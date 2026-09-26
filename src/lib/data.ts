@@ -94,6 +94,12 @@ function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message);
 }
 
+function requireData<T>(data: T | null, error: { message: string } | null): T {
+  throwIfError(error);
+  if (data == null) throw new Error("Supabase returned no row");
+  return data;
+}
+
 export async function familyById(id: string): Promise<Family> {
   if (await isDemoMode()) return familyByIdDemo(id);
   const supabase = createSupabaseServer();
@@ -174,8 +180,7 @@ export async function addPostRow(post: Post): Promise<Post> {
     })
     .select("*")
     .single();
-  throwIfError(error);
-  return mapPost(data);
+  return mapPost(requireData(data, error));
 }
 
 export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> {
@@ -196,8 +201,7 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
     })
     .select("*")
     .single();
-  throwIfError(error);
-  return mapEvent(data);
+  return mapEvent(requireData(data, error));
 }
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {
@@ -229,8 +233,7 @@ export async function digestFor(familyId: string, refresh = false): Promise<Dige
     })
     .select("*")
     .single();
-  throwIfError(inserted.error);
-  return mapDigest(inserted.data);
+  return mapDigest(requireData(inserted.data, inserted.error));
 }
 
 export async function optedInPatients(): Promise<PatientSnapshot[]> {
