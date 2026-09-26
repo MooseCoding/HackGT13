@@ -12,9 +12,13 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createSupabaseServer();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(`${origin}/?error=auth`);
+  }
+  if (data.session) {
+    const { saveGoogleTokens } = await import("@/lib/google-calendar");
+    await saveGoogleTokens(data.session);
   }
 
   const onboard = await needsOnboarding();
