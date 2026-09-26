@@ -19,12 +19,30 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.redirect(new URL("/family/calendar", req.url));
 
+    if (tokens.access_token) {
+      response.cookies.set("hearth_google_access", tokens.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 55,
+      });
+    }
     if (tokens.refresh_token) {
+      response.cookies.set("hearth_google_refresh", tokens.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+      // Keep legacy name so older clients still refresh.
       response.cookies.set("google_refresh_token", tokens.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60 * 24 * 365, 
+        maxAge: 60 * 60 * 24 * 365,
       });
     }
 

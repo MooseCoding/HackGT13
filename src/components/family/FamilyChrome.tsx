@@ -1,6 +1,11 @@
 "use client";
 
-import type { Member } from "@/lib/types";
+import { FamilyCircleSwitcher } from "@/components/family/FamilyCircleSwitcher";
+import { HearthAssistant } from "@/components/family/HearthAssistant";
+import { SettingsMenu } from "@/components/settings/SettingsPanel";
+import { DIGEST_NAME } from "@/lib/digest";
+import type { AssistantContext } from "@/lib/ai/assistant";
+import type { Family, Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -9,8 +14,6 @@ type Ctx = {
   members: Member[];
   me: Member;
   setMeId: (id: string) => void;
-  easy: boolean;
-  setEasy: (v: boolean) => void;
 };
 
 const FamilyCtx = createContext<Ctx | null>(null);
@@ -23,75 +26,124 @@ export function useFamily() {
 
 export function FamilyProvider({
   members,
+  currentMemberId,
   children,
 }: {
   members: Member[];
+  currentMemberId?: string;
   children: React.ReactNode;
 }) {
-  const defaultMember = members.find((m) => m.easyModeDefault) ?? members[0];
+  const defaultMember = members.find((m) => m.id === currentMemberId) ?? members.find((m) => m.easyModeDefault) ?? members[0];
   const [meId, setMeId] = useState(defaultMember?.id ?? "");
-  const [easy, setEasy] = useState(defaultMember?.easyModeDefault ?? false);
   const me = members.find((m) => m.id === meId) ?? members[0];
 
   useEffect(() => {
-    const savedEasy = localStorage.getItem("hearth-easy");
-    const who = localStorage.getItem("hearth-me");
-    if (savedEasy === "1") setEasy(true);
-    else if (savedEasy === null && defaultMember?.easyModeDefault) setEasy(true);
-    if (who && members.some((m) => m.id === who)) setMeId(who);
-  }, [members, defaultMember?.easyModeDefault]);
-
-  useEffect(() => {
-    localStorage.setItem("hearth-easy", easy ? "1" : "0");
-    document.documentElement.classList.toggle("easy", easy);
-  }, [easy]);
+    if (currentMemberId) return;
+    const saved = localStorage.getItem("hearth-me");
+    if (!saved || !members.some((m) => m.id === saved)) return;
+    const timer = window.setTimeout(() => setMeId(saved), 0);
+    return () => window.clearTimeout(timer);
+  }, [currentMemberId, members]);
 
   useEffect(() => {
     localStorage.setItem("hearth-me", meId);
   }, [meId]);
 
-  const value = useMemo(() => ({ members, me, setMeId, easy, setEasy }), [members, me, meId, easy]);
+  const value = useMemo(() => ({ members, me, setMeId }), [members, me]);
   return <FamilyCtx.Provider value={value}>{children}</FamilyCtx.Provider>;
 }
 
-export function FamilyChrome() {
-  const { members, me, setMeId, easy, setEasy } = useFamily();
+export function FamilyChrome({
+  demo,
+  signedIn,
+  inviteCode,
+  identityLocked,
+  assistantContext,
+  families,
+  activeFamilyId,
+  activeFamilyName,
+  userDisplayName,
+}: {
+  demo: boolean;
+  canGoLive?: boolean;
+  signedIn: boolean;
+  inviteCode?: string;
+  identityLocked: boolean;
+  assistantContext: Omit<AssistantContext, "postingAs" | "path">;
+  families: Family[];
+  activeFamilyId: string;
+  activeFamilyName: string;
+  userDisplayName?: string;
+}) {
+  const { members, me, setMeId } = useFamily();
   const path = usePathname();
   const links = [
-    { href: "/family", label: "Chats" },
+    { href: "/family", label: "Family feed" },
     { href: "/family/calendar", label: "Calendar" },
-    { href: "/family/digest", label: "This week" },
+    { href: "/family/digest", label: DIGEST_NAME },
+    { href: "/family/reminders", label: "Reminders" },
+    { href: "/family/circle", label: "Circle" },
   ];
 
   return (
-    <header className="border-b border-line bg-paper">
-      <div className="flex items-center gap-4 px-4 py-2.5">
-        <Link href="/" className="font-brand text-base text-ink">
-          Hearth
-        </Link>
-        <nav className="flex gap-1">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`px-3 py-1.5 text-sm ${
-                path === l.href ? "font-semibold text-ember" : "text-mute hover:text-ink"
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+    <header className="bg-chrome-bg text-chrome-fg">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:gap-x-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link href="/" className="font-brand shrink-0 text-base">
+            Hearth
+          </Link>
+          {families.length > 0 ? (
+            <>
+              <span className="hidden h-5 w-px shrink-0 bg-chrome-divider sm:block" aria-hidden />
+              <FamilyCircleSwitcher
+                families={families}
+                activeFamilyId={activeFamilyId}
+                activeFamilyName={activeFamilyName}
+                defaultName={userDisplayName}
+              />
+            </>
+          ) : null}
+        </div>
+        <nav className="-mx-1 flex min-w-0 flex-1 basis-full gap-3 overflow-x-auto sm:basis-auto" aria-label="Family">
+          {links.map((l) => {
+            const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={current ? "page" : undefined}
+                className={`min-h-11 shrink-0 px-1 py-2 text-sm ${
+                  current
+                    ? "font-semibold text-chrome-fg underline decoration-ember decoration-2 underline-offset-8"
+                    : "text-chrome-fg-muted hover:text-chrome-fg hover:underline"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-sm text-mute">
-            <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
-            Easy
+        <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
+          {inviteCode ? (
+            <span className="hidden text-xs text-chrome-fg-subtle lg:inline" title="Use this code to join this circle">
+              Invite <strong className="font-mono text-chrome-fg">{inviteCode}</strong>
+            </span>
+          ) : null}
+          <SettingsMenu signedIn={signedIn} userDisplayName={userDisplayName} />
+          {!demo && identityLocked && signedIn ? (
+            <ClinicalSharingToggle memberId={me?.id} initialEnabled={me?.clinicalOptIn ?? false} />
+          ) : null}
+          <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
+          <label className="sr-only" htmlFor="posting-as">
+            Posting as
           </label>
           <select
-            value={me.id}
+            id="posting-as"
+            value={me?.id ?? ""}
             onChange={(e) => setMeId(e.target.value)}
-            className="rounded-sm border border-line bg-paper px-2 py-1 text-sm"
-            aria-label="You are"
+            disabled={identityLocked}
+            title={identityLocked ? "Your signed-in account is linked to this member" : "Posting as"}
+            className="min-h-11 min-w-32 flex-1 border border-chrome-border bg-chrome-bg px-2 py-1 text-sm text-chrome-fg sm:flex-none"
           >
             {members.map((m) => (
               <option key={m.id} value={m.id}>
@@ -99,8 +151,73 @@ export function FamilyChrome() {
               </option>
             ))}
           </select>
+          {demo ? (
+            <span
+              className="text-xs font-medium text-chrome-fg-subtle"
+              title="Started from Preview sample family on the homepage"
+            >
+              Sample family
+            </span>
+          ) : null}
         </div>
       </div>
     </header>
+  );
+}
+
+function ClinicalSharingToggle({
+  memberId,
+  initialEnabled,
+}: {
+  memberId?: string;
+  initialEnabled: boolean;
+}) {
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEnabled(initialEnabled);
+  }, [initialEnabled, memberId]);
+
+  async function onChange(checked: boolean) {
+    if (!memberId || busy) return;
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/consent", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId, enabled: checked }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError(json.error || "Could not update sharing.");
+      return;
+    }
+    setEnabled(checked);
+  }
+
+  return (
+    <div className="flex flex-col">
+      <label
+        className="flex min-h-11 items-center gap-1.5 text-sm text-chrome-fg-muted"
+        title="Share posting patterns with the clinician view"
+      >
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={busy || !memberId}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-label="Share posting patterns with clinician view"
+        />
+        Clinician sharing
+      </label>
+      {error ? (
+        <span className="text-xs text-red-300" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </div>
   );
 }

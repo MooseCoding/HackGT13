@@ -1,0 +1,1 @@
+-- History placeholder: this remote migration is represented by 20260926020000_auth_profiles_and_families.sql.

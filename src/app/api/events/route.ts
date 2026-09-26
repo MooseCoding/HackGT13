@@ -1,98 +1,205 @@
 import { parseEvent } from "@/lib/calendar-parse";
-import { addEvent, eventsOf, membersOf } from "@/lib/store";
+import { mergedEventsOf } from "@/lib/calendar-data";
+import { decorateDemoPersonalEvents } from "@/lib/demo-personal-calendars";
+import { CAL_WEEKS, inCalendarWindow } from "@/lib/calendar-window";
+import { calendarAnchor } from "@/lib/clock";
+import { addEventRow, deleteEventRow, membersOf, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
+import { getAccountConsent } from "@/lib/consent-server";
+import { proposeFamilyCalls } from "@/lib/family-call-schedule";
+import {
+  deleteGoogleEvent,
+  googleAccessToken,
+  syncEventsToGoogle,
+  syncEventToGoogle,
+} from "@/lib/google-calendar";
+import { isDemoMode } from "@/lib/mode-server";
+import type { CalendarEvent } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
-import { google } from "googleapis";
-
-// Initialize the Google OAuth2 client with your environment variables
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
 
 export async function GET(req: NextRequest) {
-  const familyId = req.nextUrl.searchParams.get("familyId") || "alvarez";
-  
-  // 1. Fetch the local store events
-  const localEvents = eventsOf(familyId);
-  
-  // 2. Attempt to pull from Google Calendar
-  let googleEvents: any[] = [];
-  const userRefreshToken = req.cookies.get("google_refresh_token")?.value;
+  const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
+  try {
+    await requireFamilyAccess(familyId);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Access denied." },
+      { status: 403 },
+    );
+  }
+  const demo = await isDemoMode();
+  const anchor = calendarAnchor(demo);
+  const clientToken = req.nextUrl.searchParams.get("googleToken");
 
-  if (userRefreshToken) {
-    try {
-      oauth2Client.setCredentials({ refresh_token: userRefreshToken });
-      const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-      
-      const response = await calendar.events.list({
-        calendarId: "primary", // Accesses the currently logged in user's primary calendar
-        timeMin: new Date().toISOString(),
-        maxResults: 20,
-        singleEvents: true,
-        orderBy: "startTime", // Returns events chronologically
-      });
-      
-      const fetchedGoogleEvents = response.data.items || [];
-      
-      // Transform Google events to match your Hearth CalendarEvent interface
-      googleEvents = fetchedGoogleEvents.map((ge) => ({
-        id: ge.id || `google_${Date.now()}`,
-        familyId,
-        authorId: "google_sync",
-        title: ge.summary || "Google Calendar Event",
-        startsAt: ge.start?.dateTime || ge.start?.date || new Date().toISOString(),
-        location: ge.location || "",
-        attendees: [], 
-      }));
-    } catch (error) {
-      console.error("Failed to fetch Google Calendar events:", error);
-    }
+  let googleConnected = false;
+  try {
+    googleConnected = Boolean(await googleAccessToken(clientToken));
+  } catch {
+    // ignore
   }
 
-  // 3. Return the merged events array
-  return NextResponse.json({ events: [...localEvents, ...googleEvents] });
+  let events = await mergedEventsOf(familyId, {
+    clientToken,
+    anchor,
+    googlePull: "sample",
+  });
+
+  if (demo && familyId === "alvarez") {
+    googleConnected = true;
+    events = decorateDemoPersonalEvents(events);
+  }
+
+  const googlePersonal = events.filter((e) => e.isGoogleSynced && e.calendarScope !== "family");
+
+  return NextResponse.json({
+    events,
+    googleConnected,
+    googlePersonalCount: googlePersonal.length,
+    demoPersonalCalendars: demo && familyId === "alvarez",
+  });
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as { 
-    familyId: string; 
-    authorId: string; 
-    text: string; 
-    syncToGoogle?: boolean 
-  };
-  
-  // 1. Parse and add to local Hearth store
-  const event = parseEvent(body.text, membersOf(body.familyId), body.authorId, body.familyId);
-  addEvent(event);
+  try {
+    const body = (await req.json()) as {
+      familyId: string;
+      authorId: string;
+      text?: string;
+      calendar?: "family" | "mine";
+      syncToGoogle?: boolean;
+      googleToken?: string;
+      autoWeeklyCalls?: boolean;
+    };
+    const identity = await postingIdentity(body.familyId, body.authorId);
+    const demo = await isDemoMode();
+    const anchor = calendarAnchor(demo);
+    const members = await membersOf(identity.familyId);
+    const token = await googleAccessToken(body.googleToken);
 
-  // 2. Add to Google Calendar if requested by the client UI
-  if (body.syncToGoogle) {
-    const userRefreshToken = req.cookies.get("google_refresh_token")?.value;
-    
-    if (userRefreshToken) {
-      try {
-        oauth2Client.setCredentials({ refresh_token: userRefreshToken });
-        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-        
-        // Calculate an end time (assuming 1 hour duration by default)
-        const endTime = new Date(new Date(event.startsAt).getTime() + 60 * 60 * 1000);
-
-        await calendar.events.insert({
-          calendarId: "primary",
-          requestBody: {
-            summary: event.title,
-            location: event.location,
-            description: `Added via Hearth by ${body.authorId}`,
-            start: { dateTime: event.startsAt }, // Start time of the event
-            end: { dateTime: endTime.toISOString() }, // End time of the event
-          },
-        });
-      } catch (error) {
-        console.error("Failed to insert event to Google Calendar:", error);
+    if (body.autoWeeklyCalls) {
+      const merged = await mergedEventsOf(identity.familyId, {
+        clientToken: body.googleToken,
+        anchor,
+      });
+      const { familyCallFrequency } = await getAccountConsent();
+      const proposed = proposeFamilyCalls(merged, {
+        familyId: identity.familyId,
+        createdBy: identity.memberId,
+        members,
+        anchor,
+        frequency: familyCallFrequency,
+      });
+      const localRows: CalendarEvent[] = [];
+      for (const event of proposed) {
+        localRows.push(await addEventRow(event));
       }
-    }
-  }
 
-  return NextResponse.json(event);
+      let saved = localRows;
+      let googleSynced = 0;
+      let warning: string | undefined;
+      if (token && localRows.length) {
+        const result = await syncEventsToGoogle(token, localRows);
+        saved = result.events;
+        googleSynced = result.synced;
+        if (result.errors.length) {
+          warning =
+            googleSynced > 0
+              ? `Scheduled ${googleSynced} call${googleSynced === 1 ? "" : "s"} on Google Calendar. ${localRows.length - googleSynced} could not sync — try reconnecting Google.`
+              : "Added to family calendar, but couldn't add to Google Calendar. Try reconnecting Google.";
+        }
+      } else if (localRows.length && !token) {
+        warning = "Added to family calendar. Connect Google Calendar to also add them there.";
+      }
+
+      return NextResponse.json({
+        events: saved,
+        count: saved.length,
+        googleSynced,
+        warning,
+      });
+    }
+
+    if (!body.text?.trim()) {
+      return NextResponse.json({ error: "Add a time, day, and what it is." }, { status: 400 });
+    }
+
+    let event = parseEvent(body.text, members, identity.memberId, identity.familyId, anchor);
+    if (!inCalendarWindow(event.startsAt, anchor)) {
+      return NextResponse.json(
+        { error: `Pick a date within ${CAL_WEEKS} weeks before or after today.` },
+        { status: 400 },
+      );
+    }
+
+    const scope = body.calendar === "mine" ? "mine" : "family";
+    event = {
+      ...event,
+      id: `evt-${scope === "mine" ? "m" : "f"}-${Date.now()}`,
+      calendarScope: scope,
+      attendees: scope === "mine" ? [identity.memberId] : members.map((m) => m.id),
+    };
+
+    let saved = await addEventRow(event);
+    const wantsGoogle = body.syncToGoogle !== false;
+
+    if (wantsGoogle && token) {
+      try {
+        saved = await syncEventToGoogle(token, saved);
+      } catch (err) {
+        console.error("Google push error:", err);
+        return NextResponse.json({
+          ...saved,
+          warning: "Added here, but couldn't add to Google Calendar. Try reconnecting Google.",
+        });
+      }
+    } else if (wantsGoogle && !token) {
+      return NextResponse.json({
+        ...saved,
+        warning: "Added here. Connect Google Calendar to also add it there.",
+      });
+    }
+
+    return NextResponse.json(saved);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not create event." },
+      { status: 403 },
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const id = req.nextUrl.searchParams.get("id");
+    const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
+    await requireFamilyAccess(familyId);
+    const googleEventId = req.nextUrl.searchParams.get("googleEventId");
+    const clientToken = req.nextUrl.searchParams.get("googleToken");
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const isGoogleOnly = id.startsWith("google_");
+
+    if (googleEventId) {
+      const token = await googleAccessToken(clientToken);
+      if (!token) {
+        return NextResponse.json(
+          { error: "Sign in with Google to remove this event." },
+          { status: 401 },
+        );
+      }
+      await deleteGoogleEvent(token, googleEventId);
+    }
+
+    if (!isGoogleOnly) {
+      await deleteEventRow(id, familyId);
+    } else if (!googleEventId) {
+      return NextResponse.json({ error: "Cannot delete this event." }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Delete failed" },
+      { status: 500 },
+    );
+  }
 }

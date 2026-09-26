@@ -6,6 +6,10 @@ export function now() {
   return DEMO_NOW.toISOString();
 }
 
+export function calendarAnchor(demo: boolean) {
+  return demo ? DEMO_NOW : new Date();
+}
+
 export function atDay(daysAgo: number, hour = 10, minute = 0) {
   const d = new Date(DEMO_NOW);
   d.setDate(d.getDate() - daysAgo);
@@ -13,7 +17,9 @@ export function atDay(daysAgo: number, hour = 10, minute = 0) {
   return d.toISOString();
 }
 
-export function formatWhen(iso: string) {
+type FormatOpts = { timeZone?: string };
+
+export function formatWhen(iso: string, opts?: FormatOpts) {
   const d = new Date(iso);
   return d.toLocaleString("en-US", {
     weekday: "short",
@@ -21,14 +27,41 @@ export function formatWhen(iso: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: opts?.timeZone,
   });
 }
 
-export function formatDay(iso: string) {
+export function formatDay(iso: string, opts?: FormatOpts) {
   return new Date(iso).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
+    timeZone: opts?.timeZone,
+  });
+}
+
+export function formatTime(iso: string, opts?: FormatOpts) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: opts?.timeZone,
+  });
+}
+
+export function formatMonthYear(date: Date, opts?: FormatOpts) {
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: opts?.timeZone,
+  });
+}
+
+export function formatLongDate(iso: string, opts?: FormatOpts) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: opts?.timeZone,
   });
 }
 

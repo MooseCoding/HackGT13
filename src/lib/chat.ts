@@ -1,6 +1,13 @@
 import type { Member, Post } from "./types";
 
 export const GROUP_THREAD = "group";
+export const FAMILY_GC_LABEL = "Family chat";
+
+export function familyInitials(name: string) {
+  const words = name.replace(/^the\s+/i, "").split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
 
 /** Stable id for a 1:1 thread between two members. */
 export function dmThreadId(a: string, b: string) {
@@ -31,7 +38,7 @@ export function threadLabel(
   members: Member[],
   familyName: string,
 ) {
-  if (isGroupThread(threadId)) return familyName;
+  if (isGroupThread(threadId)) return FAMILY_GC_LABEL;
   const partnerId = dmPartner(threadId, meId);
   const partner = members.find((m) => m.id === partnerId);
   return partner?.name ?? "Direct message";
@@ -44,12 +51,17 @@ export function lastPreview(post: Post) {
   return post.transcript || post.body;
 }
 
-export function formatChatTime(iso: string) {
+export function formatChatTime(iso: string, timeZone?: string) {
   const d = new Date(iso);
   const now = new Date("2026-09-25T20:16:00-04:00");
   const sameDay = d.toDateString() === now.toDateString();
   if (sameDay) {
-    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone });
   }
-  return d.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
 }

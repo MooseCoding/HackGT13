@@ -1,11 +1,12 @@
 "use client";
 
-import { useFamily } from "@/components/family/FamilyChrome";
+import { useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { formatWhen } from "@/lib/clock";
 import type { Member, Post } from "@/lib/types";
 
 export function FeedList({ posts, members }: { posts: Post[]; members: Member[] }) {
-  const { easy } = useFamily();
+  const easy = useLargerText();
+  const timeZone = useTimezone();
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
   function speak(text: string) {
@@ -23,13 +24,13 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
 
         if (p.kind === "status") {
           return (
-            <li key={p.id} className="border-l-2 border-ember/40 pl-4">
+            <li key={p.id} className="border-l-2 border-rule pl-4">
               <p className={`leading-7 text-mute ${easy ? "text-xl leading-9" : "text-[17px]"}`}>
                 <span className="font-semibold text-ink">{m?.name.split(" ")[0]}</span>
                 {" — "}
                 {text}
               </p>
-              <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt)}</p>
+              <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt, { timeZone })}</p>
             </li>
           );
         }
@@ -41,16 +42,16 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
               <img
                 src={p.photoUrl}
                 alt={p.photoAlt || "Family photo"}
-                className="max-h-80 w-full rounded-surface object-cover"
+                className="max-h-80 w-full object-cover"
               />
               <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
               <p className="mt-1 text-sm text-mute">
-                {m?.name} · {formatWhen(p.createdAt)}
+                {m?.name} · {formatWhen(p.createdAt, { timeZone })}
               </p>
               <button
                 type="button"
                 onClick={() => speak(`${m?.name}. ${text}`)}
-                className={`mt-2 rounded-full border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
+                className={`mt-2 border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
               >
                 Play aloud
               </button>
@@ -60,11 +61,11 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
 
         if (p.kind === "voice") {
           return (
-            <li key={p.id} className="rounded-surface border border-line bg-paper/60 px-4 py-3">
+            <li key={p.id} className="border border-line px-4 py-3">
               <div className="flex flex-wrap items-center gap-3">
                 <span
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
-                  style={{ background: m?.color ?? "#92400e" }}
+                  style={{ background: m?.color ?? "#555555" }}
                 >
                   {m?.initials}
                 </span>
@@ -75,7 +76,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
                 <button
                   type="button"
                   onClick={() => speak(`${m?.name}. ${text}`)}
-                  className={`rounded-full bg-ember px-4 font-semibold text-paper ${easy ? "h-12 text-base" : "h-9 text-sm"}`}
+                  className={`bg-ember px-4 font-semibold text-white hover:bg-ember-dark ${easy ? "h-12 text-base" : "h-9 text-sm"}`}
                 >
                   Play aloud
                 </button>
@@ -88,16 +89,16 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
         }
 
         return (
-          <li key={p.id} className="rounded-note border border-line bg-paper px-4 py-3 shadow-paper">
+          <li key={p.id} className="border border-line px-4 py-3">
             <div className="flex flex-wrap items-baseline gap-2">
               <p className="font-semibold">{m?.name}</p>
-              <p className="ml-auto text-xs text-mute">{formatWhen(p.createdAt)}</p>
+              <p className="ml-auto text-xs text-mute">{formatWhen(p.createdAt, { timeZone })}</p>
             </div>
             <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
             <button
               type="button"
               onClick={() => speak(`${m?.name}. ${text}`)}
-              className={`mt-3 rounded-full border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
+              className={`mt-3 border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
             >
               Play aloud
             </button>

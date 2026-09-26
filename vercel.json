@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/clinical/analyze",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}

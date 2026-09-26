@@ -1,51 +1,27 @@
-import Link from "next/link";
+import { LandingPage } from "@/components/home/LandingPage";
+import { getAuthUser, needsOnboarding } from "@/lib/auth";
+import { needsTermsAcceptance } from "@/lib/consent-server";
+import { getPublicSupabaseConfig } from "@/lib/supabase/public";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string; error?: string }>;
+}) {
+  const q = await searchParams;
+  const user = await getAuthUser();
+  const onboard = user ? await needsOnboarding() : false;
+  const terms = user ? await needsTermsAcceptance() : false;
   return (
-    <div className="chat-surface min-h-full">
-      <div className="mx-auto max-w-4xl px-6 pt-4">
-        <header className="glass rounded-2xl">
-          <div className="flex items-center gap-3 px-6 py-4">
-            <span className="font-brand text-lg">Hearth</span>
-            <span className="font-brand text-sm text-mute">Family, in one place</span>
-          </div>
-        </header>
-      </div>
-
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="font-brand text-3xl leading-tight text-ink sm:text-4xl">
-          Come home to the story, not the group chat.
-        </h1>
-        <p className="mt-4 max-w-xl text-base leading-7 text-mute">
-          Family messaging, a shared calendar, and a weekly summary — plus a clinician view for
-          opted-in members between visits.
-        </p>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/family"
-            className="glass block rounded-2xl p-6 transition hover:border-ember/60"
-          >
-            <h2 className="text-lg font-semibold">Family chats</h2>
-            <p className="mt-2 text-sm leading-6 text-mute">
-              Message the whole family or one person. Voice notes and photos included.
-            </p>
-          </Link>
-          <Link
-            href="/hcp"
-            className="glass block rounded-2xl p-6 transition hover:border-clinic/60"
-          >
-            <h2 className="text-lg font-semibold">Clinician view</h2>
-            <p className="mt-2 text-sm leading-6 text-mute">
-              Longitudinal signals for opted-in patients, compared to their own baseline.
-            </p>
-          </Link>
-        </div>
-      </main>
-
-      <footer className="border-t border-white/50 py-4 text-center text-xs text-mute">
-        Built at HackGT 13 with Impiricus
-      </footer>
-    </div>
+    <LandingPage
+      next={q.next && q.next.startsWith("/") ? q.next : "/onboarding"}
+      authError={q.error === "auth"}
+      signedIn={Boolean(user)}
+      needsOnboarding={onboard}
+      needsTermsAcceptance={terms}
+      supabaseConfig={getPublicSupabaseConfig()}
+    />
   );
 }

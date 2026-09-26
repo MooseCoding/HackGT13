@@ -1,11 +1,13 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
+import { useLargerText } from "@/components/settings/SettingsProvider";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 export function Composer() {
-  const { me, easy } = useFamily();
+  const { me } = useFamily();
+  const easy = useLargerText();
   const router = useRouter();
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<"text" | "voice" | "photo" | "status">("text");
@@ -81,19 +83,19 @@ export function Composer() {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={easy ? "Tap Talk, or type a short note…" : "A note, a memory, a photo caption…"}
-        className={`mt-3 w-full resize-none rounded-surface border border-line bg-paper px-4 py-3 outline-none focus:border-ember ${
+        className={`mt-3 w-full resize-none border border-line bg-paper px-4 py-3 outline-none focus:border-ink ${
           easy ? "min-h-32 text-xl" : "min-h-24"
         }`}
       />
       {photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photoUrl} alt="Upload preview" className="mt-3 max-h-40 rounded-surface object-cover" />
+        <img src={photoUrl} alt="Upload preview" className="mt-3 max-h-40 object-cover" />
       ) : null}
       <div className={`mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 ${easy ? "text-lg" : "text-sm"}`}>
         <button
           type="button"
           onClick={startVoice}
-          className={`font-semibold ${listening ? "text-ember" : "text-mute hover:text-ink"}`}
+          className={`font-semibold ${listening ? "text-accent" : "text-mute hover:text-ink"}`}
         >
           {listening ? "Listening…" : "Talk"}
         </button>
@@ -109,14 +111,14 @@ export function Composer() {
         <button
           type="button"
           onClick={() => setKind("status")}
-          className={`font-semibold ${kind === "status" ? "text-ember" : "text-mute hover:text-ink"}`}
+          className={`font-semibold ${kind === "status" ? "text-ink" : "text-mute hover:text-ink"}`}
         >
           Status
         </button>
         <button
           type="button"
           onClick={send}
-          className={`ml-auto rounded-full bg-ink px-6 font-semibold text-paper ${easy ? "h-14 text-lg" : "h-11"}`}
+          className={`ml-auto rounded-sm bg-ember px-6 font-semibold text-white hover:bg-ember-dark ${easy ? "h-14 text-lg" : "h-11"}`}
         >
           Send
         </button>
