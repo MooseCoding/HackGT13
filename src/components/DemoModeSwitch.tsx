@@ -41,7 +41,7 @@ export function DemoModeSwitch({
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className={demo ? "font-medium text-ember" : "text-mute"}>
+      <span className={demo ? "font-medium text-ink" : "text-mute"}>
         {demo ? "Demo mode (mock data)" : "Live (Supabase)"}
       </span>
       {canGoLive ? (
@@ -49,7 +49,7 @@ export function DemoModeSwitch({
           type="button"
           disabled={busy}
           onClick={() => setDemo(!demo)}
-          className="border border-line px-2 py-1 text-xs hover:border-ember"
+          className="border border-line px-2 py-1 text-xs hover:underline"
         >
           {demo ? "Use Supabase" : "Use mock data"}
         </button>
@@ -62,12 +62,12 @@ export function DemoModeSwitch({
 
 export function DemoBanner({ demo, canGoLive }: { demo: boolean; canGoLive: boolean }) {
   return (
-    <div className={`border-b border-line px-4 py-1.5 ${demo ? "bg-cream" : "bg-paper"}`}>
+    <div className={`border-b border-line px-4 py-1.5 ${demo ? "bg-accent-tint" : ""}`}>
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
         <p className="text-xs text-mute">
           {demo
-            ? "Demo mode is using the local Alvarez / Okonkwo mock families."
-            : "Live mode is reading and writing the Supabase project."}
+            ? "Sample mode uses the Alvarez and Okonkwo mock families."
+            : "Live mode reads and writes your Supabase project."}
         </p>
         <DemoModeSwitch demo={demo} canGoLive={canGoLive} compact />
       </div>

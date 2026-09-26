@@ -73,7 +73,7 @@ export function FamilyCircleForm({
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error || "Could not join this family.");
+        setError(json.error || "Could not join this circle. Check the invite code and your name, then try again.");
         setBusy(false);
         return;
       }
@@ -110,7 +110,7 @@ export function FamilyCircleForm({
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error || "Could not create circle.");
+        setError(json.error || "Could not create your circle. Check the circle name and try again.");
         setBusy(false);
         return;
       }
@@ -126,7 +126,7 @@ export function FamilyCircleForm({
     }
 
     if (!familyName.trim()) {
-      setError("Name your family circle so everyone knows they're home.");
+      setError("Enter a circle name so everyone knows which household this is.");
       return;
     }
     const filled = members.filter((m) => m.name.trim());
@@ -136,7 +136,9 @@ export function FamilyCircleForm({
     }
     const missingAddress = filled.find((m) => !m.address.street.trim() || !m.address.city.trim());
     if (missingAddress) {
-      setError(`Add a street and city for ${missingAddress.name.trim() || "each person"}.`);
+      setError(
+        `Add a street and city for ${missingAddress.name.trim() || "each person"} so visits and calls have a place.`,
+      );
       return;
     }
     setBusy(true);
@@ -158,7 +160,7 @@ export function FamilyCircleForm({
     });
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error || "Could not save.");
+      setError(json.error || "Could not save your circle. Check each person's name and address, then try again.");
       setBusy(false);
       return;
     }
@@ -179,15 +181,17 @@ export function FamilyCircleForm({
     <form onSubmit={submit} className="space-y-4" noValidate>
       {!hideModeToggle ? (
         <div
-          className="grid grid-cols-2 rounded-lg border border-line bg-cream p-1"
+          className="grid grid-cols-2 border-b border-line"
           role="group"
           aria-label="Family setup choice"
         >
           <button
             type="button"
             onClick={() => setMode("create")}
-            className={`min-h-11 rounded-md text-sm font-semibold ${
-              mode === "create" ? "bg-ember text-white" : "text-mute hover:text-ink"
+            className={`min-h-11 border-b-2 text-sm font-semibold ${
+              mode === "create"
+                ? "border-accent text-ink"
+                : "border-transparent text-mute hover:text-ink"
             }`}
           >
             New circle
@@ -195,8 +199,10 @@ export function FamilyCircleForm({
           <button
             type="button"
             onClick={() => setMode("join")}
-            className={`min-h-11 rounded-md text-sm font-semibold ${
-              mode === "join" ? "bg-ember text-white" : "text-mute hover:text-ink"
+            className={`min-h-11 border-b-2 text-sm font-semibold ${
+              mode === "join"
+                ? "border-accent text-ink"
+                : "border-transparent text-mute hover:text-ink"
             }`}
           >
             Join with code
@@ -220,7 +226,7 @@ export function FamilyCircleForm({
               placeholder="ALVAREZ42"
               autoCapitalize="characters"
               autoComplete="off"
-              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 font-mono uppercase tracking-wide outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line bg-surface px-3 font-mono uppercase outline-none focus-visible:border-accent"
             />
           </div>
           <div>
@@ -230,7 +236,7 @@ export function FamilyCircleForm({
               value={memberName}
               onChange={(event) => setMemberName(event.target.value)}
               autoComplete="name"
-              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line bg-surface px-3 outline-none focus-visible:border-accent"
             />
           </div>
         </div>
@@ -247,11 +253,11 @@ export function FamilyCircleForm({
               onChange={(e) => setFamilyName(e.target.value)}
               placeholder="The Alvarez Circle"
               autoComplete="organization"
-              className="mt-1 min-h-12 w-full rounded-lg border border-line bg-paper px-3 text-base outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line bg-surface px-3 text-base outline-none focus-visible:border-accent"
             />
           </div>
           {defaultName ? (
-            <p className="rounded-lg bg-cream px-3 py-2 text-sm text-mute">
+            <p className="border border-line px-3 py-2 text-sm text-mute">
               You&apos;ll join as <strong className="font-medium text-ink">{defaultName}</strong>
             </p>
           ) : (
@@ -262,7 +268,7 @@ export function FamilyCircleForm({
                 value={memberName}
                 onChange={(e) => setMemberName(e.target.value)}
                 autoComplete="name"
-                className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 outline-none focus-visible:border-ember"
+                className="mt-1 min-h-12 w-full border border-line bg-surface px-3 outline-none focus-visible:border-accent"
               />
             </div>
           )}
@@ -270,25 +276,25 @@ export function FamilyCircleForm({
       ) : (
         <>
           <div>
-            <label htmlFor="fc-family-name" className="block text-sm font-medium text-ink">Family name</label>
+            <label htmlFor="fc-family-name" className="block text-sm font-medium text-ink">Circle name</label>
             <input
               id="fc-family-name"
               value={familyName}
               onChange={(e) => setFamilyName(e.target.value)}
               placeholder="The Alvarez Circle"
-              className="mt-1 min-h-12 w-full rounded-lg border border-line bg-paper px-3 text-base outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line bg-surface px-3 text-base outline-none focus-visible:border-accent"
             />
           </div>
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium text-ink">People in this circle</legend>
+            <legend className="text-sm font-bold text-ink">People in this circle</legend>
             <p className="text-sm leading-6 text-mute">
               Add yourself first. You can add grandparents, kids, and others — they don&apos;t need Google
               accounts yet.
             </p>
             {members.map((m, i) => (
-              <div key={i} className="rounded-xl border border-line bg-paper p-3">
+              <div key={i} className="border border-line p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold">{m.isYou ? "You" : `Member ${i + 1}`}</p>
+                  <p className="text-sm font-semibold">{m.isYou ? "You" : m.name.trim() || "Another person"}</p>
                   {members.length > 1 && !m.isYou ? (
                     <button
                       type="button"
@@ -306,7 +312,7 @@ export function FamilyCircleForm({
                       id={`fc-name-${i}`}
                       value={m.name}
                       onChange={(e) => update(i, { name: e.target.value })}
-                      className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+                      className="mt-1 min-h-12 w-full border border-line bg-surface px-3 text-base outline-none focus-visible:border-accent"
                     />
                   </div>
                   <div>
@@ -316,7 +322,7 @@ export function FamilyCircleForm({
                       list="fc-family-roles"
                       value={m.role}
                       onChange={(e) => update(i, { role: e.target.value })}
-                      className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+                      className="mt-1 min-h-12 w-full border border-line bg-surface px-3 text-base outline-none focus-visible:border-accent"
                     />
                   </div>
                   <div>
@@ -328,7 +334,7 @@ export function FamilyCircleForm({
                       max={120}
                       value={m.age}
                       onChange={(e) => update(i, { age: e.target.value })}
-                      className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+                      className="mt-1 min-h-12 w-full border border-line bg-surface px-3 text-base outline-none focus-visible:border-accent"
                     />
                   </div>
                   <AddressFields
@@ -358,7 +364,7 @@ export function FamilyCircleForm({
             <button
               type="button"
               onClick={() => setMembers((list) => [...list, emptyMember(false)])}
-              className="min-h-12 w-full rounded-lg border border-dashed border-line text-sm font-medium text-ember hover:border-ember"
+              className="min-h-12 w-full border border-dashed border-line text-sm font-medium text-accent hover:underline"
             >
               Add another person
             </button>
@@ -367,13 +373,13 @@ export function FamilyCircleForm({
       )}
 
       {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>
+        <p className="border border-line px-3 py-2 text-sm text-red-700" role="alert">{error}</p>
       ) : null}
 
       <button
         type="submit"
         disabled={busy}
-        className="min-h-12 w-full rounded-lg bg-ember text-sm font-semibold text-white disabled:opacity-60"
+        className="min-h-12 w-full rounded-sm bg-ember text-sm font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
       >
         {busy ? "Saving…" : submitLabel ?? defaultSubmit}
       </button>

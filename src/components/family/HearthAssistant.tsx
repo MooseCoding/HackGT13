@@ -9,7 +9,7 @@ type Turn = { role: "user" | "assistant"; content: string };
 
 const STARTERS = [
   "How do I invite someone?",
-  "What’s on the calendar?",
+  "What's on the calendar?",
   `How does ${DIGEST_NAME} work?`,
   "How do weekly family calls work?",
 ];
@@ -21,7 +21,7 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
   const [turns, setTurns] = useState<Turn[]>([
     {
       role: "assistant",
-      content: `Hi! I’m Hearth Assistant. Ask about chats, calendar, ${DIGEST_NAME}, invites, or Easy mode. I'm here to help!`,
+      content: `Hi! I'm Hearth Assistant. Ask about chats, calendar, ${DIGEST_NAME}, invites, or Larger text.`,
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="min-h-11 rounded-md border border-line px-3 text-sm font-medium text-ember hover:bg-cream"
+        className="min-h-11 rounded-sm border border-white/40 px-3 text-sm font-medium text-white hover:border-white"
         aria-expanded={open}
         aria-controls="hearth-assistant-panel"
       >
@@ -66,13 +66,11 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
       {open ? (
         <section
           id="hearth-assistant-panel"
-          className="fixed inset-x-3 top-14 z-50 flex h-[min(60dvh,440px)] flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:w-[22rem]"
+          className="fixed inset-x-3 top-14 z-50 flex h-[min(60dvh,440px)] flex-col overflow-hidden rounded-sm border border-rule bg-surface sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:w-[22rem]"
           aria-label="Hearth Assistant"
         >
-          <header className="flex items-center justify-between border-b border-line bg-cream px-3 py-2">
-            <div>
-              <p className="text-sm font-semibold text-ink">Hearth Assistant</p>
-            </div>
+          <header className="flex items-center justify-between border-b border-rule px-3 py-2">
+            <p className="text-sm font-semibold text-ink">Hearth Assistant</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -86,8 +84,8 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
             {turns.map((t, i) => (
               <div
                 key={`${t.role}-${i}`}
-                className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-6 ${
-                  t.role === "user" ? "ml-auto bg-ember text-white" : "mr-auto bg-cream text-ink"
+                className={`max-w-[90%] whitespace-pre-wrap border border-rule px-3 py-2 text-sm leading-6 ${
+                  t.role === "user" ? "ml-8 bg-chat-out text-ink" : "mr-auto bg-chat-in text-ink"
                 }`}
               >
                 {t.content}
@@ -97,13 +95,13 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
           </div>
 
           {!turns.some((t) => t.role === "user") ? (
-            <div className="flex flex-wrap gap-1.5 border-t border-line px-3 py-2">
+            <div className="flex flex-wrap gap-1.5 border-t border-rule px-3 py-2">
               {STARTERS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => send(s)}
-                  className="rounded-full border border-line bg-cream px-2.5 py-1 text-xs text-ink hover:border-ember"
+                  className="border border-rule px-2.5 py-1 text-xs text-ink hover:underline"
                 >
                   {s}
                 </button>
@@ -112,7 +110,7 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
           ) : null}
 
           <form
-            className="flex gap-2 border-t border-line p-2"
+            className="flex gap-2 border-t border-rule p-2"
             onSubmit={(e) => {
               e.preventDefault();
               send();
@@ -126,12 +124,12 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about Hearth…"
-              className="min-h-11 flex-1 rounded-xl border border-line bg-paper px-3 text-sm outline-none focus:border-ember"
+              className="min-h-11 flex-1 border border-rule bg-surface px-3 text-sm outline-none focus:border-accent"
             />
             <button
               type="submit"
               disabled={!input.trim()}
-              className="min-h-11 rounded-xl bg-ember px-4 text-sm font-medium text-white disabled:opacity-50"
+              className="min-h-11 rounded-sm bg-ember px-4 text-sm font-medium text-white hover:bg-ember-dark disabled:opacity-50"
             >
               Send
             </button>

@@ -53,6 +53,25 @@ export type Post = {
   rawRetained?: boolean;
 };
 
+export type ReminderStatus = "open" | "done" | "snoozed";
+
+export type Reminder = {
+  id: string;
+  familyId: FamilyId;
+  /** Who should do this */
+  assigneeId: MemberId;
+  text: string;
+  dueAt?: string;
+  /** Human-readable due when exact time is fuzzy, e.g. "Sunday" or "this weekend" */
+  dueHint: string;
+  sourceText: string;
+  sourcePostId?: string;
+  createdBy: MemberId;
+  createdAt: string;
+  status: ReminderStatus;
+  snoozedUntil?: string;
+};
+
 export type CalendarEvent = {
   id: string;
   familyId: FamilyId;

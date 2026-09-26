@@ -51,12 +51,17 @@ export function lastPreview(post: Post) {
   return post.transcript || post.body;
 }
 
-export function formatChatTime(iso: string) {
+export function formatChatTime(iso: string, timeZone?: string) {
   const d = new Date(iso);
   const now = new Date("2026-09-25T20:16:00-04:00");
   const sameDay = d.toDateString() === now.toDateString();
   if (sameDay) {
-    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone });
   }
-  return d.toLocaleDateString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
 }

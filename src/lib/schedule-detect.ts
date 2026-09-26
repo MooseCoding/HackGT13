@@ -124,8 +124,8 @@ export function suggestScheduleFromText(
       title: "Weekly family call",
       startsAtHint: formatWhen(first.startsAt),
       reason: rescheduling
-        ? "Open weeks still need a family call — Hearth found new times."
-        : "Hearth found open times around your family's schedule.",
+        ? "A few weeks still need a call. Here are open times."
+        : "We found open times that fit everyone's calendars.",
       suggestedText: `${first.title} ${formatWhen(first.startsAt)}`,
       sourceText: raw,
       weeklyFamilyCall: true,
@@ -147,7 +147,7 @@ export function suggestScheduleFromText(
   return {
     title,
     startsAtHint: `${day} ${time}`,
-    reason: "This message mentions a time — add it to the calendar?",
+    reason: "This message mentions a time. Add it to the calendar?",
     suggestedText: `${title} ${day} at ${time}`,
     sourceText: raw,
   };

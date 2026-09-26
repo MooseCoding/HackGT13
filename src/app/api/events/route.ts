@@ -1,9 +1,11 @@
 import { parseEvent } from "@/lib/calendar-parse";
 import { mergedEventsOf } from "@/lib/calendar-data";
+import { decorateDemoPersonalEvents } from "@/lib/demo-personal-calendars";
 import { CAL_WEEKS, inCalendarWindow } from "@/lib/calendar-window";
 import { calendarAnchor } from "@/lib/clock";
 import { addEventRow, deleteEventRow, membersOf, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
-import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
+import { getAccountConsent } from "@/lib/consent-server";
+import { proposeFamilyCalls } from "@/lib/family-call-schedule";
 import {
   deleteGoogleEvent,
   googleAccessToken,
@@ -35,11 +37,16 @@ export async function GET(req: NextRequest) {
     // ignore
   }
 
-  const events = await mergedEventsOf(familyId, {
+  let events = await mergedEventsOf(familyId, {
     clientToken,
     anchor,
     googlePull: "sample",
   });
+
+  if (demo && familyId === "alvarez") {
+    googleConnected = true;
+    events = decorateDemoPersonalEvents(events);
+  }
 
   const googlePersonal = events.filter((e) => e.isGoogleSynced && e.calendarScope !== "family");
 
@@ -47,6 +54,7 @@ export async function GET(req: NextRequest) {
     events,
     googleConnected,
     googlePersonalCount: googlePersonal.length,
+    demoPersonalCalendars: demo && familyId === "alvarez",
   });
 }
 
@@ -72,11 +80,13 @@ export async function POST(req: NextRequest) {
         clientToken: body.googleToken,
         anchor,
       });
-      const proposed = proposeWeeklyFamilyCalls(merged, {
+      const { familyCallFrequency } = await getAccountConsent();
+      const proposed = proposeFamilyCalls(merged, {
         familyId: identity.familyId,
         createdBy: identity.memberId,
         members,
         anchor,
+        frequency: familyCallFrequency,
       });
       const localRows: CalendarEvent[] = [];
       for (const event of proposed) {

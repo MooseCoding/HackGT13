@@ -90,23 +90,23 @@ function markovSentence(chain: Chain, seed: string[], maxLen = 14): string {
 }
 
 const OPENERS: Record<string, string[]> = {
-  gathering: ["Around the table", "Over a shared meal", "In the kitchen"],
-  outdoors: ["Out on the porch", "Under open sky", "On a walk"],
-  care: ["With care on everyone's mind", "Thinking of health and rest"],
-  memory: ["Looking back", "Old stories surfaced", "A photo brought back"],
-  celebration: ["Something to celebrate", "A milestone week"],
-  connection: ["Staying close", "Checking in", "Holding each other near"],
-  default: ["This week", "On the hearth", "Among family"],
+  gathering: ["Around the table", "Over dinner", "In the kitchen"],
+  outdoors: ["Out on the porch", "Outside", "On a walk"],
+  care: ["Health came up", "Appointments were on the calendar"],
+  memory: ["Old stories came up", "A photo sent everyone back"],
+  celebration: ["A good week for wins", "Something to mark"],
+  connection: ["People checked in", "Calls and notes kept coming"],
+  default: ["This week", "On the porch", "In the circle"],
 };
 
 const CLOSERS: Record<string, string[]> = {
-  gathering: ["— and everyone left with full plates and fuller hearts."],
-  outdoors: ["— fresh air and familiar faces."],
-  care: ["— small steps, steady support."],
-  memory: ["— the past felt close enough to touch."],
-  celebration: ["— a moment worth marking."],
-  connection: ["— the circle held."],
-  default: ["— another week together."],
+  gathering: ["Everyone left with full plates."],
+  outdoors: ["Fresh air and familiar faces."],
+  care: ["Small steps, steady support."],
+  memory: ["The past felt close this week."],
+  celebration: ["Worth a toast."],
+  connection: ["The circle stayed in touch."],
+  default: ["Another week together."],
 };
 
 export function generateStory(
@@ -146,12 +146,12 @@ export function generateStory(
 
   const narrativeParts = who
     ? [`${opener}, ${who} checked in.`]
-    : [`${opener} — the porch was quiet this week.`];
+    : [`${opener} — not much landed in chat this week.`];
   if (generated) narrativeParts.push(generated + ".");
   if (topic?.hits.length) {
-    narrativeParts.push(`Lots of talk about ${topic.hits.slice(0, 3).join(", ")}.`);
+    narrativeParts.push(`Most of the week was about ${topic.hits.slice(0, 3).join(", ")}.`);
   }
-  narrativeParts.push(closer.replace(/^— /, ""));
+  narrativeParts.push(closer);
 
   return { title, narrative: narrativeParts.join(" "), theme };
 }

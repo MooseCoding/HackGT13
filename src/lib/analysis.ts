@@ -131,10 +131,10 @@ function explainActivity(
   if (current.length < 3 || baseline.length < 4) {
     return {
       status: "insufficient_data",
-      title: "More observations are needed",
-      summary: `The agent needs at least 3 recent and 4 baseline interactions. It currently has ${current.length} recent and ${baseline.length} baseline interactions.`,
-      currentLabel: `${current.length} recent interaction${current.length === 1 ? "" : "s"}`,
-      baselineLabel: `${baseline.length} baseline interaction${baseline.length === 1 ? "" : "s"}`,
+      title: "Not enough data to compare",
+      summary: `Hearth needs at least 3 recent posts and 4 baseline posts. Right now there are ${current.length} recent and ${baseline.length} baseline.`,
+      currentLabel: `${current.length} recent post${current.length === 1 ? "" : "s"}`,
+      baselineLabel: `${baseline.length} baseline post${baseline.length === 1 ? "" : "s"}`,
       ...ranges,
       evidence: [],
     };
@@ -467,10 +467,10 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
 
 function buildNote(flags: ClinicalFlag[], insight: ExplainableInsight, nextStep: string) {
   if (insight.status === "insufficient_data") {
-    return "Insufficient longitudinal activity for baseline comparison. No clinical interpretation was generated.";
+    return "There isn't enough activity to compare the recent 14 days with the prior 30 days. Don't read meaning into word choice or posting time.";
   }
   if (!flags.length) {
-    return "No material change was detected across communication, engagement, or emotional-pattern signals versus this member's personal baseline. Continue routine monitoring.";
+    return "Posting cadence and time of day look about the same as this member's prior 30-day baseline. Use this as context for a conversation, not a diagnosis.";
   }
   const severity = { high: 3, elevated: 2, watch: 1 } as const;
   const leading = flags
@@ -478,5 +478,5 @@ function buildNote(flags: ClinicalFlag[], insight: ExplainableInsight, nextStep:
     .sort((a, b) => severity[b.severity] - severity[a.severity])
     .slice(0, 3)
     .map((flag) => flag.detail.replace(/\.$/, "").toLowerCase());
-  return `The latest 14-day window shows ${leading.join("; ")}. ${nextStep} This is a screening signal from consented interaction metadata, not a diagnosis.`;
+  return `The latest 14-day window shows ${leading.join("; ")}. ${nextStep} Word choice and posting patterns describe communication activity only. They do not diagnose mental illness or cognitive disease.`;
 }

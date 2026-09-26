@@ -18,7 +18,7 @@ export type AssistantContext = {
 /** Keyword helper — no vendor models, no network. */
 export function answerFamilyAssistant(message: string, ctx?: AssistantContext): string {
   const q = message.toLowerCase().trim();
-  if (!q) return `Ask about Chats, Calendar, ${DIGEST_NAME}, invites, switching circles, or Easy mode.`;
+  if (!q) return `Ask about Chats, Calendar, ${DIGEST_NAME}, invites, switching circles, or Settings.`;
 
   const events = ctx?.upcomingEvents?.length ? ctx.upcomingEvents : [];
   const posts = ctx?.recentPosts?.length ? ctx.recentPosts : [];
@@ -26,13 +26,13 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
   const who = ctx?.postingAs ? `You’re posting as ${ctx.postingAs}. ` : "";
 
   if (q.includes("switch") || q.includes("another circle") || q.includes("other family")) {
-    return `${who}Tap your family name in the header to switch circles, or add a new one from there.`;
+    return `${who}Tap your circle name in the header to switch circles, or add a new one from there.`;
   }
 
   if (q.includes("invite") || q.includes("add member") || q.includes("join") || q.includes("code")) {
     return ctx?.inviteCode
-      ? `${who}To invite someone: Chats → + Add member, or share invite code ${ctx.inviteCode}. To join another circle yourself, tap your family name in the header.`
-      : `${who}To invite someone: Chats → + Add member, or share the invite code in the header. You can belong to multiple circles — tap your family name to switch.`;
+      ? `${who}To invite someone: Chats → Add family member, or share invite code ${ctx.inviteCode}. To join another circle yourself, tap your circle name in the header.`
+      : `${who}To invite someone: Chats → Add family member, or share the invite code in the header. You can belong to multiple circles — tap your circle name to switch.`;
   }
 
   if (
@@ -46,16 +46,24 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
     const list = events.length
       ? `Coming up:\n${events.slice(0, 6).map((e) => `• ${e}`).join("\n")}`
       : "No upcoming events are loaded right now.";
-    return `${list}\n\nOpen Calendar to add a sentence like “Family dinner Friday at 6 PM”. Weekly family calls are placed in open gaps between existing events — locally, no AI.`;
+    return `${list}\n\nOpen Calendar to add a sentence like “Family dinner Friday at 6 PM”. Weekly family calls are placed in open gaps between existing events.`;
   }
 
   if (q.includes("digest") || q.includes("hestia") || q.includes("this week") || q.includes("recap") || q.includes("story")) {
     const recent = posts.length ? ` Recent notes: ${posts.slice(0, 3).join(" · ")}` : "";
-    return `Open ${DIGEST_NAME} for the family story — your weekly hearth recap from chats and calendar, written on this device.${recent}`;
+    return `Open ${DIGEST_NAME} for this week's story from your chats and calendar.${recent}`;
   }
 
-  if (q.includes("easy")) {
-    return "Turn on Easy in the header for larger text and bigger tap targets — helpful for elders.";
+  if (q.includes("easy") || q.includes("larger text") || q.includes("bigger text") || q.includes("settings")) {
+    return "Open Settings in the header for theme, time zone, larger text, and sign out.";
+  }
+
+  if (q.includes("dark") || q.includes("light mode") || q.includes("theme")) {
+    return "Open Settings → Theme to choose light, dark, or match your device.";
+  }
+
+  if (q.includes("time zone") || q.includes("timezone")) {
+    return "Open Settings → Time zone. Auto uses your device clock and location when available.";
   }
 
   if (q.includes("chat") || q.includes("message") || q.includes("photo") || q.includes("voice")) {
@@ -67,10 +75,10 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
   }
 
   if (q.includes("help") || q === "hi" || q === "hello") {
-    return `${who}I can help with Chats, Calendar, ${DIGEST_NAME}, invites, Easy mode, and weekly family calls. I run on this device — no company AI.`;
+    return `${who}I can help with Chats, Calendar, ${DIGEST_NAME}, invites, Settings, and weekly family calls.`;
   }
 
-  return `${who}I can help with Chats, Calendar, ${DIGEST_NAME}, invites, Easy mode, and weekly family calls. Try “What’s on the calendar?” or “How do I invite someone?”`;
+  return `${who}I can help with Chats, Calendar, ${DIGEST_NAME}, invites, Settings, and weekly family calls. Try “What’s on the calendar?” or “How do I invite someone?”`;
 }
 
 export async function runFamilyAssistant(input: {

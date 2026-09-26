@@ -1,5 +1,7 @@
 "use client";
 
+import { writePendingConsent } from "@/lib/consent";
+import { type FamilyCallFrequency } from "@/lib/family-call-frequency";
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import { useState } from "react";
@@ -7,9 +9,17 @@ import { useState } from "react";
 export function GoogleSignInButton({
   next = "/onboarding",
   supabaseConfig,
+  disabled = false,
+  healthcareConsent = false,
+  familyCallFrequency = "weekly",
+  variant = "secondary",
 }: {
   next?: string;
   supabaseConfig: PublicSupabaseConfig | null;
+  disabled?: boolean;
+  healthcareConsent?: boolean;
+  familyCallFrequency?: FamilyCallFrequency;
+  variant?: "primary" | "secondary";
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,10 +29,9 @@ export function GoogleSignInButton({
     setError(null);
     try {
       if (!supabaseConfig) {
-        throw new Error(
-          "Supabase env vars are missing. Copy .env.example to .env.local (URL + anon key), then restart npm run dev.",
-        );
+        throw new Error("Sign-in did not finish. Try again.");
       }
+      writePendingConsent({ healthcare: healthcareConsent, familyCallFrequency });
       const supabase = createSupabaseBrowser(supabaseConfig);
       await fetch("/api/demo", {
         method: "POST",
@@ -31,24 +40,22 @@ export function GoogleSignInButton({
       });
       const origin = window.location.origin;
       const { error: authError } = await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: {
-    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
-    // This exact scope allows both reading and creating events
-    scopes: "https://www.googleapis.com/auth/calendar",
-    queryParams: { 
-      access_type: "offline",
-      // "consent" forces the permission screen to reappear so you can accept the new scope
-      prompt: "consent", 
-    },
-  },
-});
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          scopes: "https://www.googleapis.com/auth/calendar",
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
       if (authError) {
-        setError(authError.message);
+        setError("Sign-in did not finish. Try again.");
         setBusy(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed.");
+    } catch {
+      setError("Sign-in did not finish. Try again.");
       setBusy(false);
     }
   }
@@ -58,18 +65,19 @@ export function GoogleSignInButton({
       <button
         type="button"
         onClick={signIn}
-        disabled={busy || !supabaseConfig}
-        className="flex min-h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-paper px-4 text-base font-semibold text-ink shadow-sm hover:border-ember focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember disabled:opacity-60"
+        disabled={busy || !supabaseConfig || disabled}
+        className={
+          variant === "primary"
+            ? "flex min-h-12 w-full items-center justify-center gap-3 rounded-sm bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
+            : "flex min-h-12 w-full items-center justify-center gap-3 rounded-sm border border-line bg-surface px-4 text-base font-semibold text-ink hover:border-ink disabled:opacity-60"
+        }
       >
         <GoogleMark />
         {busy ? "Opening Google…" : "Continue with Google"}
       </button>
       {!supabaseConfig ? (
         <p className="mt-3 text-sm text-red-700" role="alert">
-          Supabase isn’t wired in this environment. Add{" "}
-          <code className="rounded bg-cream px-1">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-          <code className="rounded bg-cream px-1">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (see{" "}
-          <code className="rounded bg-cream px-1">.env.example</code>), then restart the server.
+          Sign-in did not finish. Try again.
         </p>
       ) : null}
       {error ? (

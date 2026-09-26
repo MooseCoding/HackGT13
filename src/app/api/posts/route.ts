@@ -8,6 +8,7 @@ import { addEventRow, addPostRow, membersOf, postingIdentity, postsForThread, po
 import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
 import { googleAccessToken, syncEventsToGoogle, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
+import { suggestReminderFromText } from "@/lib/remind-detect";
 import { findScheduleProposalForConfirmation, suggestScheduleFromText } from "@/lib/schedule-detect";
 import type { CalendarEvent, Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -46,11 +47,13 @@ export async function POST(req: NextRequest) {
       membersOf(identity.familyId),
       mergedEventsOf(identity.familyId, { anchor }),
     ]);
-    const scheduleSuggestion = suggestScheduleFromText(post.transcript || post.body, members, events, {
+    const postText = post.transcript || post.body;
+    const scheduleSuggestion = suggestScheduleFromText(postText, members, events, {
       familyId: identity.familyId,
       createdBy: identity.memberId,
       anchor,
     });
+    const reminderSuggestion = suggestReminderFromText(postText, members, identity.memberId, anchor);
 
     let calendarEvent: CalendarEvent | null = null;
     let calendarEvents: CalendarEvent[] | undefined;
@@ -121,7 +124,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ...saved, scheduleSuggestion, calendarEvent, calendarEvents });
+    return NextResponse.json({ ...saved, scheduleSuggestion, reminderSuggestion, calendarEvent, calendarEvents });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

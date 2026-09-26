@@ -11,9 +11,12 @@ import { families as seedFamilies } from "./seed";
 import {
   addEvent,
   addPost,
+  addReminder,
   db,
   deleteEvent,
   patchEvent,
+  patchReminder,
+  remindersOf as remindersOfDemo,
   digestFor as digestForDemo,
   eventsOf as eventsOfDemo,
   familyById as familyByIdDemo,
@@ -25,7 +28,7 @@ import {
 } from "./store";
 import { createSupabaseServer } from "./supabase/server";
 import type { Database } from "./supabase/types";
-import type { AudioMetrics, CalendarEvent, Digest, Family, IntakeChannel, Member, PatientSnapshot, Post, PostKind } from "./types";
+import type { AudioMetrics, CalendarEvent, Digest, Family, IntakeChannel, Member, PatientSnapshot, Post, PostKind, Reminder } from "./types";
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
@@ -165,6 +168,25 @@ export async function postsForThread(familyId: string, threadId: string): Promis
   return posts
     .filter((p) => postThreadId(p) === threadId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function remindersOf(familyId: string): Promise<Reminder[]> {
+  if (await isDemoMode()) return remindersOfDemo(familyId);
+  return remindersOfDemo(familyId);
+}
+
+export async function addReminderRow(reminder: Reminder): Promise<Reminder> {
+  if (await isDemoMode()) return addReminder(reminder);
+  return addReminder(reminder);
+}
+
+export async function patchReminderRow(
+  id: string,
+  familyId: string,
+  patch: Partial<Reminder>,
+): Promise<Reminder | null> {
+  if (await isDemoMode()) return patchReminder(id, familyId, patch);
+  return patchReminder(id, familyId, patch);
 }
 
 export async function eventsOf(familyId: string): Promise<CalendarEvent[]> {
@@ -390,7 +412,12 @@ export async function setClinicalConsent(requestedMemberId: string, enabled: boo
     .eq("user_id", user.id)
     .select("*")
     .single();
-  return mapMember(requireData(result.data, result.error));
+  const member = mapMember(requireData(result.data, result.error));
+
+  const { syncHealthcareConsentMetadata } = await import("./consent-server");
+  await syncHealthcareConsentMetadata(enabled);
+
+  return member;
 }
 
 export async function joinFamily(input: { inviteCode: string; memberName: string }) {
@@ -403,6 +430,10 @@ export async function joinFamily(input: { inviteCode: string; memberName: string
   });
   throwIfError(error);
   if (!data) throw new Error("That invite code and member name did not match an available profile.");
+  const { applyHealthcareConsentToMember, profileHealthcareConsentEnabled } = await import("./consent-server");
+  if (await profileHealthcareConsentEnabled()) {
+    await applyHealthcareConsentToMember(true);
+  }
   return { joined: true };
 }
 
@@ -494,6 +525,8 @@ export async function createFamilyWithMembers(input: {
   const user = await getAuthUser();
   if (!user) throw new Error("Sign in to create a family.");
   const supabase = await createSupabaseServer();
+  const { profileHealthcareConsentEnabled } = await import("./consent-server");
+  const healthcareOptIn = await profileHealthcareConsentEnabled();
   const familyId = slugId("fam");
   const joinCode = crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
 
@@ -516,7 +549,7 @@ export async function createFamilyWithMembers(input: {
       state: address?.state?.trim() || "",
       postal_code: address?.postalCode?.trim() || "",
       country: address?.country?.trim() || "United States",
-      clinical_opt_in: false,
+      clinical_opt_in: Boolean(m.isYou && healthcareOptIn),
       easy_mode_default: Boolean(m.isYou),
     };
   });

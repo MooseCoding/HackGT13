@@ -219,5 +219,9 @@ export async function acceptInvitation(token: string) {
   const supabase = await createSupabaseServer();
   const { error } = await supabase.rpc("accept_family_invitation", { token_input: token });
   throwIfError(error);
+  const { applyHealthcareConsentToMember, profileHealthcareConsentEnabled } = await import("./consent-server");
+  if (await profileHealthcareConsentEnabled()) {
+    await applyHealthcareConsentToMember(true);
+  }
   return { joined: true, familyId: preview.familyId };
 }

@@ -7,7 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 type Suggestion = { id: string; label: string; address: Address };
 
 const fieldClass =
-  "mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember focus-visible:ring-2 focus-visible:ring-ember/30";
+  "mt-1 min-h-12 w-full border border-line px-3 text-base outline-none focus-visible:border-accent";
 
 export function AddressFields({
   idPrefix,
@@ -112,7 +112,7 @@ export function AddressFields({
             type="button"
             onClick={useMyLocation}
             disabled={locating}
-            className="min-h-11 text-sm font-medium text-ember underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember disabled:opacity-60"
+            className="min-h-11 text-sm font-medium text-accent hover:underline"
           >
             {locating ? "Getting location…" : "Use my location"}
           </button>
@@ -135,13 +135,13 @@ export function AddressFields({
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-line bg-paper shadow-md"
+            className="absolute z-20 mt-1 max-h-56 w-full overflow-auto border border-line bg-paper"
           >
             {suggestions.map((s) => (
               <li key={s.id} role="option" aria-selected="false">
                 <button
                   type="button"
-                  className="w-full px-3 py-2.5 text-left text-sm leading-5 hover:bg-cream focus-visible:bg-cream focus-visible:outline-none"
+                  className="w-full px-3 py-2.5 text-left text-sm leading-5 hover:bg-accent-tint focus-visible:bg-accent-tint focus-visible:outline-none"
                   onClick={() => pick(s)}
                 >
                   {s.label}

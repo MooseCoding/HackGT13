@@ -1,15 +1,29 @@
 import { inCalendarWindow } from "./calendar-window";
+import {
+  DEFAULT_FAMILY_CALL_FREQUENCY,
+  familyCallTitle,
+  type FamilyCallFrequency,
+} from "./family-call-frequency";
 import type { CalendarEvent, Member } from "./types";
 
+/** @deprecated use hearth:family-call:* sources; kept for seeded rows */
 export const FAMILY_CALL_SOURCE = "hearth:weekly-family-call";
 export const FAMILY_CALL_TITLE = "Weekly family call";
 export const CALL_MINUTES = 45;
 const BUFFER_MS = 15 * 60_000;
 const DEFAULT_WEEKS = 4;
 
-export function isWeeklyFamilyCall(event: CalendarEvent) {
-  return event.sourceText === FAMILY_CALL_SOURCE || /^weekly family call/i.test(event.title);
+export function familyCallSource(frequency: FamilyCallFrequency) {
+  return frequency === "none" ? "hearth:family-call:none" : `hearth:family-call:${frequency}`;
 }
+
+export function isFamilyCall(event: CalendarEvent) {
+  if (event.sourceText?.startsWith("hearth:family-call:")) return true;
+  return event.sourceText === FAMILY_CALL_SOURCE || /family call/i.test(event.title);
+}
+
+/** @deprecated use isFamilyCall */
+export const isWeeklyFamilyCall = isFamilyCall;
 
 function eventRange(event: CalendarEvent) {
   const start = new Date(event.startsAt).getTime();
@@ -48,7 +62,17 @@ function weekKey(d: Date) {
   const s = startOfLocalDay(d);
   const diff = (s.getDay() + 6) % 7;
   s.setDate(s.getDate() - diff);
-  return `${s.getFullYear()}-${s.getMonth()}-${s.getDate()}`;
+  return `w-${s.getFullYear()}-${s.getMonth()}-${s.getDate()}`;
+}
+
+function periodKey(d: Date, frequency: FamilyCallFrequency, anchor: Date) {
+  if (frequency === "weekly") return weekKey(d);
+  if (frequency === "biweekly") {
+    const days = Math.floor((startOfLocalDay(d).getTime() - startOfLocalDay(anchor).getTime()) / 86_400_000);
+    return `b-${Math.floor(days / 14)}`;
+  }
+  if (frequency === "monthly") return `m-${d.getFullYear()}-${d.getMonth()}`;
+  return "";
 }
 
 type Candidate = {
@@ -57,7 +81,7 @@ type Candidate = {
   weekday: number;
   hour: number;
   score: number;
-  week: string;
+  period: string;
 };
 
 function candidatesForRange(anchor: Date, weeks: number, busy: { start: number; end: number }[]) {
@@ -81,7 +105,7 @@ function candidatesForRange(anchor: Date, weeks: number, busy: { start: number; 
           weekday: start.getDay(),
           hour,
           score: win.bonus + elderFriendly,
-          week: weekKey(start),
+          period: "",
         });
       }
     }
@@ -89,7 +113,7 @@ function candidatesForRange(anchor: Date, weeks: number, busy: { start: number; 
   return out;
 }
 
-export function proposeWeeklyFamilyCalls(
+export function proposeFamilyCalls(
   events: CalendarEvent[],
   opts: {
     familyId: string;
@@ -97,19 +121,27 @@ export function proposeWeeklyFamilyCalls(
     members: Member[];
     anchor: Date;
     weeks?: number;
+    frequency?: FamilyCallFrequency;
   },
 ): CalendarEvent[] {
+  const frequency = opts.frequency ?? DEFAULT_FAMILY_CALL_FREQUENCY;
+  if (frequency === "none") return [];
+
   const weeks = opts.weeks ?? DEFAULT_WEEKS;
-  const existingCalls = events.filter(isWeeklyFamilyCall);
-  const covered = new Set(existingCalls.map((e) => weekKey(new Date(e.startsAt))));
+  const existingCalls = events.filter(isFamilyCall);
+  const covered = new Set(
+    existingCalls.map((e) => periodKey(new Date(e.startsAt), frequency, opts.anchor)).filter(Boolean),
+  );
   const busy = events
-    .filter((e) => !isWeeklyFamilyCall(e))
+    .filter((e) => !isFamilyCall(e))
     .map((e) => {
       const r = eventRange(e);
       return { start: r.start - BUFFER_MS, end: r.end + BUFFER_MS };
     });
 
-  const free = candidatesForRange(opts.anchor, weeks, busy).filter((c) => !covered.has(c.week));
+  const free = candidatesForRange(opts.anchor, weeks, busy)
+    .map((c) => ({ ...c, period: periodKey(c.start, frequency, opts.anchor) }))
+    .filter((c) => c.period && !covered.has(c.period));
   if (!free.length) return [];
 
   const byPattern = new Map<string, Candidate[]>();
@@ -120,38 +152,55 @@ export function proposeWeeklyFamilyCalls(
     byPattern.set(key, list);
   }
 
-  let bestPattern = [...byPattern.entries()].sort((a, b) => {
+  const bestPattern = [...byPattern.entries()].sort((a, b) => {
     const scoreA = a[1].reduce((s, c) => s + c.score, 0) + a[1].length * 20;
     const scoreB = b[1].reduce((s, c) => s + c.score, 0) + b[1].length * 20;
     return scoreB - scoreA;
   })[0];
 
   const chosen: Candidate[] = [];
-  const usedWeeks = new Set<string>(covered);
+  const usedPeriods = new Set<string>(covered);
   if (bestPattern) {
     for (const c of bestPattern[1].sort((a, b) => a.start.getTime() - b.start.getTime())) {
-      if (usedWeeks.has(c.week)) continue;
+      if (usedPeriods.has(c.period)) continue;
       chosen.push(c);
-      usedWeeks.add(c.week);
+      usedPeriods.add(c.period);
     }
   }
 
   chosen.sort((a, b) => a.start.getTime() - b.start.getTime());
+  const title = familyCallTitle(frequency);
+  const sourceText = familyCallSource(frequency);
 
   return chosen
     .filter((c) => inCalendarWindow(c.start.toISOString(), opts.anchor))
     .map((c, i) => ({
       id: `evt-f-call-${c.start.getTime()}-${i}`,
       familyId: opts.familyId,
-      title: FAMILY_CALL_TITLE,
+      title,
       startsAt: c.start.toISOString(),
       endsAt: c.end.toISOString(),
       location: "Family video call",
       attendees: opts.members.map((m) => m.id),
-      sourceText: FAMILY_CALL_SOURCE,
+      sourceText,
       createdBy: opts.createdBy,
       calendarScope: "family" as const,
     }));
+}
+
+/** @deprecated use proposeFamilyCalls */
+export function proposeWeeklyFamilyCalls(
+  events: CalendarEvent[],
+  opts: {
+    familyId: string;
+    createdBy: string;
+    members: Member[];
+    anchor: Date;
+    weeks?: number;
+    frequency?: FamilyCallFrequency;
+  },
+) {
+  return proposeFamilyCalls(events, opts);
 }
 
 export function proposalCopy(event: CalendarEvent) {
@@ -174,5 +223,5 @@ export function consistentSlotLabel(events: CalendarEvent[]) {
     const d = new Date(e.startsAt);
     return d.getDay() === first.getDay() && d.getHours() === first.getHours();
   });
-  return same ? `Usually ${weekday}s at ${time}` : "Best open gaps this month";
+  return same ? `Usually ${weekday}s at ${time}` : "Open times we found";
 }

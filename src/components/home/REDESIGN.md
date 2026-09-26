@@ -9,16 +9,16 @@ This landing page is a **placeholder**. Keep the product flow; replace the visua
 3. Keep `data-home` hooks: `header`, `hero`, `sign-in`, `demo`, `footer`.
 4. Keep landmarks: skip link `#main-content`, `<header>`, `<main id="main-content">`, `<footer>`.
 5. Mobile-first: one column by default; `sm:` and up only for extra layout. Tap targets ≥ 44px. Text ≥ 16px on inputs (iOS zoom).
-6. Accessibility: visible focus rings, contrast on cream/paper/ink, `aria-labelledby` on the sign-in region, do not remove `role="alert"` error text.
-7. Fonts: **Fraunces** (`font-serif`) for the headline, **Nunito** (`font-sans`) for UI. Tokens live in `src/app/globals.css` (`--ember`, `--ink`, `--mute`, `--cream`, `--paper`, `--line`).
+6. Accessibility: visible focus rings, contrast on ground/surface/ink, `aria-labelledby` on the sign-in region, do not remove `role="alert"` error text.
+7. Fonts: system UI stack. Wordmark in red (`#c8102e`); links in blue (`#1d4ed8`). Tokens in `DESIGN.md` / `globals.css`. Do not reintroduce Instagram Sans, Nunito, Literata, WhatsApp green, or a white-only “document” look.
 
 ## Suggested redesign (feel free)
 
-- Illustration or photo of a family porch / kitchen table (warm, not clinical).
+- Left-aligned page: header, type, and boxes. Not a centered SaaS card.
 - Short proof line (“async chat · calendar · weekly story”).
 - Optional secondary path: clinician (`/hcp`) after sign-in only.
 - Motion: respect `prefers-reduced-motion`.
-- Dark mode is optional; if added, keep ember/clinic tokens.
+- 1px `#ccc` borders or nothing — no glass, shadows, or backdrop-filter.
 
 ## Out of scope for a visual pass
 

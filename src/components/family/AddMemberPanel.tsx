@@ -45,7 +45,7 @@ export function AddMemberPanel({
     const json = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setError(json.error || "Could not send invite.");
+      setError(json.error || "Could not send the invite. Check the name and email, then try again.");
       return;
     }
     setCreated(json.invitation);
@@ -61,7 +61,7 @@ export function AddMemberPanel({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Copy failed — select the link manually.");
+      setError("Could not copy the link. Select it and copy manually.");
     }
   }
 
@@ -74,7 +74,7 @@ export function AddMemberPanel({
       aria-modal="true"
       aria-labelledby="add-member-title"
     >
-      <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl bg-paper p-4 shadow-lg sm:p-5">
+      <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto border border-line bg-paper p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="add-member-title" className="text-lg font-semibold">
@@ -99,7 +99,7 @@ export function AddMemberPanel({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line px-3 text-base outline-none focus-visible:border-accent"
               placeholder="Sofia Alvarez"
             />
           </div>
@@ -113,7 +113,7 @@ export function AddMemberPanel({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line px-3 text-base outline-none focus-visible:border-accent"
               placeholder="sofia@example.com"
             />
           </div>
@@ -125,7 +125,7 @@ export function AddMemberPanel({
               id="invite-role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember"
+              className="mt-1 min-h-12 w-full border border-line px-3 text-base outline-none focus-visible:border-accent"
             />
           </div>
           {error ? (
@@ -136,22 +136,22 @@ export function AddMemberPanel({
           <button
             type="submit"
             disabled={busy}
-            className="min-h-12 w-full rounded-lg bg-ember font-semibold text-white disabled:opacity-60"
+            className="min-h-12 w-full rounded-sm bg-ember font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
           >
             {busy ? "Sending…" : "Send invitation"}
           </button>
         </form>
 
         {created?.inviteUrl ? (
-          <div className="mt-4 rounded-lg border border-line bg-cream p-3">
+          <div className="mt-4 border border-line p-3">
             <p className="text-sm font-medium text-ink">Invite ready for {created.inviteeName}</p>
             <p className="mt-1 break-all font-mono text-xs text-mute">{created.inviteUrl}</p>
             <button
               type="button"
               onClick={() => copyLink(created.inviteUrl!)}
-              className="mt-2 min-h-11 text-sm font-medium text-ember underline-offset-2 hover:underline"
+              className="mt-2 min-h-11 text-sm font-medium text-accent hover:underline"
             >
-              {copied ? "Copied!" : "Copy invite link"}
+              {copied ? "Link copied." : "Copy invite link"}
             </button>
             <p className="mt-2 text-xs text-mute">
               Share this link (text/email). They sign in with Google and tap Accept to join.
@@ -162,7 +162,7 @@ export function AddMemberPanel({
         {pending.length ? (
           <div className="mt-5">
             <h3 className="text-sm font-semibold">Pending invites</h3>
-            <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+            <ul className="mt-2 divide-y divide-line border border-line">
               {pending.map((i) => (
                 <li key={i.id} className="px-3 py-2 text-sm">
                   <p className="font-medium">{i.inviteeName}</p>
@@ -171,7 +171,7 @@ export function AddMemberPanel({
                     <button
                       type="button"
                       onClick={() => copyLink(i.inviteUrl!)}
-                      className="mt-1 text-xs font-medium text-ember"
+                      className="mt-1 text-xs font-medium text-accent hover:underline"
                     >
                       Copy link
                     </button>

@@ -23,5 +23,6 @@ export async function GET(request: Request) {
 
   const onboard = await needsOnboarding();
   const dest = onboard ? "/onboarding" : next.startsWith("/") ? next : "/family";
-  return NextResponse.redirect(`${origin}${dest}`);
+  const complete = `/auth/complete?next=${encodeURIComponent(dest)}`;
+  return NextResponse.redirect(`${origin}${complete}`);
 }

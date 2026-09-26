@@ -1,48 +1,119 @@
-@import url("https://fonts.cdnfonts.com/css/instagram-sans-2");
 @import "tailwindcss";
 
 :root {
-  --ember: #128c7e;
-  --ember-dark: #075e54;
-  --cream: #f0f2f5;
-  --paper: #ffffff;
-  --ink: #111827;
-  --mute: #667781;
-  --line: #e9edef;
-  --clinic: #2563eb;
-  --clinic-ink: #1e293b;
-  --clinic-paper: #f8fafc;
-  --chat-in: #ffffff;
-  --chat-out: #d9fdd3;
-  --chat-bg: #efeae2;
+  --ground: #f3f0ea;
+  --surface: #fffefb;
+  --ink: #121212;
+  --mute: #5c5850;
+  --rule: #d2ccc2;
+  --red: #c8102e;
+  --red-dark: #9a0c23;
+  --red-tint: #fde8ec;
+  --blue: #1d4ed8;
+  --blue-dark: #153eab;
+  --accent: var(--red);
+  --accent-dark: var(--red-dark);
+  --accent-tint: var(--red-tint);
+  --chat-in: #fffefb;
+  --chat-out: #fde8ec;
+  --clinic-ground: #f3f0ea;
+  --clinic-ink: #121212;
+  --clinic-accent: var(--blue);
+  --clinic-paper: #fffefb;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  --ember: var(--red);
+  --ember-dark: var(--red-dark);
+  --cream: var(--ground);
+  --paper: var(--surface);
+  --line: var(--rule);
+  --clinic: var(--blue);
+  --chat-bg: var(--ground);
+
+  --chrome-bg: #121212;
+  --chrome-fg: #ffffff;
+  --chrome-fg-muted: rgba(255, 255, 255, 0.7);
+  --chrome-fg-subtle: rgba(255, 255, 255, 0.6);
+  --chrome-border: rgba(255, 255, 255, 0.3);
+  --chrome-divider: rgba(255, 255, 255, 0.2);
+  --overlay: rgba(0, 0, 0, 0.4);
+}
+
+html.dark {
+  --ground: #1a1816;
+  --surface: #242220;
+  --ink: #f3f0ea;
+  --mute: #a39e96;
+  --rule: #3d3935;
+  --red-tint: #3d2028;
+  --chat-in: #242220;
+  --chat-out: #3d2028;
+  --clinic-ground: #1a1816;
+  --clinic-ink: #f3f0ea;
+  --clinic-paper: #242220;
+  --cream: var(--ground);
+  --paper: var(--surface);
+  --line: var(--rule);
+  --chat-bg: var(--ground);
+
+  --chrome-bg: #0f0e0d;
+  --chrome-fg: #f3f0ea;
+  --chrome-fg-muted: rgba(243, 240, 234, 0.72);
+  --chrome-fg-subtle: rgba(243, 240, 234, 0.55);
+  --chrome-border: rgba(243, 240, 234, 0.28);
+  --chrome-divider: rgba(243, 240, 234, 0.18);
+  --overlay: rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {
-  --color-ember: var(--ember);
-  --color-ember-dark: var(--ember-dark);
-  --color-cream: var(--cream);
-  --color-paper: var(--paper);
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-mute: var(--mute);
-  --color-line: var(--line);
-  --color-clinic: var(--clinic);
-  --color-clinic-ink: var(--clinic-ink);
-  --color-clinic-paper: var(--clinic-paper);
+  --color-rule: var(--rule);
+  --color-accent: var(--red);
+  --color-accent-dark: var(--red-dark);
+  --color-accent-tint: var(--red-tint);
+  --color-ember: var(--red);
+  --color-ember-dark: var(--red-dark);
+  --color-cream: var(--ground);
+  --color-paper: var(--surface);
+  --color-line: var(--rule);
+  --color-clinic: var(--blue);
+  --color-clinic-ink: var(--ink);
+  --color-clinic-paper: var(--surface);
   --color-chat-in: var(--chat-in);
   --color-chat-out: var(--chat-out);
-  --color-chat-bg: var(--chat-bg);
-  --font-sans: "Instagram Sans", "Instagram Sans Headline", -apple-system, "Segoe UI", sans-serif;
-  --font-serif: var(--font-fraunces);
+  --color-chat-bg: var(--ground);
+  --color-blue: var(--blue);
+  --color-chrome-bg: var(--chrome-bg);
+  --color-chrome-fg: var(--chrome-fg);
+  --color-chrome-fg-muted: var(--chrome-fg-muted);
+  --color-chrome-fg-subtle: var(--chrome-fg-subtle);
+  --color-chrome-border: var(--chrome-border);
+  --color-chrome-divider: var(--chrome-divider);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-display: ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
 }
 
 html,
 body {
-  background: var(--cream);
+  background: var(--ground);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--red-tint);
   color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--ember);
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -85,30 +156,18 @@ a {
   text-decoration: none;
 }
 
-/* Brand lockup: Instagram Sans Bold */
 .font-brand {
-  font-family: "Instagram Sans", "Instagram Sans Headline", -apple-system, "Segoe UI", sans-serif;
+  font-family: ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
+  color: var(--red);
 }
 
-/* Chat background */
+.font-letter {
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
 .chat-surface {
-  background: var(--cream);
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
-}
-
-.glass-soft {
-  background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--ground);
 }
 
 .easy body,
