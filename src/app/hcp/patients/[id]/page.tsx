@@ -1,5 +1,5 @@
 import { LineChart, Metric } from "@/components/hcp/Charts";
-import { formatWhen } from "@/lib/clock";
+import { DEMO_NOW, formatDay, formatWhen } from "@/lib/clock";
 import { patientById } from "@/lib/data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -10,8 +10,15 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const row = await patientById(id);
   if (!row) notFound();
-  const { member, family, snapshot, posts } = row;
+  const { member, family, snapshot, posts, events } = row;
   const s = snapshot;
+  const checkInEvent = events.find(
+    (event) => new Date(event.startsAt) >= DEMO_NOW && event.attendees.includes(member.id),
+  );
+  const draft = checkInEvent
+    ? `Could someone check in with ${member.name.split(" ")[0]} before ${checkInEvent.title}?`
+    : `Could someone check in with ${member.name.split(" ")[0]} today?`;
+  const checkInHref = `/family?draft=${encodeURIComponent(draft)}`;
 
   return (
     <div>
@@ -22,6 +29,62 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       <p className="text-sm text-mute">
         {member.age} · {member.role} · {family.name}
       </p>
+
+      <section className="mt-6 border border-clinic/30 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-clinic">Explainable activity insight</p>
+        <h2 className="mt-1 text-lg font-semibold">{s.insight.title}</h2>
+        <p className="mt-2 text-sm leading-6 text-mute">{s.insight.summary}</p>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-md bg-clinic-paper p-3">
+            <dt className="text-xs text-mute">
+              Recent · {s.insight.currentRange.start} to {s.insight.currentRange.end}
+            </dt>
+            <dd className="mt-1 font-semibold">{s.insight.currentLabel}</dd>
+          </div>
+          <div className="rounded-md bg-clinic-paper p-3">
+            <dt className="text-xs text-mute">
+              Baseline · {s.insight.baselineRange.start} to {s.insight.baselineRange.end}
+            </dt>
+            <dd className="mt-1 font-semibold">{s.insight.baselineLabel}</dd>
+          </div>
+        </dl>
+        {s.insight.status === "ready" ? (
+          <div className="mt-4">
+            <p className="text-sm font-medium">Posts behind this insight</p>
+            {s.insight.evidence.length ? (
+              <ul className="mt-2 space-y-2">
+                {s.insight.evidence.map((evidence) => (
+                  <li key={evidence.postId} className="border-l-2 border-clinic/30 pl-3 text-sm">
+                    <p className="text-xs text-mute">{formatWhen(evidence.createdAt)}</p>
+                    <p className="mt-0.5">{evidence.text}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-mute">No individual late-night posts were found in the recent window.</p>
+            )}
+          </div>
+        ) : null}
+        <p className="mt-4 text-xs leading-5 text-mute">
+          This compares communication activity only. Word choice and posting patterns do not diagnose mental illness or cognitive disease.
+        </p>
+      </section>
+
+      {s.insight.status === "ready" ? (
+        <section className="mt-4 flex flex-col gap-3 border border-line bg-paper p-4 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <h2 className="font-medium">Check in with {member.name.split(" ")[0]}</h2>
+            <p className="mt-1 text-sm text-mute">
+              {checkInEvent
+                ? `Suggested time: ${formatDay(checkInEvent.startsAt)} at ${new Date(checkInEvent.startsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}, around “${checkInEvent.title}.”`
+                : "No shared upcoming calendar event was found; send a direct message instead."}
+            </p>
+          </div>
+          <Link href={checkInHref} className="rounded-md bg-clinic px-4 py-2 text-center text-sm font-semibold text-white">
+            Check in with {member.name.split(" ")[0]}
+          </Link>
+        </section>
+      ) : null}
 
       <section className="mt-6 border border-line bg-paper p-4">
         <h2 className="font-medium">Pre-visit brief</h2>
@@ -40,31 +103,25 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         ) : null}
       </section>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Lexical diversity" value={s.lexicalDiversity.toFixed(2)} delta={s.lexicalDiversityDelta} />
-        <Metric label="Sentence length" value={`${s.meanSentenceLength.toFixed(1)} w`} delta={s.sentenceLengthDelta} />
-        <Metric label="Posts / week" value={s.engagementPerWeek.toFixed(1)} delta={s.engagementDelta} />
-        <Metric label="Night activity" value={`${Math.round(s.nightShare * 100)}%`} delta={s.nightShare} invert />
-      </section>
+      {s.insight.status === "ready" ? (
+        <>
+          <section className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Metric label="Posts / week" value={s.engagementPerWeek.toFixed(1)} delta={s.engagementDelta} />
+            <Metric label="Night activity" value={`${Math.round(s.nightShare * 100)}%`} delta={s.nightShare} invert />
+          </section>
 
-      <section className="mt-6 space-y-4 border border-line bg-paper p-4">
-        <div>
-          <p className="text-sm font-medium text-mute">Lexical diversity</p>
-          <LineChart points={s.series} accessor={(p) => p.lexicalDiversity} />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-mute">Sentiment</p>
-          <LineChart points={s.series} accessor={(p) => p.sentiment} />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-mute">Daily posts</p>
-          <LineChart points={s.series} accessor={(p) => p.posts} />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-mute">Night posts</p>
-          <LineChart points={s.series} accessor={(p) => p.nightPosts} />
-        </div>
-      </section>
+          <section className="mt-6 space-y-4 border border-line bg-paper p-4">
+            <div>
+              <p className="text-sm font-medium text-mute">Daily posts</p>
+              <LineChart points={s.series} accessor={(p) => p.posts} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-mute">Night posts</p>
+              <LineChart points={s.series} accessor={(p) => p.nightPosts} />
+            </div>
+          </section>
+        </>
+      ) : null}
 
       <section className="mt-6">
         <h2 className="font-medium">Source timeline</h2>

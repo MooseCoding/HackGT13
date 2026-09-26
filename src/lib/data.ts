@@ -33,7 +33,7 @@ function iso(value: string) {
 }
 
 function mapFamily(row: FamilyRow): Family {
-  return { id: row.id, name: row.name, tagline: row.tagline };
+  return { id: row.id, name: row.name, tagline: row.tagline, inviteCode: row.join_code };
 }
 
 function mapMember(row: MemberRow): Member {
@@ -265,9 +265,13 @@ export async function patientById(id: string) {
   if (!memberRes.data || !memberRes.data.clinical_opt_in) return null;
   const member = mapMember(memberRes.data);
   const family = await familyById(member.familyId);
-  const { data, error } = await supabase.from("posts").select("*").eq("family_id", member.familyId);
-  throwIfError(error);
-  const familyPosts = (data ?? []).map(mapPost);
+  const [postRes, eventRes] = await Promise.all([
+    supabase.from("posts").select("*").eq("family_id", member.familyId),
+    supabase.from("calendar_events").select("*").eq("family_id", member.familyId).order("starts_at"),
+  ]);
+  throwIfError(postRes.error);
+  throwIfError(eventRes.error);
+  const familyPosts = (postRes.data ?? []).map(mapPost);
   const posts = familyPosts
     .filter((p) => p.authorId === id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -276,7 +280,59 @@ export async function patientById(id: string) {
     family,
     snapshot: analyzeMember(id, familyPosts),
     posts,
+    events: (eventRes.data ?? []).map(mapEvent),
   };
+}
+
+export async function postingIdentity(requestedFamilyId: string, requestedMemberId: string) {
+  if (await isDemoMode()) {
+    const member = db().members.find(
+      (candidate) => candidate.id === requestedMemberId && candidate.familyId === requestedFamilyId,
+    );
+    if (!member) throw new Error("That member does not belong to this family.");
+    return { familyId: requestedFamilyId, memberId: requestedMemberId };
+  }
+  const profile = await getProfile();
+  if (!profile?.family_id || !profile.member_id) throw new Error("Finish joining a family first.");
+  if (profile.family_id !== requestedFamilyId || profile.member_id !== requestedMemberId) {
+    throw new Error("You can only post as your own family profile.");
+  }
+  return { familyId: profile.family_id, memberId: profile.member_id };
+}
+
+export async function setClinicalConsent(requestedMemberId: string, enabled: boolean) {
+  if (await isDemoMode()) {
+    const member = db().members.find((candidate) => candidate.id === requestedMemberId);
+    if (!member) throw new Error("Member not found.");
+    member.clinicalOptIn = enabled;
+    return member;
+  }
+  const profile = await getProfile();
+  if (!profile?.member_id || profile.member_id !== requestedMemberId) {
+    throw new Error("You can only change your own sharing preference.");
+  }
+  const supabase = await createSupabaseServer();
+  const result = await supabase
+    .from("members")
+    .update({ clinical_opt_in: enabled })
+    .eq("id", profile.member_id)
+    .eq("family_id", profile.family_id ?? "")
+    .select("*")
+    .single();
+  return mapMember(requireData(result.data, result.error));
+}
+
+export async function joinFamily(input: { inviteCode: string; memberName: string }) {
+  const user = await getAuthUser();
+  if (!user) throw new Error("Sign in to join a family.");
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("join_family", {
+    invite_code_input: input.inviteCode.trim().toUpperCase(),
+    member_name_input: input.memberName.trim(),
+  });
+  throwIfError(error);
+  if (!data) throw new Error("That invite code and member name did not match an available profile.");
+  return { joined: true };
 }
 
 export async function resolveFamilyId(): Promise<string> {
@@ -311,6 +367,7 @@ export async function createFamilyWithMembers(input: {
       name: input.familyName.trim(),
       tagline: input.tagline?.trim() || "Our family circle",
       owner_id: user.id,
+      join_code: crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase(),
     })
     .select("*")
     .single();
@@ -337,6 +394,7 @@ export async function createFamilyWithMembers(input: {
       country: address?.country?.trim() || "United States",
       clinical_opt_in: false,
       easy_mode_default: Boolean(m.isYou),
+      user_id: m.isYou ? user.id : null,
     };
   });
 

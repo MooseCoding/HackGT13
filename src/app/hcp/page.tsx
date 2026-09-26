@@ -20,6 +20,12 @@ export default async function HcpHome() {
         Opted-in members only. Compared to personal baseline — not a medical device.
       </p>
       <ul className="mt-6 divide-y divide-line border border-line bg-paper">
+        {patients.length === 0 ? (
+          <li className="px-4 py-8 text-center">
+            <p className="font-medium">No members are sharing with the clinician view.</p>
+            <p className="mt-1 text-sm text-mute">When a member turns sharing on, their activity summary appears here.</p>
+          </li>
+        ) : null}
         {patients.map((p) => {
           const m = members.find((x) => x.id === p.memberId);
           return (

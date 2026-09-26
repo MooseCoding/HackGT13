@@ -1,6 +1,6 @@
 import { DEMO_NOW } from "./clock";
 import { hourOf, lexicalDiversity, meanSentenceLength, repetitionScore, sentimentScore } from "./nlp";
-import type { ClinicalFlag, DailyPoint, PatientSnapshot, Post } from "./types";
+import type { ClinicalFlag, DailyPoint, ExplainableInsight, PatientSnapshot, Post } from "./types";
 
 function textOf(p: Post) {
   return p.transcript || p.body;
@@ -36,6 +36,84 @@ function nightShare(posts: Post[]) {
     const h = hourOf(p.createdAt);
     return h >= 22 || h < 5;
   }).length / posts.length;
+}
+
+function dateOnly(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
+function explainActivity(
+  current: Post[],
+  baseline: Post[],
+  windowStart: Date,
+  baselineStart: Date,
+  baselineEnd: Date,
+): ExplainableInsight {
+  const ranges = {
+    currentRange: { start: dateOnly(windowStart), end: dateOnly(DEMO_NOW) },
+    baselineRange: {
+      start: dateOnly(baselineStart),
+      end: dateOnly(new Date(baselineEnd.getTime() - 24 * 60 * 60 * 1000)),
+    },
+  };
+  if (current.length < 3 || baseline.length < 4) {
+    return {
+      status: "insufficient_data",
+      title: "Insufficient data for a comparison",
+      summary: `Hearth needs at least 3 recent posts and 4 baseline posts. It currently has ${current.length} recent and ${baseline.length} baseline posts.`,
+      currentLabel: `${current.length} recent post${current.length === 1 ? "" : "s"}`,
+      baselineLabel: `${baseline.length} baseline post${baseline.length === 1 ? "" : "s"}`,
+      ...ranges,
+      evidence: [],
+    };
+  }
+
+  const currentNight = current.filter((p) => {
+    const hour = hourOf(p.createdAt);
+    return hour >= 22 || hour < 5;
+  });
+  const baselineNight = baseline.filter((p) => {
+    const hour = hourOf(p.createdAt);
+    return hour >= 22 || hour < 5;
+  });
+  const currentNightPct = Math.round((currentNight.length / current.length) * 100);
+  const baselineNightPct = Math.round((baselineNight.length / baseline.length) * 100);
+  const currentWeekly = current.length / 2;
+  const baselineWeekly = baseline.length / (30 / 7);
+  const useNight = Math.abs(currentNightPct - baselineNightPct) >= 20;
+  const evidencePosts = (useNight ? currentNight : current)
+    .slice()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 5);
+
+  return {
+    status: "ready",
+    title: useNight
+      ? `Late-night activity changed from ${baselineNightPct}% to ${currentNightPct}%`
+      : `Posts per week changed from ${baselineWeekly.toFixed(1)} to ${currentWeekly.toFixed(1)}`,
+    summary: useNight
+      ? `${currentNight.length} of ${current.length} recent posts were sent from 10pm–5am, compared with ${baselineNight.length} of ${baseline.length} in the baseline period.`
+      : `${current.length} posts in the recent 14-day window are compared with ${baseline.length} posts in the prior 30 days, normalized per week.`,
+    currentLabel: useNight
+      ? `${currentNightPct}% late-night (${currentNight.length}/${current.length})`
+      : `${currentWeekly.toFixed(1)} posts/week`,
+    baselineLabel: useNight
+      ? `${baselineNightPct}% late-night (${baselineNight.length}/${baseline.length})`
+      : `${baselineWeekly.toFixed(1)} posts/week`,
+    ...ranges,
+    evidence: evidencePosts.map((post) => ({
+      postId: post.id,
+      createdAt: post.createdAt,
+      text: textOf(post),
+    })),
+  };
 }
 
 function seriesFor(posts: Post[], days: number): DailyPoint[] {
@@ -99,29 +177,22 @@ export function analyzeMember(memberId: string, posts: Post[]): PatientSnapshot 
   const engDelta = pctDelta(eng, engB);
   const mornDelta = morn - mornB;
   const rep = repetitionScore(current.map(textOf));
+  const insight = explainActivity(current, baseline, windowStart, baselineStart, baselineEnd);
 
   const flags: ClinicalFlag[] = [];
-  if (lexDelta <= -0.15 || sentLenDelta <= -0.2 || rep >= 0.25) {
+  if (insight.status === "ready" && engDelta <= -0.25) {
     flags.push({
-      code: "cognitive_change",
-      severity: lexDelta <= -0.22 || rep >= 0.4 ? "high" : "elevated",
-      title: "Cognitive language shift vs personal baseline",
-      detail: `Lexical diversity ${Math.round(lexDelta * 100)}% vs prior 30 days. Mean sentence length ${Math.round(sentLenDelta * 100)}%. Conversational repetition score ${Math.round(rep * 100)}%.`,
-    });
-  }
-  if (engDelta <= -0.25 || sentDelta <= -0.15) {
-    flags.push({
-      code: "mood_isolation",
+      code: "engagement_change",
       severity: engDelta <= -0.4 ? "high" : "elevated",
-      title: "Engagement and affect change",
-      detail: `Weekly posts ${Math.round(engDelta * 100)}% vs baseline. Sentiment shifted ${sentDelta.toFixed(2)} on a −1 to 1 scale.`,
+      title: "Posting activity decreased",
+      detail: `Weekly posts changed ${Math.round(engDelta * 100)}% versus this member's prior 30-day baseline.`,
     });
   }
-  if (mornDelta <= -0.15 || night >= 0.35) {
+  if (insight.status === "ready" && (mornDelta <= -0.15 || night >= 0.35)) {
     flags.push({
       code: "sleep_shift",
       severity: night >= 0.45 ? "high" : "watch",
-      title: "Temporal pattern / sundowning watch",
+      title: "Posting-time pattern changed",
       detail: `Morning activity share ${Math.round(morn * 100)}% (Δ ${Math.round(mornDelta * 100)} pts). Night posts ${Math.round(night * 100)}% of recent activity.`,
     });
   }
@@ -138,6 +209,7 @@ export function analyzeMember(memberId: string, posts: Post[]): PatientSnapshot 
     rep,
     sent,
     flags,
+    insight,
   });
 
   return {
@@ -158,6 +230,7 @@ export function analyzeMember(memberId: string, posts: Post[]): PatientSnapshot 
     morningShareDelta: mornDelta,
     nightShare: night,
     flags,
+    insight,
     note,
     series: seriesFor(mine, 42),
   };
@@ -175,16 +248,18 @@ function buildNote(s: {
   rep: number;
   sent: number;
   flags: ClinicalFlag[];
+  insight: ExplainableInsight;
 }) {
+  if (s.insight.status === "insufficient_data") {
+    return "There is not enough activity to compare the recent 14 days with the prior 30 days. No conclusion should be drawn from word choice or posting time.";
+  }
   if (!s.flags.length) {
-    return "No material deviation from this patient's 30-day personal baseline. Language richness, posting cadence, and diurnal pattern remain stable. Continue routine follow-up.";
+    return "No material change in posting cadence or time of day versus this member's prior 30-day baseline. These communication patterns are context for a conversation, not a diagnosis.";
   }
   const parts = [
-    `Patient demonstrates a ${Math.abs(Math.round(s.lexDelta * 100))}% ${s.lexDelta < 0 ? "reduction" : "increase"} in lexical diversity over the last 14 days versus their prior 30-day baseline, with mean sentence length ${s.sentLen.toFixed(1)} words (${Math.round(s.sentLenDelta * 100)}%).`,
-    `Repetition of short phrases is ${Math.round(s.rep * 100)}% of recent utterances. Morning activity share is ${Math.round(s.morn * 100)}%; ${Math.round(s.night * 100)}% of posts occur after 10pm.`,
-    s.flags.some((f) => f.code === "cognitive_change")
-      ? "Pattern is consistent with a watch for mild cognitive change (word-finding / perseveration). This is decision support, not a diagnosis."
-      : "Mood and circadian signals warrant clinical review between office visits.",
+    s.insight.summary,
+    `Morning activity share is ${Math.round(s.morn * 100)}%; ${Math.round(s.night * 100)}% of recent posts occur from 10pm–5am.`,
+    "This describes communication activity only. Word choice and posting patterns do not diagnose mental illness or cognitive disease.",
   ];
   return parts.join(" ");
 }

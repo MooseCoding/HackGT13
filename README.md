@@ -46,3 +46,7 @@ Next.js (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres) · 
 - **Live mode** reads and writes the same shapes from the Supabase project. Copy `.env.example` to `.env.local`, then uncheck Demo.
 
 Schema lives in `supabase/migrations/`.
+
+Live families now support multiple authenticated accounts through a short invite code. Each account claims one pre-created member profile, and the server verifies that identity for posts, calendar events, and clinician-sharing consent. Family chat refreshes every four seconds so posts appear across devices and remain in Supabase after reload.
+
+For the two-profile rehearsal, consent demo, explainable-insight path, and backup recording shot list, see [`DEMO_RUNBOOK.md`](./DEMO_RUNBOOK.md).

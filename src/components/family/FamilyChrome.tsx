@@ -3,7 +3,7 @@
 import { DemoModeSwitch } from "@/components/DemoModeSwitch";
 import type { Member } from "@/lib/types";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type Ctx = {
@@ -24,23 +24,17 @@ export function useFamily() {
 
 export function FamilyProvider({
   members,
+  currentMemberId,
   children,
 }: {
   members: Member[];
+  currentMemberId?: string;
   children: React.ReactNode;
 }) {
-  const defaultMember = members.find((m) => m.easyModeDefault) ?? members[0];
+  const defaultMember = members.find((m) => m.id === currentMemberId) ?? members.find((m) => m.easyModeDefault) ?? members[0];
   const [meId, setMeId] = useState(defaultMember?.id ?? "");
   const [easy, setEasy] = useState(defaultMember?.easyModeDefault ?? false);
   const me = members.find((m) => m.id === meId) ?? members[0];
-
-  useEffect(() => {
-    const savedEasy = localStorage.getItem("hearth-easy");
-    const who = localStorage.getItem("hearth-me");
-    if (savedEasy === "1") setEasy(true);
-    else if (savedEasy === null && defaultMember?.easyModeDefault) setEasy(true);
-    if (who && members.some((m) => m.id === who)) setMeId(who);
-  }, [members, defaultMember?.easyModeDefault]);
 
   useEffect(() => {
     localStorage.setItem("hearth-easy", easy ? "1" : "0");
@@ -51,7 +45,7 @@ export function FamilyProvider({
     localStorage.setItem("hearth-me", meId);
   }, [meId]);
 
-  const value = useMemo(() => ({ members, me, setMeId, easy, setEasy }), [members, me, meId, easy]);
+  const value = useMemo(() => ({ members, me, setMeId, easy, setEasy }), [members, me, easy]);
   return <FamilyCtx.Provider value={value}>{children}</FamilyCtx.Provider>;
 }
 
@@ -59,13 +53,22 @@ export function FamilyChrome({
   demo,
   canGoLive,
   signedIn,
+  inviteCode,
+  identityLocked,
 }: {
   demo: boolean;
   canGoLive: boolean;
   signedIn: boolean;
+  inviteCode?: string;
+  identityLocked: boolean;
 }) {
   const { members, me, setMeId, easy, setEasy } = useFamily();
   const path = usePathname();
+  const router = useRouter();
+  const [sharingOverrides, setSharingOverrides] = useState<Record<string, boolean>>({});
+  const [savingConsent, setSavingConsent] = useState(false);
+  const [consentError, setConsentError] = useState("");
+  const sharing = sharingOverrides[me?.id] ?? me?.clinicalOptIn ?? false;
   const links = [
     { href: "/family", label: "Chats" },
     { href: "/family/calendar", label: "Calendar" },
@@ -75,7 +78,26 @@ export function FamilyChrome({
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" });
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
+  }
+
+  async function updateSharing(enabled: boolean) {
+    const previous = sharing;
+    setSharingOverrides((values) => ({ ...values, [me.id]: enabled }));
+    setSavingConsent(true);
+    setConsentError("");
+    const response = await fetch("/api/consent", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: me.id, enabled }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      setSharingOverrides((values) => ({ ...values, [me.id]: previous }));
+      setConsentError(result.error || "Could not update sharing.");
+    }
+    setSavingConsent(false);
   }
 
   return (
@@ -105,6 +127,20 @@ export function FamilyChrome({
           })}
         </nav>
         <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
+          {inviteCode ? (
+            <span className="hidden text-xs text-mute lg:inline" title="Use this code to join this family">
+              Invite <strong className="font-mono text-ink">{inviteCode}</strong>
+            </span>
+          ) : null}
+          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute" title="Controls server-side clinician access">
+            <input
+              type="checkbox"
+              checked={sharing}
+              disabled={savingConsent || !me}
+              onChange={(event) => updateSharing(event.target.checked)}
+            />
+            Clinician sharing
+          </label>
           <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
             <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
             Easy
@@ -116,6 +152,8 @@ export function FamilyChrome({
             id="posting-as"
             value={me?.id ?? ""}
             onChange={(e) => setMeId(e.target.value)}
+            disabled={identityLocked}
+            title={identityLocked ? "Your signed-in account is linked to this member" : "Posting as"}
             className="min-h-11 min-w-32 flex-1 rounded-md border border-line bg-paper px-2 py-1 text-sm sm:flex-none"
           >
             {members.map((m) => (
@@ -134,6 +172,7 @@ export function FamilyChrome({
               Sign out
             </button>
           ) : null}
+          {consentError ? <span className="w-full text-xs text-red-700" role="alert">{consentError}</span> : null}
         </div>
       </div>
     </header>

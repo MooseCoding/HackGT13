@@ -7,11 +7,13 @@ export const families: Family[] = [
     id: "alvarez",
     name: "The Alvarez Circle",
     tagline: "Atlanta · three generations · one hearth",
+    inviteCode: "ALVAREZ42",
   },
   {
     id: "okonkwo",
     name: "The Okonkwo Circle",
     tagline: "Decatur · opted-in comparison patient",
+    inviteCode: "OKONKWO42",
   },
 ];
 
@@ -95,6 +97,46 @@ const photoCampus =
   "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1200&q=80";
 
 export const posts: Post[] = [
+  {
+    id: "history-1",
+    familyId: "alvarez",
+    authorId: "elena",
+    kind: "text",
+    body: "The neighborhood walk was cool this morning. I stopped by the corner garden and brought home mint for tea.",
+    createdAt: atDay(41, 8, 20),
+  },
+  {
+    id: "history-2",
+    familyId: "alvarez",
+    authorId: "miguel",
+    kind: "text",
+    body: "Sunday lunch photos are finally in the album. Ma, the one of you and Sofia is my favorite.",
+    createdAt: atDay(40, 14, 10),
+  },
+  {
+    id: "history-3",
+    familyId: "alvarez",
+    authorId: "elena",
+    kind: "status",
+    body: "Beans are simmering and the porch radio is on. Come by if you are nearby.",
+    createdAt: atDay(31, 10, 35),
+  },
+  {
+    id: "history-4",
+    familyId: "alvarez",
+    authorId: "priya",
+    kind: "text",
+    body: "I put Sofia's game and the family dinner on the calendar so nobody has to hunt through messages.",
+    createdAt: atDay(24, 15, 25),
+  },
+  {
+    id: "history-5",
+    familyId: "alvarez",
+    authorId: "elena",
+    kind: "text",
+    body: "Watered the tomatoes before breakfast. The yellow ones are coming in slowly but they taste sweet.",
+    createdAt: atDay(18, 8, 5),
+  },
   {
     id: "p1",
     familyId: "alvarez",

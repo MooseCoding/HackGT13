@@ -21,6 +21,9 @@ function emptyMember(isYou = false, name = ""): DraftMember {
 
 export function OnboardingForm({ defaultName }: { defaultName: string }) {
   const router = useRouter();
+  const [mode, setMode] = useState<"create" | "join">("create");
+  const [inviteCode, setInviteCode] = useState("");
+  const [memberName, setMemberName] = useState(defaultName);
   const [familyName, setFamilyName] = useState("");
   const [members, setMembers] = useState<DraftMember[]>([emptyMember(true, defaultName)]);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,27 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (mode === "join") {
+      if (!inviteCode.trim() || !memberName.trim()) {
+        setError("Enter the invite code and your full name exactly as your family added it.");
+        return;
+      }
+      setBusy(true);
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, inviteCode, memberName }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error || "Could not join this family.");
+        setBusy(false);
+        return;
+      }
+      router.push("/family");
+      router.refresh();
+      return;
+    }
     if (!familyName.trim()) {
       setError("Name your family circle so everyone knows they’re home.");
       return;
@@ -82,6 +106,51 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
 
   return (
     <form onSubmit={submit} className="space-y-6" noValidate>
+      <div className="grid grid-cols-2 rounded-lg border border-line bg-paper p-1" role="group" aria-label="Family setup choice">
+        <button
+          type="button"
+          onClick={() => setMode("create")}
+          className={`min-h-11 rounded-md text-sm font-semibold ${mode === "create" ? "bg-ember text-white" : "text-mute"}`}
+        >
+          Create a circle
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("join")}
+          className={`min-h-11 rounded-md text-sm font-semibold ${mode === "join" ? "bg-ember text-white" : "text-mute"}`}
+        >
+          Join a circle
+        </button>
+      </div>
+
+      {mode === "join" ? (
+        <div className="space-y-4 rounded-xl border border-line bg-paper p-4">
+          <p className="text-sm leading-6 text-mute">
+            Ask the family organizer for the invite code. Your name must match the profile they created for you.
+          </p>
+          <div>
+            <label htmlFor="invite-code" className="block text-sm font-medium">Invite code</label>
+            <input
+              id="invite-code"
+              value={inviteCode}
+              onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+              placeholder="ALVAREZ42"
+              autoCapitalize="characters"
+              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 font-mono uppercase outline-none focus-visible:border-ember"
+            />
+          </div>
+          <div>
+            <label htmlFor="member-name" className="block text-sm font-medium">Your full name</label>
+            <input
+              id="member-name"
+              value={memberName}
+              onChange={(event) => setMemberName(event.target.value)}
+              className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 outline-none focus-visible:border-ember"
+            />
+          </div>
+        </div>
+      ) : (
+        <>
       <div>
         <label htmlFor="family-name" className="block text-sm font-medium text-ink">
           Family name
@@ -191,6 +260,8 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
           Add another person
         </button>
       </fieldset>
+        </>
+      )}
 
       {error ? (
         <p className="text-sm text-red-700" role="alert">
@@ -203,7 +274,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
         disabled={busy}
         className="min-h-12 w-full rounded-lg bg-ember text-base font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember-dark disabled:opacity-60"
       >
-        {busy ? "Saving…" : "Continue to Hearth"}
+        {busy ? "Saving…" : mode === "join" ? "Join family circle" : "Continue to Hearth"}
       </button>
     </form>
   );

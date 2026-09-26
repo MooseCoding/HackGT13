@@ -102,5 +102,6 @@ export function patientById(id: string) {
     posts: db()
       .posts.filter((p) => p.authorId === id)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    events: eventsOf(member.familyId),
   };
 }

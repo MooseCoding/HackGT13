@@ -70,9 +70,9 @@ export type Database = {
         Relationships: [];
       };
       families: {
-        Row: { id: string; name: string; owner_id: string | null; tagline: string };
-        Insert: { id: string; name: string; owner_id?: string | null; tagline?: string };
-        Update: { id?: string; name?: string; owner_id?: string | null; tagline?: string };
+        Row: { id: string; join_code: string; name: string; owner_id: string | null; tagline: string };
+        Insert: { id: string; join_code?: string; name: string; owner_id?: string | null; tagline?: string };
+        Update: { id?: string; join_code?: string; name?: string; owner_id?: string | null; tagline?: string };
         Relationships: [];
       };
       profiles: {
@@ -117,6 +117,7 @@ export type Database = {
           role: string;
           state: string;
           street: string;
+          user_id: string | null;
         };
         Insert: {
           age: number;
@@ -135,6 +136,7 @@ export type Database = {
           role: string;
           state?: string;
           street?: string;
+          user_id?: string | null;
         };
         Update: {
           age?: number;
@@ -153,6 +155,7 @@ export type Database = {
           role?: string;
           state?: string;
           street?: string;
+          user_id?: string | null;
         };
         Relationships: [];
       };
@@ -203,7 +206,12 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      join_family: {
+        Args: { invite_code_input: string; member_name_input: string };
+        Returns: boolean;
+      };
+      has_family_access: { Args: { fid: string }; Returns: boolean };
+      is_family_owner: { Args: { fid: string }; Returns: boolean };
     };
     Enums: {
       [_ in never]: never;

@@ -12,7 +12,7 @@ import {
 } from "@/lib/chat";
 import type { Member, Post } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function Avatar({ member, size = 40 }: { member?: Member; size?: number }) {
   return (
@@ -38,14 +38,22 @@ export function ChatApp({
   const router = useRouter();
   const searchParams = useSearchParams();
   const withParam = searchParams.get("with") ?? GROUP_THREAD;
+  const draft = searchParams.get("draft") ?? "";
   const threadId = withParam === GROUP_THREAD ? GROUP_THREAD : threadForDm(me.id, withParam);
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(draft);
   const [kind, setKind] = useState<"text" | "voice" | "photo" | "status">("text");
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [listening, setListening] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(withParam !== GROUP_THREAD || false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [router]);
 
   const threads = useMemo(() => {
     const list: {

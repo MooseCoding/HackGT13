@@ -54,6 +54,7 @@ export type Family = {
   id: FamilyId;
   name: string;
   tagline: string;
+  inviteCode?: string;
 };
 
 export type Digest = {
@@ -76,10 +77,27 @@ export type DailyPoint = {
 };
 
 export type ClinicalFlag = {
-  code: "cognitive_change" | "mood_isolation" | "sleep_shift";
+  code: "engagement_change" | "sleep_shift";
   severity: "watch" | "elevated" | "high";
   title: string;
   detail: string;
+};
+
+export type InsightEvidence = {
+  postId: string;
+  createdAt: string;
+  text: string;
+};
+
+export type ExplainableInsight = {
+  status: "ready" | "insufficient_data";
+  title: string;
+  summary: string;
+  currentLabel: string;
+  baselineLabel: string;
+  currentRange: { start: string; end: string };
+  baselineRange: { start: string; end: string };
+  evidence: InsightEvidence[];
 };
 
 export type PatientSnapshot = {
@@ -101,6 +119,7 @@ export type PatientSnapshot = {
   nightShare: number;
   responseHours?: number;
   flags: ClinicalFlag[];
+  insight: ExplainableInsight;
   note: string;
   series: DailyPoint[];
 };

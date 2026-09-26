@@ -3,6 +3,7 @@
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 /**
@@ -23,6 +24,7 @@ export function LandingPage({
   supabaseConfig: PublicSupabaseConfig | null;
 }) {
   const [demoBusy, setDemoBusy] = useState(false);
+  const router = useRouter();
 
   async function openDemo() {
     setDemoBusy(true);
@@ -31,7 +33,8 @@ export function LandingPage({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ demo: true }),
     });
-    window.location.href = "/family";
+    router.push("/family");
+    router.refresh();
   }
 
   return (

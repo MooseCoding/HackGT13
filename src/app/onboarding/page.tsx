@@ -19,10 +19,9 @@ export default async function OnboardingPage() {
         </div>
       </header>
       <main id="main-content" className="mx-auto max-w-lg px-4 py-8 sm:py-12">
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Add your family</h1>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Set up your family</h1>
         <p className="mt-2 text-base leading-7 text-mute">
-          These names show up in chats, the calendar, and the weekly story. You can post as any of
-          them.
+          Create a new circle, or use an invite code to claim the profile your family made for you.
         </p>
         <div className="mt-8">
           <OnboardingForm defaultName={user.name} />

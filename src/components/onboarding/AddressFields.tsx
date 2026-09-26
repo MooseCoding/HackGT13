@@ -38,7 +38,6 @@ export function AddressFields({
   useEffect(() => {
     const q = query.trim();
     if (q.length < 3) {
-      setSuggestions([]);
       return;
     }
     const t = window.setTimeout(async () => {
@@ -127,19 +126,19 @@ export function AddressFields({
           autoComplete="off"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => suggestions.length && setOpen(true)}
+          onFocus={() => query.trim().length >= 3 && suggestions.length && setOpen(true)}
           placeholder="Start typing a street or city…"
           className={fieldClass}
         />
         {searching ? <p className="mt-1 text-xs text-mute">Searching…</p> : null}
-        {open && suggestions.length ? (
+        {open && query.trim().length >= 3 && suggestions.length ? (
           <ul
             id={listId}
             role="listbox"
             className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-line bg-paper shadow-md"
           >
             {suggestions.map((s) => (
-              <li key={s.id} role="option">
+              <li key={s.id} role="option" aria-selected="false">
                 <button
                   type="button"
                   className="w-full px-3 py-2.5 text-left text-sm leading-5 hover:bg-cream focus-visible:bg-cream focus-visible:outline-none"

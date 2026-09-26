@@ -1,12 +1,28 @@
-import { createFamilyWithMembers, type NewMemberInput } from "@/lib/data";
+import { createFamilyWithMembers, joinFamily, type NewMemberInput } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
+    mode?: "create" | "join";
+    inviteCode?: string;
+    memberName?: string;
     familyName?: string;
     tagline?: string;
     members?: NewMemberInput[];
   };
+  if (body.mode === "join") {
+    if (!body.inviteCode?.trim() || !body.memberName?.trim()) {
+      return NextResponse.json({ error: "Enter the invite code and your full member name." }, { status: 400 });
+    }
+    try {
+      return NextResponse.json(await joinFamily({ inviteCode: body.inviteCode, memberName: body.memberName }));
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Could not join family." },
+        { status: 400 },
+      );
+    }
+  }
   const members = (body.members ?? []).filter((m) => m.name?.trim());
   if (!body.familyName?.trim()) {
     return NextResponse.json({ error: "Give your family a name." }, { status: 400 });
