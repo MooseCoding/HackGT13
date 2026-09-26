@@ -19,6 +19,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} h-full`} suppressHydrationWarning>
       <head>
+        <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/instagram-sans-2" />
         <ThemeScript />
       </head>
       <body className="min-h-full font-sans text-base leading-6 antialiased">
