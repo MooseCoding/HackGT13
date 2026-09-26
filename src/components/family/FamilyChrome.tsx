@@ -87,85 +87,87 @@ export function FamilyChrome({
   ];
 
   return (
-    <header className="bg-chrome-bg text-chrome-fg">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:gap-x-3 sm:px-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <Link href="/" className="font-brand shrink-0 text-base">
-            Hearth
-          </Link>
-          {families.length > 0 ? (
-            <>
-              <span className="hidden h-5 w-px shrink-0 bg-chrome-divider sm:block" aria-hidden />
-              <FamilyCircleSwitcher
-                families={families}
-                activeFamilyId={activeFamilyId}
-                activeFamilyName={activeFamilyName}
-                defaultName={userDisplayName}
-              />
-            </>
-          ) : null}
-        </div>
-        <nav className="-mx-1 flex min-w-0 flex-1 basis-full gap-3 overflow-x-auto sm:basis-auto" aria-label="Family">
-          {links.map((l) => {
-            const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                aria-current={current ? "page" : undefined}
-                className={`min-h-11 shrink-0 px-1 py-2 text-sm ${
-                  current
-                    ? "font-semibold text-chrome-fg underline decoration-ember decoration-2 underline-offset-8"
-                    : "text-chrome-fg-muted hover:text-chrome-fg hover:underline"
-                }`}
-              >
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
-          {inviteCode ? (
-            <span className="hidden text-xs text-chrome-fg-subtle lg:inline" title="Use this code to join this circle">
-              Invite <strong className="font-mono text-chrome-fg">{inviteCode}</strong>
-            </span>
-          ) : null}
-          <SettingsMenu
-            signedIn={signedIn}
-            userDisplayName={userDisplayName}
-            families={families}
-            activeFamilyId={activeFamilyId}
-            activeFamilyName={activeFamilyName}
-          />
-          {!demo && identityLocked && signedIn && me ? (
-            <ClinicalConsentToggle key={me.id} member={me} />
-          ) : null}
-          <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
-          <label className="sr-only" htmlFor="posting-as">
-            Posting as
-          </label>
-          <select
-            id="posting-as"
-            value={me?.id ?? ""}
-            onChange={(e) => setMeId(e.target.value)}
-            disabled={identityLocked}
-            title={identityLocked ? "Your signed-in account is linked to this member" : "Posting as"}
-            className="min-h-11 min-w-32 flex-1 border border-chrome-border bg-chrome-bg px-2 py-1 text-sm text-chrome-fg sm:flex-none"
-          >
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-          {demo ? (
-            <span
-              className="text-xs font-medium text-chrome-fg-subtle"
-              title="Started from Preview sample family on the homepage"
+    <header className="border-b border-white/50 bg-transparent">
+      <div className="mx-auto max-w-6xl px-3 pt-3 sm:px-4">
+        <div className="glass flex flex-wrap items-center gap-x-2 gap-y-2 rounded-2xl px-3 py-2.5 sm:gap-x-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <Link href="/" className="font-brand shrink-0 text-base text-ink">
+              Hearth
+            </Link>
+            {families.length > 0 ? (
+              <>
+                <span className="hidden h-5 w-px shrink-0 bg-chrome-divider sm:block" aria-hidden />
+                <FamilyCircleSwitcher
+                  families={families}
+                  activeFamilyId={activeFamilyId}
+                  activeFamilyName={activeFamilyName}
+                  defaultName={userDisplayName}
+                />
+              </>
+            ) : null}
+          </div>
+          <nav className="-mx-1 flex min-w-0 flex-1 basis-full gap-3 overflow-x-auto sm:basis-auto" aria-label="Family">
+            {links.map((l) => {
+              const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  aria-current={current ? "page" : undefined}
+                  className={`min-h-11 shrink-0 px-1 py-2 text-sm ${
+                    current
+                      ? "font-semibold text-ember underline decoration-ember decoration-2 underline-offset-8"
+                      : "text-mute hover:text-ink hover:underline"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
+            {inviteCode ? (
+              <span className="hidden text-xs text-mute lg:inline" title="Use this code to join this circle">
+                Invite <strong className="font-mono text-ink">{inviteCode}</strong>
+              </span>
+            ) : null}
+            <SettingsMenu
+              signedIn={signedIn}
+              userDisplayName={userDisplayName}
+              families={families}
+              activeFamilyId={activeFamilyId}
+              activeFamilyName={activeFamilyName}
+            />
+            {!demo && identityLocked && signedIn && me ? (
+              <ClinicalConsentToggle key={me.id} member={me} />
+            ) : null}
+            <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
+            <label className="sr-only" htmlFor="posting-as">
+              Posting as
+            </label>
+            <select
+              id="posting-as"
+              value={me?.id ?? ""}
+              onChange={(e) => setMeId(e.target.value)}
+              disabled={identityLocked}
+              title={identityLocked ? "Your signed-in account is linked to this member" : "Posting as"}
+              className="min-h-11 min-w-32 flex-1 rounded-xl border border-line bg-paper/80 px-2 py-1 text-sm text-ink sm:flex-none"
             >
-              Sample family
-            </span>
-          ) : null}
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            {demo ? (
+              <span
+                className="text-xs font-medium text-mute"
+                title="Started from Preview sample family on the homepage"
+              >
+                Sample family
+              </span>
+            ) : null}
+          </div>
         </div>
       </div>
     </header>
