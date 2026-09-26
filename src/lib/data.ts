@@ -360,18 +360,7 @@ export async function createFamilyWithMembers(input: {
   if (!user) throw new Error("Sign in to create a family.");
   const supabase = await createSupabaseServer();
   const familyId = slugId("fam");
-  const familyInsert = await supabase
-    .from("families")
-    .insert({
-      id: familyId,
-      name: input.familyName.trim(),
-      tagline: input.tagline?.trim() || "Our family circle",
-      owner_id: user.id,
-      join_code: crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase(),
-    })
-    .select("*")
-    .single();
-  const family = requireData(familyInsert.data, familyInsert.error);
+  const joinCode = crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
 
   const rows = input.members.map((m, i) => {
     const name = m.name.trim();
@@ -394,20 +383,26 @@ export async function createFamilyWithMembers(input: {
       country: address?.country?.trim() || "United States",
       clinical_opt_in: false,
       easy_mode_default: Boolean(m.isYou),
-      user_id: m.isYou ? user.id : null,
     };
   });
 
-  const memberInsert = await supabase.from("members").insert(rows).select("*");
-  throwIfError(memberInsert.error);
   const youIndex = input.members.findIndex((m) => m.isYou);
-  const you = (memberInsert.data ?? rows)[youIndex >= 0 ? youIndex : 0];
+  const you = rows[youIndex >= 0 ? youIndex : 0];
+  const created = await supabase.rpc("create_family_circle", {
+    family_id_input: familyId,
+    family_name_input: input.familyName.trim(),
+    tagline_input: input.tagline?.trim() || "Our family circle",
+    join_code_input: joinCode,
+    members_input: rows,
+    you_member_id_input: you.id,
+  });
+  throwIfError(created.error);
 
-  const profileUpdate = await supabase
-    .from("profiles")
-    .update({ family_id: familyId, member_id: you.id, display_name: user.name })
-    .eq("id", user.id);
-  throwIfError(profileUpdate.error);
-
-  return { family: mapFamily(family), members: (memberInsert.data ?? []).map(mapMember) };
+  const [familyResult, memberResult] = await Promise.all([
+    supabase.from("families").select("*").eq("id", familyId).single(),
+    supabase.from("members").select("*").eq("family_id", familyId),
+  ]);
+  const family = requireData(familyResult.data, familyResult.error);
+  throwIfError(memberResult.error);
+  return { family: mapFamily(family), members: (memberResult.data ?? []).map(mapMember) };
 }

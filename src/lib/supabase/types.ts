@@ -206,6 +206,17 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      create_family_circle: {
+        Args: {
+          family_id_input: string;
+          family_name_input: string;
+          tagline_input: string;
+          join_code_input: string;
+          members_input: Json;
+          you_member_id_input: string;
+        };
+        Returns: string;
+      };
       join_family: {
         Args: { invite_code_input: string; member_name_input: string };
         Returns: boolean;

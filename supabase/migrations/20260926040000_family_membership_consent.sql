@@ -196,3 +196,6 @@ create policy "delete digests" on public.digests
     (auth.uid() is null and exists (select 1 from public.families f where f.id = family_id and f.owner_id is null))
     or public.has_family_access(family_id)
   );
+
+-- Make newly added columns and RPCs visible to PostgREST immediately.
+notify pgrst, 'reload schema';

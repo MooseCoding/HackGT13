@@ -1,0 +1,1 @@
+-- History placeholder: this remote migration is represented by 20260926030000_member_address_fields.sql.
