@@ -2,15 +2,18 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-full bg-paper">
-      <header className="border-b border-line">
-        <div className="mx-auto flex max-w-4xl items-center px-6 py-4">
-          <span className="text-lg font-semibold">Hearth</span>
-        </div>
-      </header>
+    <div className="chat-surface min-h-full">
+      <div className="mx-auto max-w-4xl px-6 pt-4">
+        <header className="glass rounded-2xl">
+          <div className="flex items-center gap-3 px-6 py-4">
+            <span className="font-brand text-lg">Hearth</span>
+            <span className="font-brand text-sm text-mute">Family, in one place</span>
+          </div>
+        </header>
+      </div>
 
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-3xl font-semibold leading-tight text-ink sm:text-4xl">
+        <h1 className="font-brand text-3xl leading-tight text-ink sm:text-4xl">
           Come home to the story, not the group chat.
         </h1>
         <p className="mt-4 max-w-xl text-base leading-7 text-mute">
@@ -21,7 +24,7 @@ export default function Home() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           <Link
             href="/family"
-            className="block border border-line bg-cream p-6 hover:border-ember"
+            className="glass block rounded-2xl p-6 transition hover:border-ember/60"
           >
             <h2 className="text-lg font-semibold">Family chats</h2>
             <p className="mt-2 text-sm leading-6 text-mute">
@@ -30,7 +33,7 @@ export default function Home() {
           </Link>
           <Link
             href="/hcp"
-            className="block border border-line bg-cream p-6 hover:border-clinic"
+            className="glass block rounded-2xl p-6 transition hover:border-clinic/60"
           >
             <h2 className="text-lg font-semibold">Clinician view</h2>
             <p className="mt-2 text-sm leading-6 text-mute">
@@ -40,7 +43,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="border-t border-line py-4 text-center text-xs text-mute">
+      <footer className="border-t border-white/50 py-4 text-center text-xs text-mute">
         Built at HackGT 13 with Impiricus
       </footer>
     </div>

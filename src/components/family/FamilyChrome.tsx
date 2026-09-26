@@ -66,7 +66,7 @@ export function FamilyChrome() {
   return (
     <header className="border-b border-line bg-paper">
       <div className="flex items-center gap-4 px-4 py-2.5">
-        <Link href="/" className="text-base font-semibold text-ink">
+        <Link href="/" className="font-brand text-base text-ink">
           Hearth
         </Link>
         <nav className="flex gap-1">
