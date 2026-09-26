@@ -1,7 +1,8 @@
 import { runFamilyAssistant, type AssistantContext, type AssistantTurn } from "@/lib/ai/assistant";
-import { eventsOf, familyById, membersOf, postsOf, resolveFamilyId } from "@/lib/data";
+import { eventsOf, familyById, membersOf, postsOf, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Kept for older clients. Answers locally from Hearth data — never calls a vendor model. */
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const familyId = body.familyId || (await resolveFamilyId());
+    await requireFamilyAccess(familyId);
     const [family, members, events, posts] = await Promise.all([
       familyById(familyId),
       membersOf(familyId),

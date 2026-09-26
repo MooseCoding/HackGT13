@@ -1,15 +1,19 @@
+import { cookies } from "next/headers";
 import { formatAddress, type Address } from "./address";
 import { getAuthUser, getProfile } from "./auth";
 import { analyzeMember } from "./analysis";
 import { postThreadId } from "./chat";
 import { buildDigest } from "./digest";
 import { DEFAULT_FAMILY_ID, initialsFrom, MEMBER_COLORS, slugId } from "./ids";
+import { FAMILY_COOKIE } from "./mode";
 import { isDemoMode } from "./mode-server";
+import { families as seedFamilies } from "./seed";
 import {
   addEvent,
   addPost,
   db,
   deleteEvent,
+  patchEvent,
   digestFor as digestForDemo,
   eventsOf as eventsOfDemo,
   familyById as familyByIdDemo,
@@ -85,6 +89,7 @@ function mapEvent(row: EventRow): CalendarEvent {
     attendees: row.attendees ?? [],
     sourceText: row.source_text,
     createdBy: row.created_by,
+    calendarScope: row.id.startsWith("evt-m-") ? "mine" : row.id.startsWith("evt-f-") ? "family" : undefined,
   };
 }
 
@@ -227,7 +232,21 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
     })
     .select("*")
     .single();
-  return mapEvent(requireData(data, error));
+  const saved = mapEvent(requireData(data, error));
+  if (event.googleEventId) {
+    return { ...saved, googleEventId: event.googleEventId, isGoogleSynced: event.isGoogleSynced };
+  }
+  return saved;
+}
+
+export async function patchEventRow(
+  id: string,
+  familyId: string,
+  patch: Partial<CalendarEvent>,
+): Promise<CalendarEvent | null> {
+  if (await isDemoMode()) return patchEvent(id, familyId, patch);
+  // Google metadata is kept in-memory for the session; DB schema has no google columns yet.
+  return null;
 }
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {
@@ -301,6 +320,24 @@ export async function patientById(id: string) {
   };
 }
 
+export async function hasFamilyAccess(familyId: string): Promise<boolean> {
+  if (await isDemoMode()) {
+    return seedFamilies.some((f) => f.id === familyId);
+  }
+  const user = await getAuthUser();
+  if (!user) return false;
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("has_family_access", { fid: familyId });
+  throwIfError(error);
+  return Boolean(data);
+}
+
+export async function requireFamilyAccess(familyId: string) {
+  if (!(await hasFamilyAccess(familyId))) {
+    throw new Error("You do not have access to this family.");
+  }
+}
+
 export async function postingIdentity(requestedFamilyId: string, requestedMemberId: string) {
   if (await isDemoMode()) {
     const member = db().members.find(
@@ -309,12 +346,20 @@ export async function postingIdentity(requestedFamilyId: string, requestedMember
     if (!member) throw new Error("That member does not belong to this family.");
     return { familyId: requestedFamilyId, memberId: requestedMemberId };
   }
-  const profile = await getProfile();
-  if (!profile?.family_id || !profile.member_id) throw new Error("Finish joining a family first.");
-  if (profile.family_id !== requestedFamilyId || profile.member_id !== requestedMemberId) {
-    throw new Error("You can only post as your own family profile.");
-  }
-  return { familyId: profile.family_id, memberId: profile.member_id };
+  const user = await getAuthUser();
+  if (!user) throw new Error("Sign in to post.");
+  await requireFamilyAccess(requestedFamilyId);
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("members")
+    .select("*")
+    .eq("family_id", requestedFamilyId)
+    .eq("id", requestedMemberId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  throwIfError(error);
+  if (!data) throw new Error("You can only post as your own member profile in this family.");
+  return { familyId: requestedFamilyId, memberId: requestedMemberId };
 }
 
 export async function setClinicalConsent(requestedMemberId: string, enabled: boolean) {
@@ -324,16 +369,16 @@ export async function setClinicalConsent(requestedMemberId: string, enabled: boo
     member.clinicalOptIn = enabled;
     return member;
   }
-  const profile = await getProfile();
-  if (!profile?.member_id || profile.member_id !== requestedMemberId) {
-    throw new Error("You can only change your own sharing preference.");
-  }
+  const user = await getAuthUser();
+  if (!user) throw new Error("Sign in to update sharing.");
+  const familyId = await resolveFamilyId();
   const supabase = await createSupabaseServer();
   const result = await supabase
     .from("members")
     .update({ clinical_opt_in: enabled })
-    .eq("id", profile.member_id)
-    .eq("family_id", profile.family_id ?? "")
+    .eq("id", requestedMemberId)
+    .eq("family_id", familyId)
+    .eq("user_id", user.id)
     .select("*")
     .single();
   return mapMember(requireData(result.data, result.error));
@@ -353,10 +398,74 @@ export async function joinFamily(input: { inviteCode: string; memberName: string
 }
 
 export async function resolveFamilyId(): Promise<string> {
-  if (await isDemoMode()) return DEFAULT_FAMILY_ID;
+  if (await isDemoMode()) {
+    const jar = await cookies();
+    const cookieVal = jar.get(FAMILY_COOKIE)?.value;
+    if (cookieVal && seedFamilies.some((f) => f.id === cookieVal)) return cookieVal;
+    return DEFAULT_FAMILY_ID;
+  }
+  const user = await getAuthUser();
+  if (!user) return DEFAULT_FAMILY_ID;
   const profile = await getProfile();
-  if (profile?.family_id) return profile.family_id;
+  if (profile?.family_id && (await hasFamilyAccess(profile.family_id))) {
+    return profile.family_id;
+  }
+  const supabase = await createSupabaseServer();
+  const memberRes = await supabase
+    .from("members")
+    .select("family_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+  throwIfError(memberRes.error);
+  if (memberRes.data?.family_id) return memberRes.data.family_id;
+  const ownedRes = await supabase.from("families").select("id").eq("owner_id", user.id).limit(1).maybeSingle();
+  throwIfError(ownedRes.error);
+  if (ownedRes.data?.id) return ownedRes.data.id;
   return DEFAULT_FAMILY_ID;
+}
+
+export async function familiesForUser(): Promise<{ families: Family[]; activeId: string }> {
+  const activeId = await resolveFamilyId();
+  if (await isDemoMode()) {
+    return { families: seedFamilies, activeId };
+  }
+  const user = await getAuthUser();
+  if (!user) return { families: [], activeId };
+  const supabase = await createSupabaseServer();
+  const [ownedRes, memberRes] = await Promise.all([
+    supabase.from("families").select("*").eq("owner_id", user.id),
+    supabase.from("members").select("family_id").eq("user_id", user.id),
+  ]);
+  throwIfError(ownedRes.error);
+  throwIfError(memberRes.error);
+  const familyIds = [
+    ...new Set([
+      ...(ownedRes.data ?? []).map((f) => f.id),
+      ...(memberRes.data ?? []).map((m) => m.family_id),
+    ]),
+  ];
+  if (familyIds.length === 0) return { families: [], activeId };
+  const familiesRes = await supabase.from("families").select("*").in("id", familyIds);
+  throwIfError(familiesRes.error);
+  const families = (familiesRes.data ?? []).map(mapFamily);
+  families.sort((a, b) => a.name.localeCompare(b.name));
+  return { families, activeId };
+}
+
+export async function setActiveFamily(familyId: string) {
+  if (await isDemoMode()) {
+    if (!seedFamilies.some((f) => f.id === familyId)) {
+      throw new Error("That family is not available in demo mode.");
+    }
+    return { activeId: familyId };
+  }
+  await requireFamilyAccess(familyId);
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase.rpc("set_active_family", { family_id_input: familyId });
+  throwIfError(error);
+  if (!data) throw new Error("Could not switch to that family.");
+  return { activeId: familyId };
 }
 
 export type NewMemberInput = {

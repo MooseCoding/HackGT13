@@ -39,13 +39,14 @@ export async function getProfile(): Promise<Profile | null> {
 
 export async function needsOnboarding() {
   if (await isDemoMode()) return false;
-  const profile = await getProfile();
-  if (!profile?.family_id) return true;
+  const user = await getAuthUser();
+  if (!user) return true;
   const supabase = await createSupabaseServer();
-  const { count, error } = await supabase
-    .from("members")
-    .select("id", { count: "exact", head: true })
-    .eq("family_id", profile.family_id);
-  if (error) throw new Error(error.message);
-  return (count ?? 0) < 1;
+  const [memberRes, ownedRes] = await Promise.all([
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("families").select("id", { count: "exact", head: true }).eq("owner_id", user.id),
+  ]);
+  if (memberRes.error) throw new Error(memberRes.error.message);
+  if (ownedRes.error) throw new Error(ownedRes.error.message);
+  return (memberRes.count ?? 0) + (ownedRes.count ?? 0) < 1;
 }

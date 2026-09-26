@@ -1,56 +1,52 @@
 import { parseEvent } from "@/lib/calendar-parse";
-import { CAL_WEEKS, inCalendarWindow, windowBounds } from "@/lib/calendar-window";
+import { mergedEventsOf } from "@/lib/calendar-data";
+import { CAL_WEEKS, inCalendarWindow } from "@/lib/calendar-window";
 import { calendarAnchor } from "@/lib/clock";
-import { addEventRow, deleteEventRow, eventsOf, membersOf, postingIdentity, resolveFamilyId } from "@/lib/data";
+import { addEventRow, deleteEventRow, membersOf, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
+import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
 import {
-  createGoogleEvent,
   deleteGoogleEvent,
-  fetchGoogleEvents,
   googleAccessToken,
+  syncEventsToGoogle,
+  syncEventToGoogle,
 } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
+import type { CalendarEvent } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
-
-/** How many past + future Google events to surface inside the Hearth window. */
-const GOOGLE_PAST = 40;
-const GOOGLE_FUTURE = 40;
 
 export async function GET(req: NextRequest) {
   const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
+  try {
+    await requireFamilyAccess(familyId);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Access denied." },
+      { status: 403 },
+    );
+  }
   const demo = await isDemoMode();
   const anchor = calendarAnchor(demo);
   const clientToken = req.nextUrl.searchParams.get("googleToken");
-  const local = (await eventsOf(familyId)).filter((e) => inCalendarWindow(e.startsAt, anchor));
 
-  let google: Awaited<ReturnType<typeof fetchGoogleEvents>> = [];
   let googleConnected = false;
   try {
-    const token = await googleAccessToken(clientToken);
-    googleConnected = Boolean(token);
-    if (token) {
-      const { min, max } = windowBounds(anchor);
-      const all = await fetchGoogleEvents(familyId, token, min, max);
-      const now = anchor.getTime();
-      const past = all.filter((e) => new Date(e.startsAt).getTime() < now);
-      const future = all.filter((e) => new Date(e.startsAt).getTime() >= now);
-      google = [...past.slice(-GOOGLE_PAST), ...future.slice(0, GOOGLE_FUTURE)];
-    }
-  } catch (err) {
-    console.error("Google Calendar fetch error:", err);
+    googleConnected = Boolean(await googleAccessToken(clientToken));
+  } catch {
+    // ignore
   }
 
-  // Prefer Google copy when the same title+start was also saved locally after sync.
-  const googleKeys = new Set(
-    google.map((e) => `${e.title.trim().toLowerCase()}|${new Date(e.startsAt).toISOString()}`),
-  );
-  const localDeduped = local.filter(
-    (e) => !googleKeys.has(`${e.title.trim().toLowerCase()}|${new Date(e.startsAt).toISOString()}`),
-  );
+  const events = await mergedEventsOf(familyId, {
+    clientToken,
+    anchor,
+    googlePull: "sample",
+  });
+
+  const googlePersonal = events.filter((e) => e.isGoogleSynced && e.calendarScope !== "family");
 
   return NextResponse.json({
-    events: [...localDeduped, ...google].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    events,
     googleConnected,
-    googleCount: google.length,
+    googlePersonalCount: googlePersonal.length,
   });
 }
 
@@ -59,15 +55,62 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       familyId: string;
       authorId: string;
-      text: string;
+      text?: string;
       calendar?: "family" | "mine";
       syncToGoogle?: boolean;
       googleToken?: string;
+      autoWeeklyCalls?: boolean;
     };
     const identity = await postingIdentity(body.familyId, body.authorId);
     const demo = await isDemoMode();
     const anchor = calendarAnchor(demo);
     const members = await membersOf(identity.familyId);
+    const token = await googleAccessToken(body.googleToken);
+
+    if (body.autoWeeklyCalls) {
+      const merged = await mergedEventsOf(identity.familyId, {
+        clientToken: body.googleToken,
+        anchor,
+      });
+      const proposed = proposeWeeklyFamilyCalls(merged, {
+        familyId: identity.familyId,
+        createdBy: identity.memberId,
+        members,
+        anchor,
+      });
+      const localRows: CalendarEvent[] = [];
+      for (const event of proposed) {
+        localRows.push(await addEventRow(event));
+      }
+
+      let saved = localRows;
+      let googleSynced = 0;
+      let warning: string | undefined;
+      if (token && localRows.length) {
+        const result = await syncEventsToGoogle(token, localRows);
+        saved = result.events;
+        googleSynced = result.synced;
+        if (result.errors.length) {
+          warning =
+            googleSynced > 0
+              ? `Scheduled ${googleSynced} call${googleSynced === 1 ? "" : "s"} on Google Calendar. ${localRows.length - googleSynced} could not sync — try reconnecting Google.`
+              : "Added to family calendar, but couldn't add to Google Calendar. Try reconnecting Google.";
+        }
+      } else if (localRows.length && !token) {
+        warning = "Added to family calendar. Connect Google Calendar to also add them there.";
+      }
+
+      return NextResponse.json({
+        events: saved,
+        count: saved.length,
+        googleSynced,
+        warning,
+      });
+    }
+
+    if (!body.text?.trim()) {
+      return NextResponse.json({ error: "Add a time, day, and what it is." }, { status: 400 });
+    }
 
     let event = parseEvent(body.text, members, identity.memberId, identity.familyId, anchor);
     if (!inCalendarWindow(event.startsAt, anchor)) {
@@ -77,29 +120,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (body.calendar === "mine") {
-      event = { ...event, attendees: [identity.memberId] };
-    } else if (event.attendees.length <= 1) {
-      event = { ...event, attendees: members.map((m) => m.id) };
-    }
+    const scope = body.calendar === "mine" ? "mine" : "family";
+    event = {
+      ...event,
+      id: `evt-${scope === "mine" ? "m" : "f"}-${Date.now()}`,
+      calendarScope: scope,
+      attendees: scope === "mine" ? [identity.memberId] : members.map((m) => m.id),
+    };
 
-    const saved = await addEventRow(event);
+    let saved = await addEventRow(event);
+    const wantsGoogle = body.syncToGoogle !== false;
 
-    if (body.syncToGoogle) {
-      const token = await googleAccessToken(body.googleToken);
-      if (!token) {
-        return NextResponse.json(
-          { ...saved, warning: "Added here. Sign in with Google to also add it there." },
-        );
-      }
+    if (wantsGoogle && token) {
       try {
-        await createGoogleEvent(token, saved);
+        saved = await syncEventToGoogle(token, saved);
       } catch (err) {
         console.error("Google push error:", err);
-        return NextResponse.json(
-          { ...saved, warning: "Added here, but couldn't add to Google Calendar. Try signing in again." },
-        );
+        return NextResponse.json({
+          ...saved,
+          warning: "Added here, but couldn't add to Google Calendar. Try reconnecting Google.",
+        });
       }
+    } else if (wantsGoogle && !token) {
+      return NextResponse.json({
+        ...saved,
+        warning: "Added here. Connect Google Calendar to also add it there.",
+      });
     }
 
     return NextResponse.json(saved);
@@ -115,6 +161,7 @@ export async function DELETE(req: NextRequest) {
   try {
     const id = req.nextUrl.searchParams.get("id");
     const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
+    await requireFamilyAccess(familyId);
     const googleEventId = req.nextUrl.searchParams.get("googleEventId");
     const clientToken = req.nextUrl.searchParams.get("googleToken");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

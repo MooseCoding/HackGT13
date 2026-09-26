@@ -1,4 +1,5 @@
-import { getAuthUser, getProfile } from "./auth";
+import { getAuthUser } from "./auth";
+import { requireFamilyAccess } from "./data";
 import { initialsFrom, MEMBER_COLORS, slugId } from "./ids";
 import type { FamilyInvitation, InvitationPreview } from "./invitations-types";
 import { isDemoMode } from "./mode-server";
@@ -100,10 +101,7 @@ export async function createFamilyInvitation(input: {
 
   const user = await getAuthUser();
   if (!user) throw new Error("Sign in to invite someone.");
-  const profile = await getProfile();
-  if (!profile?.family_id || profile.family_id !== input.familyId) {
-    throw new Error("You can only invite people to your own family.");
-  }
+  await requireFamilyAccess(input.familyId);
 
   const supabase = await createSupabaseServer();
   const existing = await supabase

@@ -9,13 +9,15 @@ export async function POST(req: NextRequest) {
     familyName?: string;
     tagline?: string;
     members?: NewMemberInput[];
+    redirect?: boolean;
   };
   if (body.mode === "join") {
     if (!body.inviteCode?.trim() || !body.memberName?.trim()) {
       return NextResponse.json({ error: "Enter the invite code and your full member name." }, { status: 400 });
     }
     try {
-      return NextResponse.json(await joinFamily({ inviteCode: body.inviteCode, memberName: body.memberName }));
+      const result = await joinFamily({ inviteCode: body.inviteCode, memberName: body.memberName });
+      return NextResponse.json({ ...result, redirect: body.redirect !== false });
     } catch (err) {
       return NextResponse.json(
         { error: err instanceof Error ? err.message : "Could not join family." },
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
       tagline: body.tagline,
       members,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, redirect: body.redirect !== false });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not save family.";
     return NextResponse.json({ error: message }, { status: 400 });

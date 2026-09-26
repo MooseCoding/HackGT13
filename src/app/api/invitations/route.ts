@@ -1,10 +1,11 @@
 import { createFamilyInvitation, listFamilyInvitations } from "@/lib/invitations";
-import { resolveFamilyId } from "@/lib/data";
+import { requireFamilyAccess, resolveFamilyId } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
+    await requireFamilyAccess(familyId);
     const origin = req.nextUrl.origin;
     const invitations = await listFamilyInvitations(familyId, origin);
     return NextResponse.json({ invitations });
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
       role?: string;
     };
     const familyId = body.familyId || (await resolveFamilyId());
+    await requireFamilyAccess(familyId);
     const invite = await createFamilyInvitation({
       familyId,
       name: body.name || "",
