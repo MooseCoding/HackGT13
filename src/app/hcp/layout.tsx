@@ -1,7 +1,6 @@
 import { HearthMark } from "@/components/HearthMark";
 import { HcpNav } from "@/components/hcp/HcpNav";
 import { getAuthUser, isClinicianUser } from "@/lib/auth";
-import { hcpReportingMode } from "@/lib/hcp-settings-server";
 import { isDemoMode } from "@/lib/mode-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -15,7 +14,7 @@ export default async function HcpLayout({ children }: { children: React.ReactNod
     if (!user) redirect("/login/clinician?next=/hcp");
     if (!(await isClinicianUser())) redirect("/login/clinician?error=access-denied&next=/hcp");
   }
-  const [user, reportingMode] = await Promise.all([getAuthUser(), hcpReportingMode()]);
+  const user = await getAuthUser();
 
   return (
     <div className="flex min-h-full flex-col bg-ground text-ink">
@@ -26,7 +25,7 @@ export default async function HcpLayout({ children }: { children: React.ReactNod
             <span className="text-lg font-semibold">Hearth</span>
             <span className="text-sm text-mute">Clinical</span>
           </Link>
-          <HcpNav userName={user?.name ?? null} reportingMode={reportingMode} />
+          <HcpNav userName={user?.name ?? null} />
         </div>
       </header>
       <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">

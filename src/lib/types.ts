@@ -180,6 +180,26 @@ export type SafeCheckInStatus = {
   primaryContactName?: string;
 };
 
+export type WishlistStatus = "wishlist" | "ordered" | "purchased";
+
+export type WishlistItem = {
+  id: string;
+  familyId: FamilyId;
+  /** Who wants or needs this */
+  forMemberId: MemberId;
+  title: string;
+  note?: string;
+  kind?: CommerceKind;
+  items?: CommerceItem[];
+  estimatedTotal?: number;
+  sourcePostId?: string;
+  createdBy: MemberId;
+  createdAt: string;
+  status: WishlistStatus;
+  orderedBy?: MemberId;
+  orderedAt?: string;
+};
+
 export type ReminderStatus = "open" | "done" | "snoozed";
 
 export type Reminder = {

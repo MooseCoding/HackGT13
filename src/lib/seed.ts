@@ -1,7 +1,7 @@
 import { atDay } from "./clock";
 import { dmThreadId } from "./chat";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
-import type { CalendarEvent, Family, Member, Post, Reminder } from "./types";
+import type { CalendarEvent, Family, Member, Post, Reminder, WishlistItem } from "./types";
 
 export const families: Family[] = [
   {
@@ -962,4 +962,76 @@ export const events: CalendarEvent[] = [
     calendarScope: "family",
   },
   ...alvarezPersonalEvents,
+];
+
+export const wishlistItems: WishlistItem[] = [
+  {
+    id: "wl1",
+    familyId: "alvarez",
+    forMemberId: "sofia",
+    title: "Wireless earbuds",
+    note: "For the bus commute — birthday in October",
+    estimatedTotal: 49.99,
+    createdBy: "sofia",
+    createdAt: atDay(5, 14, 20),
+    status: "wishlist",
+  },
+  {
+    id: "wl2",
+    familyId: "alvarez",
+    forMemberId: "elena",
+    title: "Cozy throw blanket",
+    note: "Something warm for the living room couch",
+    estimatedTotal: 34.99,
+    createdBy: "priya",
+    createdAt: atDay(4, 9, 10),
+    status: "wishlist",
+  },
+  {
+    id: "wl3",
+    familyId: "alvarez",
+    forMemberId: "sofia",
+    title: "Volcano science project supplies",
+    note: "Baking soda, food coloring, poster board",
+    kind: "supply",
+    items: [
+      { name: "Baking soda", quantity: 1 },
+      { name: "Food coloring", quantity: 1 },
+      { name: "Poster board", quantity: 1 },
+    ],
+    estimatedTotal: 18.5,
+    sourcePostId: "demo-commerce-volcano",
+    createdBy: "priya",
+    createdAt: atDay(0, 12, 25),
+    status: "wishlist",
+  },
+  {
+    id: "wl4",
+    familyId: "alvarez",
+    forMemberId: "elena",
+    title: "Chamomile tea (3 boxes)",
+    note: "Her usual brand — evening ritual",
+    kind: "supply",
+    items: [{ name: "Chamomile tea", quantity: 3 }],
+    estimatedTotal: 12.99,
+    sourcePostId: "demo-commerce-tea",
+    createdBy: "miguel",
+    createdAt: atDay(0, 11, 30),
+    status: "ordered",
+    orderedBy: "miguel",
+    orderedAt: atDay(0, 14, 5),
+  },
+  {
+    id: "wl5",
+    familyId: "alvarez",
+    forMemberId: "james",
+    title: "GT hoodie (medium)",
+    note: "Navy or gold",
+    estimatedTotal: 54.0,
+    createdBy: "james",
+    createdAt: atDay(8, 16, 0),
+    status: "purchased",
+    orderedBy: "priya",
+    orderedAt: atDay(7, 10, 0),
+  },
 ];

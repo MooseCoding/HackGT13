@@ -6,8 +6,15 @@ import { aiConfigured, groqConfigured, museConfigured } from "./ai/config";
 import { buildDigest } from "./digest";
 import { enrichDigestTimeMachine } from "./digest-time-machine";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
-import { events as seedEvents, families, members, posts as seedPosts, reminders as seedReminders } from "./seed";
-import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post, Reminder } from "./types";
+import {
+  events as seedEvents,
+  families,
+  members,
+  posts as seedPosts,
+  reminders as seedReminders,
+  wishlistItems as seedWishlist,
+} from "./seed";
+import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post, Reminder, WishlistItem } from "./types";
 
 /** In-memory mock backend used when demo mode is on. */
 
@@ -17,6 +24,7 @@ type Store = {
   posts: Post[];
   events: CalendarEvent[];
   reminders: Reminder[];
+  wishlist: WishlistItem[];
   digests: Digest[];
 };
 
@@ -29,6 +37,7 @@ function empty(): Store {
     posts: structuredClone(seedPosts),
     events: structuredClone(seedEvents),
     reminders: structuredClone(seedReminders),
+    wishlist: structuredClone(seedWishlist),
     digests: [],
   };
   seedDemoCheckInState();
@@ -38,6 +47,7 @@ function empty(): Store {
 
 function hydrateStore(store: Store): Store {
   if (!store.reminders) store.reminders = structuredClone(seedReminders);
+  if (!store.wishlist) store.wishlist = structuredClone(seedWishlist);
   return store;
 }
 
@@ -153,6 +163,30 @@ export function patchReminder(id: string, familyId: string, patch: Partial<Remin
   if (idx < 0) return null;
   store.reminders[idx] = { ...store.reminders[idx], ...patch };
   return store.reminders[idx];
+}
+
+export function wishlistOf(familyId: string) {
+  const order: Record<WishlistItem["status"], number> = { wishlist: 0, ordered: 1, purchased: 2 };
+  return db()
+    .wishlist.filter((w) => w.familyId === familyId)
+    .sort((a, b) => {
+      const statusDiff = order[a.status] - order[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+}
+
+export function addWishlistItem(item: WishlistItem) {
+  db().wishlist.push(item);
+  return item;
+}
+
+export function patchWishlistItem(id: string, familyId: string, patch: Partial<WishlistItem>) {
+  const store = db();
+  const idx = store.wishlist.findIndex((w) => w.id === id && w.familyId === familyId);
+  if (idx < 0) return null;
+  store.wishlist[idx] = { ...store.wishlist[idx], ...patch };
+  return store.wishlist[idx];
 }
 
 function digestMatchesPreference(digest: Digest, preferLocal: boolean) {

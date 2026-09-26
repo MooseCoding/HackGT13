@@ -63,14 +63,14 @@ export function ClinicianLoginPage({
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2">
             <HearthMark className="h-6 w-6" />
-            <span className="font-brand text-xl">Familyr</span>
+            <span className="font-brand text-xl">Hearth</span>
             <span className="text-sm font-semibold text-chrome-fg-muted">Clinical</span>
           </Link>
           <Link
             href="/"
             className="rounded-sm px-3 py-2 text-sm font-semibold text-chrome-fg-muted hover:text-chrome-fg"
           >
-            Back to Familyr home
+            Back to Hearth home
           </Link>
         </div>
       </header>
@@ -191,7 +191,7 @@ export function ClinicianLoginPage({
             </p>
             <p className="flex flex-wrap gap-x-4 gap-y-2">
               <Link href="/" className="font-medium underline-offset-4 hover:text-ink hover:underline">
-                Back to Familyr home
+                Back to Hearth home
               </Link>
               <Link href="/privacy" className="font-medium underline-offset-4 hover:text-ink hover:underline">
                 Privacy

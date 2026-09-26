@@ -121,11 +121,22 @@ function CircleIcon({ className }: { className?: string }) {
   );
 }
 
+function ShoppingIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M3 4h2.5l1.5 9h9l2-7H6" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+      <circle cx="8" cy="16.5" r="1.25" fill="currentColor" />
+      <circle cx="14" cy="16.5" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
 const NAV_LINKS = [
   { href: "/family", label: "Messages", icon: MessagesIcon },
   { href: "/family/calendar", label: "Calendar", icon: CalendarIcon },
   { href: "/family/digest", label: DIGEST_NAME, icon: StoryIcon },
   { href: "/family/reminders", label: "Reminders", icon: RemindersIcon },
+  { href: "/family/shopping", label: "Shopping", icon: ShoppingIcon },
   { href: "/family/circle", label: "Circle", icon: CircleIcon },
 ] as const;
 

@@ -100,7 +100,7 @@ export function InsuranceSettings({
       </header>
 
       {demo && !lockedMemberId ? (
-        <section className="mt-6 border border-line bg-surface px-4 py-4">
+        <section className="mt-6 rounded-xl border border-line bg-surface px-4 py-4 shadow-sm shadow-black/[0.03]">
           <label className="block text-sm font-semibold text-ink" htmlFor="insurance-member">
             Family member
           </label>
@@ -108,7 +108,7 @@ export function InsuranceSettings({
             id="insurance-member"
             value={memberId}
             onChange={(e) => setMemberId(e.target.value)}
-            className="mt-2 min-h-11 w-full border border-line bg-ground px-3 text-sm text-ink"
+            className="mt-2 min-h-11 w-full rounded-lg border border-line bg-ground px-3 text-sm text-ink outline-none transition-colors hover:border-ink/25 focus:border-ember"
           >
             {members.map((candidate) => (
               <option key={candidate.id} value={candidate.id}>
@@ -119,7 +119,7 @@ export function InsuranceSettings({
         </section>
       ) : null}
 
-      <section className="mt-8 border border-line bg-surface px-4 py-5">
+      <section className="mt-8 rounded-xl border border-line bg-surface px-4 py-5 shadow-sm shadow-black/[0.03]">
         <h2 className="text-sm font-semibold text-ink">Coverage details</h2>
         <p className="mt-2 text-sm text-mute">
           Demo only — stored locally for this session. Real eligibility checks would run against a payer API.
@@ -131,7 +131,7 @@ export function InsuranceSettings({
             <select
               value={carrierId}
               onChange={(e) => setCarrierId(e.target.value)}
-              className="mt-2 min-h-11 w-full border border-line bg-ground px-3 text-sm"
+              className="mt-2 min-h-11 w-full rounded-lg border border-line bg-ground px-3 text-sm outline-none transition-colors hover:border-ink/25 focus:border-ember"
             >
               <option value="">Select a carrier</option>
               {INSURANCE_CARRIERS.map((carrier) => (
@@ -148,7 +148,7 @@ export function InsuranceSettings({
               value={policyMemberId}
               onChange={(e) => setPolicyMemberId(e.target.value)}
               placeholder="Policy or Medicare number"
-              className="mt-2 min-h-11 w-full border border-line bg-ground px-3 text-sm"
+              className="mt-2 min-h-11 w-full rounded-lg border border-line bg-ground px-3 text-sm outline-none transition-colors hover:border-ink/25 focus:border-ember"
             />
           </label>
 
@@ -159,7 +159,7 @@ export function InsuranceSettings({
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
               placeholder="GRP-0000"
-              className="mt-2 min-h-11 w-full border border-line bg-ground px-3 text-sm"
+              className="mt-2 min-h-11 w-full rounded-lg border border-line bg-ground px-3 text-sm outline-none transition-colors hover:border-ink/25 focus:border-ember"
             />
           </label>
         </div>
@@ -174,14 +174,14 @@ export function InsuranceSettings({
           type="button"
           onClick={saveInsurance}
           disabled={busy || !carrierId}
-          className="mt-5 min-h-11 rounded-sm bg-ember px-4 text-sm font-semibold text-white hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 min-h-11 w-full rounded-lg bg-ember px-4 text-sm font-semibold text-white transition-colors hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {busy ? "Saving…" : "Save insurance"}
         </button>
       </section>
 
       {previewInsurance ? (
-        <section className="mt-6 border border-emerald-200 bg-emerald-50 px-4 py-5" aria-live="polite">
+        <section className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-5" aria-live="polite">
           <h2 className="text-sm font-semibold text-emerald-950">In-network clinicians</h2>
           <p className="mt-2 text-sm leading-6 text-emerald-950/90">
             {matchedClinicians.length

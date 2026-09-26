@@ -63,7 +63,7 @@ export function ClinicalSharingSettings({
         </p>
       </header>
 
-      <section className="mt-8 rounded-sm border border-amber-200 bg-amber-50 px-4 py-4" aria-labelledby="clinical-warning-heading">
+      <section className="mt-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4" aria-labelledby="clinical-warning-heading">
         <h2 id="clinical-warning-heading" className="text-sm font-semibold text-amber-950">
           Before you turn this on
         </h2>
@@ -81,7 +81,7 @@ export function ClinicalSharingSettings({
         </p>
       </section>
 
-      <section className="mt-8 border border-rule bg-surface px-4 py-5" aria-labelledby="clinical-status-heading">
+      <section className="mt-8 rounded-xl border border-rule bg-surface px-4 py-5 shadow-sm shadow-black/[0.03]" aria-labelledby="clinical-status-heading">
         <h2 id="clinical-status-heading" className="text-sm font-semibold text-ink">Your profile</h2>
         <p className="mt-2 text-sm text-mute">
           Clinician sharing is{" "}
@@ -104,7 +104,7 @@ export function ClinicalSharingSettings({
               type="button"
               onClick={() => updateConsent(false)}
               disabled={busy}
-              className="min-h-11 rounded-sm border border-rule px-4 text-sm font-medium text-ink hover:bg-accent-tint disabled:opacity-60"
+              className="min-h-11 w-full rounded-lg border border-rule px-4 text-sm font-medium text-ink transition-colors hover:border-ink/25 hover:bg-accent-tint disabled:opacity-60 sm:w-auto"
             >
               {busy ? "Saving…" : "Turn off clinician sharing"}
             </button>
@@ -127,7 +127,7 @@ export function ClinicalSharingSettings({
               type="button"
               onClick={() => updateConsent(true)}
               disabled={busy || !acknowledged}
-              className="min-h-11 rounded-sm bg-ember px-4 text-sm font-semibold text-white hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-11 w-full rounded-lg bg-ember px-4 text-sm font-semibold text-white transition-colors hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {busy ? "Saving…" : "Turn on clinician sharing"}
             </button>

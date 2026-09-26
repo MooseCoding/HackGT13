@@ -1,7 +1,5 @@
 "use client";
 
-import { HcpReportingModeToggle } from "@/components/hcp/HcpReportingModeToggle";
-import type { HcpReportingMode } from "@/lib/hcp-settings";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,13 +12,7 @@ function navClass(active: boolean) {
     : "inline-flex min-h-9 items-center px-3 text-sm font-semibold text-mute hover:text-ink";
 }
 
-export function HcpNav({
-  userName,
-  reportingMode,
-}: {
-  userName: string | null;
-  reportingMode: HcpReportingMode;
-}) {
+export function HcpNav({ userName }: { userName: string | null }) {
   const pathname = usePathname();
   const onPatients = pathname === "/hcp" || pathname.startsWith("/hcp/patients");
   const onLive = pathname.startsWith("/hcp/live");
@@ -35,8 +27,6 @@ export function HcpNav({
           Live signal
         </Link>
       ) : null}
-      <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
-      <HcpReportingModeToggle initialMode={reportingMode} />
       <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
       <span className="hidden text-xs text-mute sm:block">{userName ?? "Demo clinician"}</span>
     </nav>

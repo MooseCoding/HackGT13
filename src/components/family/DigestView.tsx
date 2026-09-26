@@ -107,8 +107,6 @@ function MemoryCard({
 export function DigestView({ initial: digest }: { initial: Digest }) {
   const easy = useLargerText();
   const timeZone = useTimezone();
-  const [showStorybook, setShowStorybook] = useState(false);
-  const [storyPage, setStoryPage] = useState(0);
   const [expandedMemory, setExpandedMemory] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const cancelRef = useRef(false);
@@ -171,7 +169,7 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
         </p>
       </header>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4">
         <button
           type="button"
           onClick={playFamilyRadio}
@@ -179,15 +177,6 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
         >
           {playing ? "Stop Family Radio" : "Family Radio"}
         </button>
-        {storybook.length ? (
-          <button
-            type="button"
-            onClick={() => setShowStorybook((v) => !v)}
-            className={`rounded-sm border font-medium ${showStorybook ? "border-ember bg-accent-tint text-ink" : "border-rule text-ink hover:bg-accent-tint"} ${btn}`}
-          >
-            {showStorybook ? "Hide storybook" : "Storybook"}
-          </button>
-        ) : null}
       </div>
 
       {onThisDay.length ? (
@@ -213,6 +202,14 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
         {digest.narrative}
       </p>
 
+      {storybook.length ? (
+        <div className="mt-8 space-y-4">
+          {storybook.map((page) => (
+            <StorybookSpread key={page.id} page={page} easy={easy} />
+          ))}
+        </div>
+      ) : null}
+
       {digest.highlights.length ? (
         <section className="mt-8 border-t border-rule pt-6">
           <h2 className="text-sm font-bold text-ink">Moments from the week</h2>
@@ -231,36 +228,6 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
               );
             })}
           </ul>
-        </section>
-      ) : null}
-
-      {showStorybook && storybook.length ? (
-        <section className="mt-8 border-t border-rule pt-6">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-bold text-ink">Storybook</h2>
-            <p className="text-xs text-mute">
-              {storyPage + 1} / {storybook.length}
-            </p>
-          </div>
-          <StorybookSpread page={storybook[storyPage]} easy={easy} />
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={storyPage === 0}
-              onClick={() => setStoryPage((p) => Math.max(0, p - 1))}
-              className="border border-rule px-3 py-1.5 text-sm disabled:opacity-40"
-            >
-              ←
-            </button>
-            <button
-              type="button"
-              disabled={storyPage >= storybook.length - 1}
-              onClick={() => setStoryPage((p) => Math.min(storybook.length - 1, p + 1))}
-              className="border border-rule px-3 py-1.5 text-sm disabled:opacity-40"
-            >
-              →
-            </button>
-          </div>
         </section>
       ) : null}
     </article>
