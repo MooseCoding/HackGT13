@@ -51,6 +51,26 @@ a {
   font-weight: 700;
 }
 
+/* Frosted-glass chat look */
+.chat-surface {
+  background: linear-gradient(135deg, #e3def5 0%, #ece3f1 38%, #f7e7ee 68%, #e9edf7 100%);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+}
+
+.glass-soft {
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
 .easy body,
 html.easy {
   font-size: 18px;
