@@ -1,0 +1,94 @@
+import { analyzeMember } from "./analysis";
+import { maybeLlmDigest, templateDigest } from "./digest";
+import { events as seedEvents, families, members, posts as seedPosts } from "./seed";
+import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post } from "./types";
+
+type Store = {
+  families: Family[];
+  members: Member[];
+  posts: Post[];
+  events: CalendarEvent[];
+  digests: Digest[];
+};
+
+const g = globalThis as typeof globalThis & { __hearth?: Store };
+
+function empty(): Store {
+  return {
+    families: structuredClone(families),
+    members: structuredClone(members),
+    posts: structuredClone(seedPosts),
+    events: structuredClone(seedEvents),
+    digests: [],
+  };
+}
+
+export function db(): Store {
+  if (!g.__hearth) g.__hearth = empty();
+  return g.__hearth;
+}
+
+export function resetStore() {
+  g.__hearth = empty();
+}
+
+export function familyById(id: string) {
+  return db().families.find((f) => f.id === id) ?? db().families[0];
+}
+
+export function membersOf(familyId: string) {
+  return db().members.filter((m) => m.familyId === familyId);
+}
+
+export function postsOf(familyId: string) {
+  return db()
+    .posts.filter((p) => p.familyId === familyId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export function eventsOf(familyId: string) {
+  return db()
+    .events.filter((e) => e.familyId === familyId)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}
+
+export function addPost(post: Post) {
+  db().posts.push(post);
+  return post;
+}
+
+export function addEvent(event: CalendarEvent) {
+  db().events.push(event);
+  return event;
+}
+
+export async function digestFor(familyId: string, useLlm = false) {
+  const store = db();
+  const existing = store.digests.find((d) => d.familyId === familyId);
+  if (existing && !useLlm) return existing;
+  const digest = useLlm
+    ? await maybeLlmDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId))
+    : templateDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
+  store.digests = store.digests.filter((d) => d.familyId !== familyId);
+  store.digests.push(digest);
+  return digest;
+}
+
+export function optedInPatients(): PatientSnapshot[] {
+  return db()
+    .members.filter((m) => m.clinicalOptIn)
+    .map((m) => analyzeMember(m.id, db().posts.filter((p) => p.familyId === m.familyId)));
+}
+
+export function patientById(id: string) {
+  const member = db().members.find((m) => m.id === id);
+  if (!member || !member.clinicalOptIn) return null;
+  return {
+    member,
+    family: familyById(member.familyId),
+    snapshot: analyzeMember(id, db().posts.filter((p) => p.familyId === member.familyId)),
+    posts: db()
+      .posts.filter((p) => p.authorId === id)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  };
+}

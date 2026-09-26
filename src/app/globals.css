@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --ember: #c45c26;
+  --ember-dark: #8f3b16;
+  --cream: #f6efe4;
+  --paper: #fffaf3;
+  --ink: #2c2118;
+  --mute: #6b5748;
+  --line: #e6d7c6;
+  --clinic: #0f766e;
+  --clinic-ink: #0b1f24;
+  --clinic-paper: #f4f8f8;
+}
+
+@theme inline {
+  --color-ember: var(--ember);
+  --color-ember-dark: var(--ember-dark);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-clinic: var(--clinic);
+  --font-sans: var(--font-nunito);
+  --font-serif: var(--font-fraunces);
+}
+
+html,
+body {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+a {
+  text-decoration: none;
+}
+
+.easy body,
+html.easy {
+  font-size: 20px;
+}
+
+.easy button,
+.easy a.big {
+  min-height: 56px;
+}
