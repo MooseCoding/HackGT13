@@ -156,6 +156,59 @@ export function generateStory(
   return { title, narrative: narrativeParts.join(" "), theme };
 }
 
+// ── week highlights (keyword-scored moments for digest) ───────────────
+
+const HIGHLIGHT_PATTERNS: { keywords: string[]; weight: number }[] = [
+  { keywords: ["win", "won", "wins", "winning", "victory"], weight: 3 },
+  { keywords: ["proud", "amazing", "wonderful", "fantastic", "awesome", "incredible"], weight: 2 },
+  { keywords: ["great job", "well done", "nailed it", "so good"], weight: 2 },
+  { keywords: ["celebrate", "celebration", "celebrated", "milestone"], weight: 2 },
+  { keywords: ["love", "loved", "grateful", "thankful", "blessed"], weight: 2 },
+  { keywords: ["happy", "excited", "thrilled", "joy", "smile", "smiled"], weight: 1 },
+  { keywords: ["first time", "finally", "achieved", "success", "succeeded"], weight: 2 },
+  { keywords: ["best", "breakthrough", "accomplished"], weight: 1 },
+];
+
+function matchesHighlightKeyword(text: string, keyword: string): boolean {
+  const lower = text.toLowerCase();
+  if (keyword.includes(" ")) return lower.includes(keyword);
+  const tokens = tokenize(lower);
+  return tokens.some((t) => t === keyword || (keyword.length >= 5 && t.startsWith(keyword)));
+}
+
+function scoreHighlightText(text: string): number {
+  let score = 0;
+  for (const { keywords, weight } of HIGHLIGHT_PATTERNS) {
+    for (const keyword of keywords) {
+      if (matchesHighlightKeyword(text, keyword)) score += weight;
+    }
+  }
+  return score;
+}
+
+/** Pick up to `limit` keyword-matched moments from the week's posts (no API). */
+export function pickWeekHighlights(
+  posts: Post[],
+  memberName: (id: string) => string,
+  limit = 5,
+): string[] {
+  const scored = posts.map((p) => {
+    const text = p.transcript || p.body;
+    const bit = text.slice(0, 110);
+    return {
+      score: scoreHighlightText(text),
+      createdAt: p.createdAt,
+      line: `${memberName(p.authorId)}: ${bit}${bit.length >= 110 ? "…" : ""}`,
+    };
+  });
+
+  return scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score || b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit)
+    .map((s) => s.line);
+}
+
 // ── context clues (keyword relevance for HCP evidence) ──────────────
 
 const CLUE_PATTERNS: { tag: string; keywords: string[]; weight: number }[] = [
@@ -262,6 +315,27 @@ export function analyzeCalendarText(raw: string): CalendarParseHint {
   return { eventType, durationHours, recurring, confidence, suggestions };
 }
 
+const TITLE_SMALL = new Set(["a", "an", "the", "at", "in", "on", "to", "for", "and", "or", "of", "with"]);
+
+/** Title-case event names: "dinner at burger king" → "Dinner at Burger King". */
+export function capitalizeEventTitle(title: string) {
+  return title
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, i) => {
+      if (i > 0 && TITLE_SMALL.has(word.toLowerCase())) return word.toLowerCase();
+      const parts = word.split(/(['-])/);
+      return parts
+        .map((part, j) => {
+          if (part === "'" || part === "-") return part;
+          if (j > 0 && part.length <= 2) return part.toLowerCase();
+          return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+        })
+        .join("");
+    })
+    .join(" ");
+}
+
 export function cleanEventTitle(raw: string, hint: CalendarParseHint): string {
   let title = raw.replace(/\b(this|next|every|on)\s+/gi, "").trim();
   if (!title && hint.eventType) {
@@ -275,5 +349,6 @@ export function cleanEventTitle(raw: string, hint: CalendarParseHint): string {
     title = labels[hint.eventType] ?? "Event";
   }
   if (title.length > 72) title = title.slice(0, 69) + "…";
-  return title || raw.trim().slice(0, 72);
+  title = title || raw.trim().slice(0, 72);
+  return capitalizeEventTitle(title);
 }

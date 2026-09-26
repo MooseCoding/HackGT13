@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ draft?: string }>;
+  searchParams: Promise<{ draft?: string; autoCall?: string }>;
 }) {
   const familyId = await resolveFamilyId();
   const q = await searchParams;
@@ -17,6 +17,7 @@ export default async function CalendarPage({
         familyId={familyId}
         supabaseConfig={getPublicSupabaseConfig()}
         initialDraft={q.draft?.trim() || ""}
+        offerWeeklyCalls={q.autoCall === "1"}
       />
     </div>
   );

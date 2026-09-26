@@ -1,6 +1,7 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
+import { DIGEST_NAME } from "@/lib/digest";
 import type { Digest } from "@/lib/types";
 import { useState } from "react";
 
@@ -26,7 +27,8 @@ export function DigestView({ initial }: { initial: Digest }) {
   return (
     <article className="max-w-2xl">
       <header className="border-b border-line pb-4">
-        <h1 className={`font-semibold ${easy ? "text-2xl" : "text-xl"}`}>{digest.title}</h1>
+        <p className="text-sm font-medium uppercase tracking-wide text-ember">{DIGEST_NAME}</p>
+        <h1 className={`mt-1 font-semibold ${easy ? "text-2xl" : "text-xl"}`}>{digest.title}</h1>
         <p className="mt-1 text-sm text-mute">
           Week of{" "}
           {new Date(digest.weekOf + "T12:00:00").toLocaleDateString("en-US", {

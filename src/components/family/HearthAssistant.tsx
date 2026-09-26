@@ -1,5 +1,7 @@
 "use client";
 
+import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant";
+import { DIGEST_NAME } from "@/lib/digest";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,73 +10,68 @@ type Turn = { role: "user" | "assistant"; content: string };
 const STARTERS = [
   "How do I invite someone?",
   "What’s on the calendar?",
-  "How does This week work?",
-  "What does clinician sharing mean?",
+  `How does ${DIGEST_NAME} work?`,
+  "How do weekly family calls work?",
 ];
 
-export function HearthAssistant({ familyId }: { familyId: string }) {
+export function HearthAssistant({ context }: { context: AssistantContext }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([
     {
       role: "assistant",
-      content:
-        "Hi — I’m Hearth Assistant. Ask about chats, calendar, This week, invites, Easy mode, or clinician sharing.",
+      content: `Hi! I’m Hearth Assistant. Ask about chats, calendar, ${DIGEST_NAME}, invites, or Easy mode. I'm here to help!`,
     },
   ]);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ block: "end" });
   }, [turns, open]);
 
-  async function send(text?: string) {
-    const message = (text ?? input).trim();
-    if (!message || busy) return;
-    setInput("");
-    const prior = turns.slice(-10);
-    setTurns((prev) => [...prev, { role: "user", content: message }]);
-    setBusy(true);
-    try {
-      const res = await fetch("/api/assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          familyId,
-          path,
-          history: prior,
-        }),
-      });
-      const data = (await res.json()) as { reply?: string; error?: string; source?: string };
-      const reply =
-        data.reply ||
-        data.error ||
-        "I couldn’t answer just now. Try again, or open Chats / Calendar / This week from the header.";
-      setTurns((prev) => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setTurns((prev) => [
-        ...prev,
-        { role: "assistant", content: "Something went wrong reaching the assistant. Check GROQ_API_KEY or try again." },
-      ]);
-    } finally {
-      setBusy(false);
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(ev: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(ev.target as Node)) setOpen(false);
     }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  function send(text?: string) {
+    const message = (text ?? input).trim();
+    if (!message) return;
+    setInput("");
+    const ctx: AssistantContext = {
+      ...context,
+      path,
+    };
+    const reply = answerFamilyAssistant(message, ctx);
+    setTurns((prev) => [...prev, { role: "user", content: message }, { role: "assistant", content: reply }]);
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+    <div className="relative" ref={panelRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="min-h-11 rounded-md border border-line px-3 text-sm font-medium text-ember hover:bg-cream"
+        aria-expanded={open}
+        aria-controls="hearth-assistant-panel"
+      >
+        {open ? "Close help" : "Ask Hearth"}
+      </button>
       {open ? (
         <section
-          className="flex h-[min(70dvh,520px)] w-[min(100vw-2rem,380px)] flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-lg"
+          id="hearth-assistant-panel"
+          className="fixed inset-x-3 top-14 z-50 flex h-[min(60dvh,440px)] flex-col overflow-hidden rounded-2xl border border-line bg-paper shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+0.5rem)] sm:w-[22rem]"
           aria-label="Hearth Assistant"
         >
           <header className="flex items-center justify-between border-b border-line bg-cream px-3 py-2">
             <div>
               <p className="text-sm font-semibold text-ink">Hearth Assistant</p>
-              <p className="text-xs text-mute">Chats · Calendar · This week · Care team</p>
             </div>
             <button
               type="button"
@@ -89,16 +86,13 @@ export function HearthAssistant({ familyId }: { familyId: string }) {
             {turns.map((t, i) => (
               <div
                 key={`${t.role}-${i}`}
-                className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-6 ${
-                  t.role === "user"
-                    ? "ml-auto bg-ember text-white"
-                    : "mr-auto bg-cream text-ink"
+                className={`max-w-[90%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-6 ${
+                  t.role === "user" ? "ml-auto bg-ember text-white" : "mr-auto bg-cream text-ink"
                 }`}
               >
                 {t.content}
               </div>
             ))}
-            {busy ? <p className="text-xs text-mute">Thinking…</p> : null}
             <div ref={bottomRef} />
           </div>
 
@@ -121,7 +115,7 @@ export function HearthAssistant({ familyId }: { familyId: string }) {
             className="flex gap-2 border-t border-line p-2"
             onSubmit={(e) => {
               e.preventDefault();
-              void send();
+              send();
             }}
           >
             <label className="sr-only" htmlFor="hearth-assistant-input">
@@ -133,11 +127,10 @@ export function HearthAssistant({ familyId }: { familyId: string }) {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about Hearth…"
               className="min-h-11 flex-1 rounded-xl border border-line bg-paper px-3 text-sm outline-none focus:border-ember"
-              disabled={busy}
             />
             <button
               type="submit"
-              disabled={busy || !input.trim()}
+              disabled={!input.trim()}
               className="min-h-11 rounded-xl bg-ember px-4 text-sm font-medium text-white disabled:opacity-50"
             >
               Send
@@ -145,15 +138,6 @@ export function HearthAssistant({ familyId }: { familyId: string }) {
           </form>
         </section>
       ) : null}
-
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="min-h-12 rounded-full bg-ember px-5 text-sm font-semibold text-white shadow-md hover:bg-ember-dark"
-        aria-expanded={open}
-      >
-        {open ? "Hide assistant" : "Ask Hearth"}
-      </button>
     </div>
   );
 }

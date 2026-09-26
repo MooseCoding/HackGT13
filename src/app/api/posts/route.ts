@@ -1,8 +1,15 @@
-import { now } from "@/lib/clock";
-import { addPostRow, membersOf, postingIdentity, postsForThread, postsOf, resolveFamilyId } from "@/lib/data";
+import { mergedEventsOf } from "@/lib/calendar-data";
+import { parseEvent } from "@/lib/calendar-parse";
+import { inCalendarWindow } from "@/lib/calendar-window";
+import { eventsMatch } from "@/lib/calendar-merge";
+import { postThreadId } from "@/lib/chat";
+import { calendarAnchor, now } from "@/lib/clock";
+import { addEventRow, addPostRow, membersOf, postingIdentity, postsForThread, postsOf, resolveFamilyId } from "@/lib/data";
+import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
+import { googleAccessToken, syncEventsToGoogle, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
-import { suggestScheduleFromText } from "@/lib/schedule-detect";
-import type { Post, PostKind } from "@/lib/types";
+import { findScheduleProposalForConfirmation, suggestScheduleFromText } from "@/lib/schedule-detect";
+import type { CalendarEvent, Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -30,12 +37,88 @@ export async function POST(req: NextRequest) {
       threadId: body.threadId,
     };
     const saved = await addPostRow(post);
-    const members = await membersOf(identity.familyId);
-    const scheduleSuggestion = suggestScheduleFromText(
+    const demo = await isDemoMode();
+    const anchor = calendarAnchor(demo);
+    const [members, events] = await Promise.all([
+      membersOf(identity.familyId),
+      mergedEventsOf(identity.familyId, { anchor }),
+    ]);
+    const scheduleSuggestion = suggestScheduleFromText(post.transcript || post.body, members, events, {
+      familyId: identity.familyId,
+      createdBy: identity.memberId,
+      anchor,
+    });
+
+    let calendarEvent: CalendarEvent | null = null;
+    let calendarEvents: CalendarEvent[] | undefined;
+    const threadPosts = await postsForThread(identity.familyId, postThreadId(saved));
+    const confirmedProposal = findScheduleProposalForConfirmation(
       post.transcript || post.body,
+      threadPosts,
+      saved.id,
       members,
+      events,
+      { familyId: identity.familyId, anchor },
     );
-    return NextResponse.json({ ...saved, scheduleSuggestion });
+
+    if (confirmedProposal) {
+      const googleToken = await googleAccessToken();
+      if (confirmedProposal.weeklyFamilyCall) {
+        const proposed = proposeWeeklyFamilyCalls(events, {
+          familyId: identity.familyId,
+          createdBy: identity.memberId,
+          members,
+          anchor,
+        });
+        const savedEvents: CalendarEvent[] = [];
+        for (const event of proposed) {
+          if (events.some((existing) => eventsMatch(existing, event))) continue;
+          savedEvents.push(
+            await addEventRow({
+              ...event,
+              calendarScope: "family",
+            }),
+          );
+        }
+        if (savedEvents.length) {
+          if (googleToken) {
+            const synced = await syncEventsToGoogle(googleToken, savedEvents);
+            calendarEvents = synced.events;
+            calendarEvent = synced.events[0];
+          } else {
+            calendarEvents = savedEvents;
+            calendarEvent = savedEvents[0];
+          }
+        }
+      } else {
+        const parsed = parseEvent(
+          confirmedProposal.sourceText,
+          members,
+          identity.memberId,
+          identity.familyId,
+          anchor,
+        );
+        const titled = { ...parsed, title: confirmedProposal.title };
+        if (inCalendarWindow(titled.startsAt, anchor) && !events.some((existing) => eventsMatch(existing, titled))) {
+          let row = await addEventRow({
+            ...titled,
+            id: `evt-f-${Date.now()}`,
+            calendarScope: "family",
+            attendees: members.map((m) => m.id),
+          });
+          if (googleToken) {
+            try {
+              row = await syncEventToGoogle(googleToken, row);
+            } catch (err) {
+              console.error("Google sync from chat:", err);
+            }
+          }
+          calendarEvent = row;
+        }
+      }
+    }
+
+    return NextResponse.json({ ...saved, scheduleSuggestion, calendarEvent, calendarEvents });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

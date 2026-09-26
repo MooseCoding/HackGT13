@@ -66,8 +66,7 @@ export function LandingPage({
           Come home to the story, not the group chat.
         </h1>
         <p className="mt-4 text-base leading-7 text-mute sm:text-lg">
-          Sign in, add the people you love, then use chats, the calendar, this week’s digest, and the
-          clinician view.
+          Sign in, add the people you love, then use chats, the calendar, and Hestia — your weekly hearth story.
         </p>
 
         <section

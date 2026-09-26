@@ -10,7 +10,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Hearth",
-  description: "Family messaging, calendar, weekly summary, and clinician view for opted-in members.",
+  description: "Family messaging, calendar, and a weekly summary in one place.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
