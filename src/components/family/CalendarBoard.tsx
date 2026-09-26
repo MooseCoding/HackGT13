@@ -1,13 +1,19 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
-import { exampleEventText } from "@/lib/calendar-parse";
 import { CAL_WEEKS, localDateKey } from "@/lib/calendar-window";
+import { searchEventsByClues } from "@/lib/chat-calendar-hints";
 import { calendarAnchor } from "@/lib/clock";
+import {
+  consistentSlotLabel,
+  isWeeklyFamilyCall,
+  proposalCopy,
+  proposeWeeklyFamilyCalls,
+} from "@/lib/family-call-schedule";
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import type { CalendarEvent } from "@/lib/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -21,39 +27,52 @@ function monthGrid(focus: Date) {
   });
 }
 
+function eventScope(e: CalendarEvent): "family" | "mine" | "unknown" {
+  if (e.calendarScope === "family" || e.calendarScope === "mine") return e.calendarScope;
+  if (e.isGoogleSynced) return "mine";
+  return e.attendees.length === 1 ? "mine" : "family";
+}
+
 function isFamilyEvent(e: CalendarEvent) {
-  // Family circle events + anything synced from Google so prior Google history shows up.
-  if (e.isGoogleSynced) return true;
-  return e.attendees.length > 1;
+  return eventScope(e) === "family";
 }
 
 function isMineEvent(e: CalendarEvent, meId: string) {
-  return e.isGoogleSynced || (e.attendees.length === 1 && e.createdBy === meId);
+  if (eventScope(e) !== "mine") return false;
+  if (e.isGoogleSynced) return true;
+  return e.createdBy === meId;
 }
 
 export function CalendarBoard({
   familyId,
   supabaseConfig,
   initialDraft = "",
+  offerWeeklyCalls = false,
 }: {
   familyId: string;
   supabaseConfig: PublicSupabaseConfig | null;
   initialDraft?: string;
+  offerWeeklyCalls?: boolean;
 }) {
-  const { me, easy } = useFamily();
+  const { me, members, easy } = useFamily();
   const [demo, setDemo] = useState(true);
   const [anchor, setAnchor] = useState(() => calendarAnchor(true));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [googleConnected, setGoogleConnected] = useState(false);
+  const [googlePersonalCount, setGooglePersonalCount] = useState(0);
   const [text, setText] = useState(initialDraft);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [view, setView] = useState<"family" | "mine">("family");
-  const [weekOff, setWeekOff] = useState(0);
+  const [monthOff, setMonthOff] = useState(0);
   const [pick, setPick] = useState<string | null>(null);
-  const [syncToGoogle, setSyncToGoogle] = useState(true);
+  const [syncToGoogle, setSyncToGoogle] = useState(false);
   const [msg, setMsg] = useState("");
+  const [query, setQuery] = useState("");
+  const [schedulingCalls, setSchedulingCalls] = useState(false);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const autoScheduledRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/demo")
@@ -68,19 +87,26 @@ export function CalendarBoard({
   useEffect(() => {
     if (demo || !supabaseConfig) return;
     const supabase = createSupabaseBrowser(supabaseConfig);
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setGoogleToken(session?.provider_token ?? null);
-    });
+    const refreshToken = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setGoogleToken(session?.provider_token ?? null);
+      });
+    };
+    refreshToken();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => refreshToken());
+    return () => sub.subscription.unsubscribe();
   }, [demo, supabaseConfig]);
 
   const load = useCallback(async () => {
     const q = new URLSearchParams({ familyId });
     if (googleToken) q.set("googleToken", googleToken);
-    const res = await fetch(`/api/events?${q}`);
+    const res = await fetch(`/api/events?${q}`, { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
       setEvents(data.events);
       setGoogleConnected(Boolean(data.googleConnected));
+      setGooglePersonalCount(Number(data.googlePersonalCount ?? 0));
+      setEventsLoaded(true);
     }
   }, [familyId, googleToken]);
 
@@ -89,19 +115,46 @@ export function CalendarBoard({
     return () => window.clearTimeout(timeout);
   }, [load]);
 
-  const focus = useMemo(() => {
-    const d = new Date(anchor);
-    d.setDate(d.getDate() + weekOff * 7);
-    return d;
-  }, [anchor, weekOff]);
+  const monthBounds = useMemo(() => {
+    const min = new Date(anchor);
+    min.setDate(min.getDate() - CAL_WEEKS * 7);
+    const max = new Date(anchor);
+    max.setDate(max.getDate() + CAL_WEEKS * 7);
+    const toOff = (d: Date) => (d.getFullYear() - anchor.getFullYear()) * 12 + (d.getMonth() - anchor.getMonth());
+    return { minOff: toOff(min), maxOff: toOff(max) };
+  }, [anchor]);
 
-  const month = new Date(focus.getFullYear(), focus.getMonth(), 1);
-  const cells = monthGrid(focus);
+  const displayMonth = useMemo(
+    () => new Date(anchor.getFullYear(), anchor.getMonth() + monthOff, 1),
+    [anchor, monthOff],
+  );
+  const cells = monthGrid(displayMonth);
+  const todayKey = localDateKey(anchor);
 
-  const shown = useMemo(
+  useEffect(() => {
+    if (googleConnected) setSyncToGoogle(true);
+  }, [googleConnected]);
+
+  const scoped = useMemo(
     () => events.filter((e) => (view === "family" ? isFamilyEvent(e) : isMineEvent(e, me.id))),
     [events, view, me.id],
   );
+
+  const shown = useMemo(() => searchEventsByClues(query, scoped), [query, scoped]);
+
+  const weeklyProposal = useMemo(
+    () =>
+      proposeWeeklyFamilyCalls(events, {
+        familyId,
+        createdBy: me.id,
+        members,
+        anchor,
+      }),
+    [events, familyId, me.id, members, anchor],
+  );
+
+  const hasWeeklyCalls = events.some(isWeeklyFamilyCall);
+  const needsWeeklyCalls = weeklyProposal.length > 0;
 
   const byDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -115,10 +168,49 @@ export function CalendarBoard({
   const picked = pick ? byDay.get(pick) ?? [] : [];
 
   const QUICK = [
-    "Doctor checkup tomorrow at 9 AM",
+    "Doctor appointment tomorrow at 9 AM",
     "Family dinner Friday at 6 PM",
-    "Soccer practice Saturday at 10 AM at Piedmont Park",
+    "Video call Sunday at 4 PM",
   ];
+
+  async function addWeeklyCalls() {
+    if (schedulingCalls || !weeklyProposal.length) return;
+    const rescheduling = events.some(isWeeklyFamilyCall);
+    setSchedulingCalls(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId,
+          authorId: me.id,
+          autoWeeklyCalls: true,
+          googleToken,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg(data.error || "Could not schedule family calls.");
+        return;
+      }
+      if (data.warning) {
+        setMsg(data.warning);
+      } else       if (data.count) {
+        const g = data.googleSynced ? ` · ${data.googleSynced} added to Google Calendar` : "";
+        const verb = rescheduling ? "Rescheduled" : "Scheduled";
+        setMsg(`${verb} ${data.count} weekly family call${data.count === 1 ? "" : "s"}${g}.`);
+      } else {
+        setMsg("No open time slots found in the next few weeks.");
+      }
+      if (data.events?.[0]) setPick(localDateKey(data.events[0].startsAt));
+      setView("family");
+      await load();
+    } finally {
+      setSchedulingCalls(false);
+    }
+  }
 
   async function create() {
     if (!text.trim() || busy) return;
@@ -127,6 +219,7 @@ export function CalendarBoard({
     try {
       const res = await fetch("/api/events", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           familyId,
@@ -143,7 +236,11 @@ export function CalendarBoard({
         return;
       }
       if (data.warning) setMsg(data.warning);
-      else setMsg(`Added to ${view === "family" ? "family" : "your"} calendar.`);
+      else if (data.googleEventId) {
+        setMsg(`Added to ${view === "family" ? "family" : "your"} calendar and Google Calendar.`);
+      } else {
+        setMsg(`Added to ${view === "family" ? "family" : "your"} calendar.`);
+      }
       setText("");
       setPick(localDateKey(data.startsAt));
       await load();
@@ -151,6 +248,21 @@ export function CalendarBoard({
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (
+      !eventsLoaded ||
+      !offerWeeklyCalls ||
+      !needsWeeklyCalls ||
+      autoScheduledRef.current ||
+      schedulingCalls
+    ) {
+      return;
+    }
+    autoScheduledRef.current = true;
+    void addWeeklyCalls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot after events load
+  }, [eventsLoaded, offerWeeklyCalls, needsWeeklyCalls, schedulingCalls]);
 
   async function remove(e: CalendarEvent) {
     if (deletingId) return;
@@ -165,7 +277,11 @@ export function CalendarBoard({
       if (!res.ok) throw new Error(data.error || "Could not delete event.");
       setEvents((prev) => prev.filter((x) => x.id !== e.id));
       if (pick && picked.length <= 1) setPick(null);
-      setMsg("Event removed.");
+      if (isWeeklyFamilyCall(e)) {
+        setMsg("Family call removed. Pick new times below when you're ready.");
+      } else {
+        setMsg("Event removed.");
+      }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Could not delete event.");
       await load();
@@ -189,26 +305,84 @@ export function CalendarBoard({
       </div>
       <p className="mt-1 text-xs text-mute">
         {view === "family"
-          ? "Shared family events plus Google Calendar history when connected"
-          : "Your personal events and Google Calendar"}
+          ? "Events shared with your family circle"
+          : googleConnected
+            ? `Your personal events · ${googlePersonalCount || "no"} Google Calendar event${googlePersonalCount === 1 ? "" : "s"} (5 past, 5 upcoming)`
+            : "Your personal events — connect Google Calendar to pull in recent events"}
       </p>
       {!demo && !googleConnected ? (
         <p className="mt-2 text-sm">
           <a href="/api/auth/google" className="font-medium text-ember underline-offset-2 hover:underline">
             Connect Google Calendar
           </a>{" "}
-          to pull in previous and upcoming events.
+          to see your personal schedule alongside family events.
         </p>
       ) : null}
-      {!demo && googleConnected ? (
-        <p className="mt-2 text-xs text-mute">Google Calendar connected · prior events sync into this view.</p>
+      {!demo && googleConnected && view === "mine" ? (
+        <p className="mt-2 text-xs text-mute">
+          Showing up to 5 past and 5 upcoming events from your Google Calendar.
+        </p>
       ) : null}
       {msg ? <p className="mt-2 text-sm text-ember-dark">{msg}</p> : null}
 
+      {view === "family" && needsWeeklyCalls ? (
+        <div className={`mt-3 border border-line bg-paper p-3 ${offerWeeklyCalls ? "ring-1 ring-ember" : ""}`}>
+          <p className="text-sm font-medium">
+            {hasWeeklyCalls ? "Reschedule family calls" : "Schedule weekly family calls"}
+          </p>
+          <p className="mt-0.5 text-xs text-mute">
+            {hasWeeklyCalls
+              ? `${weeklyProposal.length} open week${weeklyProposal.length === 1 ? "" : "s"} need${weeklyProposal.length === 1 ? "s" : ""} a call. ${consistentSlotLabel(weeklyProposal)}.`
+              : `${consistentSlotLabel(weeklyProposal)}. Hearth finds open times around your existing events${googleConnected ? " and Google Calendar" : ""}.`}
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {weeklyProposal.map((e) => (
+              <li key={e.startsAt} className="text-mute">
+                {proposalCopy(e)}
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => void addWeeklyCalls()}
+            disabled={schedulingCalls}
+            className="mt-2 bg-ember px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          >
+            {schedulingCalls
+              ? "Scheduling…"
+              : hasWeeklyCalls
+                ? `Reschedule ${weeklyProposal.length} call${weeklyProposal.length === 1 ? "" : "s"}`
+                : "Schedule these calls"}
+          </button>
+        </div>
+      ) : null}
+
+      {view === "family" && hasWeeklyCalls && !needsWeeklyCalls ? (
+        <p className="mt-2 text-xs text-mute">Weekly family calls are scheduled on the family calendar.</p>
+      ) : null}
+
+      <div className="mt-3">
+        <label className="sr-only" htmlFor="calendar-clue-search">
+          Search calendar by clue
+        </label>
+        <input
+          id="calendar-clue-search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search events by name, day, or location…"
+          className="w-full border border-line bg-paper px-3 py-2 text-sm"
+        />
+        {query.trim() ? (
+          <p className="mt-1 text-xs text-mute">
+            {shown.length ? `${shown.length} matching event${shown.length === 1 ? "" : "s"}` : "No matching events"}
+          </p>
+        ) : null}
+      </div>
+
       <div className="mt-3 flex items-center justify-between border border-line bg-paper px-3 py-2">
-        <button type="button" disabled={weekOff <= -CAL_WEEKS} onClick={() => setWeekOff((w) => w - 1)} className="px-2 disabled:opacity-30">←</button>
-        <span className="text-sm font-medium">{month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
-        <button type="button" disabled={weekOff >= CAL_WEEKS} onClick={() => setWeekOff((w) => w + 1)} className="px-2 disabled:opacity-30">→</button>
+        <button type="button" disabled={monthOff <= monthBounds.minOff} onClick={() => setMonthOff((m) => m - 1)} className="px-2 disabled:opacity-30">←</button>
+        <span className="text-sm font-medium">{displayMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+        <button type="button" disabled={monthOff >= monthBounds.maxOff} onClick={() => setMonthOff((m) => m + 1)} className="px-2 disabled:opacity-30">→</button>
       </div>
 
       <div className="grid grid-cols-7 border-x border-b border-line bg-paper text-center text-xs text-mute">
@@ -217,23 +391,21 @@ export function CalendarBoard({
         ))}
         {cells.map((d) => {
           const k = localDateKey(d);
-          const inMonth = d.getMonth() === month.getMonth();
+          const inMonth = d.getMonth() === displayMonth.getMonth();
           const dayEvents = byDay.get(k) ?? [];
-          const today = localDateKey(anchor);
+          const isToday = k === todayKey;
+          const isPick = pick === k;
           return (
             <button
               key={k}
               type="button"
               onClick={() => setPick(k)}
-              className={`min-h-[68px] border-t border-r border-line p-1 text-left ${!inMonth ? "bg-cream/50 text-mute" : ""} ${k === today ? "ring-1 ring-inset ring-ember" : ""} ${
-                /* CHANGE HERE: Replace "bg-cream" with your preferred blue utility class (e.g., "bg-blue-100") */
-                pick === k ? "bg-blue-100" : ""
-              }`}
+              className={`min-h-[68px] border-t border-r border-line p-1 text-left ${!inMonth ? "bg-cream/50 text-mute" : ""} ${isToday ? "ring-1 ring-inset ring-ember" : ""} ${isPick ? "bg-blue-100 ring-2 ring-inset ring-blue-400" : ""}`}
             >
-              <span className={`text-sm ${k === today ? "font-bold text-ember" : ""}`}>{d.getDate()}</span>
+              <span className={`text-sm ${isToday ? "font-bold text-ember" : ""}`}>{d.getDate()}</span>
               <div className="mt-0.5 space-y-0.5">
                 {dayEvents.slice(0, 2).map((e) => (
-                  <div key={e.id} className="truncate bg-ember/15 px-0.5 text-[10px]">{e.title}</div>
+                  <div key={e.id} className={`truncate px-0.5 text-[10px] ${isPick ? "bg-blue-200 font-medium text-blue-900" : "bg-ember/15"}`}>{e.title}</div>
                 ))}
                 {dayEvents.length > 2 ? <div className="text-[10px]">+{dayEvents.length - 2}</div> : null}
               </div>
@@ -269,7 +441,7 @@ export function CalendarBoard({
       ) : null}
 
       <div className="mt-4 border border-line bg-paper p-3">
-        <p className="mb-2 text-xs text-mute">Say when it is, who&apos;s involved, and where.</p>
+        <p className="mb-2 text-xs text-mute">Describe the event — include the day, time, and location.</p>
         <div className="mb-2 flex flex-wrap gap-1.5">
           {QUICK.map((q) => (
             <button
@@ -285,15 +457,14 @@ export function CalendarBoard({
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={view === "family" ? "e.g. Abuela's checkup Thursday at 2 PM at Emory" : "e.g. Dentist Tuesday at 3 PM"}
+          placeholder={view === "family" ? "e.g. Family dinner Sunday at 6 PM at home" : "e.g. Dentist Tuesday at 3 PM"}
           className={`w-full border border-line px-3 py-2 ${easy ? "min-h-24 text-base" : "min-h-16 text-sm"}`}
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => setText(exampleEventText(anchor))} className="border border-line px-2 py-1 text-xs">Example</button>
-          {!demo ? (
+          {!demo && googleConnected ? (
             <label className="flex items-center gap-1 text-xs text-mute">
               <input type="checkbox" checked={syncToGoogle} onChange={(e) => setSyncToGoogle(e.target.checked)} />
-              Also add to my Google Calendar
+              Also add to Google Calendar
             </label>
           ) : null}
           <button type="button" onClick={create} disabled={busy || !text.trim()} className="ml-auto bg-ember px-4 py-1.5 text-sm text-white disabled:opacity-50">

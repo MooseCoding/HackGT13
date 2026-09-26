@@ -1,4 +1,5 @@
 export const DEMO_COOKIE = "hearth-demo";
+export const FAMILY_COOKIE = "hearth-family";
 
 export function isSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);

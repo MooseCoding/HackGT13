@@ -1,6 +1,10 @@
 "use client";
 
-import type { Member } from "@/lib/types";
+import { FamilyCircleSwitcher } from "@/components/family/FamilyCircleSwitcher";
+import { HearthAssistant } from "@/components/family/HearthAssistant";
+import { DIGEST_NAME } from "@/lib/digest";
+import type { AssistantContext } from "@/lib/ai/assistant";
+import type { Family, Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -61,20 +65,26 @@ export function FamilyChrome({
   signedIn,
   inviteCode,
   identityLocked,
+  assistantContext,
+  families,
+  activeFamilyId,
+  activeFamilyName,
+  userDisplayName,
 }: {
   demo: boolean;
   canGoLive?: boolean;
   signedIn: boolean;
   inviteCode?: string;
   identityLocked: boolean;
+  assistantContext: Omit<AssistantContext, "postingAs" | "path">;
+  families: Family[];
+  activeFamilyId: string;
+  activeFamilyName: string;
+  userDisplayName?: string;
 }) {
   const { members, me, setMeId, easy, setEasy } = useFamily();
   const path = usePathname();
   const router = useRouter();
-  const [sharingOverrides, setSharingOverrides] = useState<Record<string, boolean>>({});
-  const [savingConsent, setSavingConsent] = useState(false);
-  const [consentError, setConsentError] = useState("");
-  const sharing = sharingOverrides[me?.id] ?? me?.clinicalOptIn ?? false;
   const links = [
     { href: "/family", label: "Family feed" },
     { href: "/family/calendar", label: "Calendar" },
@@ -89,34 +99,29 @@ export function FamilyChrome({
     router.refresh();
   }
 
-  async function updateSharing(enabled: boolean) {
-    const previous = sharing;
-    setSharingOverrides((values) => ({ ...values, [me.id]: enabled }));
-    setSavingConsent(true);
-    setConsentError("");
-    const response = await fetch("/api/consent", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId: me.id, enabled }),
-    });
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      setSharingOverrides((values) => ({ ...values, [me.id]: previous }));
-      setConsentError(result.error || "Could not update sharing.");
-    }
-    setSavingConsent(false);
-  }
-
   return (
     <header className="border-b border-line bg-paper">
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4">
-        <Link
-          href="/"
-          className="font-brand text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
-        >
-          Hearth
-        </Link>
-        <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto" aria-label="Family">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:gap-x-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link
+            href="/"
+            className="shrink-0 font-brand text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+          >
+            Hearth
+          </Link>
+          {families.length > 0 ? (
+            <>
+              <span className="hidden h-5 w-px shrink-0 bg-line sm:block" aria-hidden />
+              <FamilyCircleSwitcher
+                families={families}
+                activeFamilyId={activeFamilyId}
+                activeFamilyName={activeFamilyName}
+                defaultName={userDisplayName}
+              />
+            </>
+          ) : null}
+        </div>
+        <nav className="-mx-1 flex min-w-0 flex-1 basis-full gap-1 overflow-x-auto sm:basis-auto" aria-label="Family">
           {links.map((l) => {
             const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));
             return (
@@ -140,18 +145,10 @@ export function FamilyChrome({
             </span>
           ) : null}
           <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
-            <input
-              type="checkbox"
-              checked={sharing}
-              disabled={savingConsent || !me}
-              onChange={(event) => updateSharing(event.target.checked)}
-            />
-            Share with care team
-          </label>
-          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
             <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
             Easy
           </label>
+          <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
           <label className="sr-only" htmlFor="posting-as">
             Posting as
           </label>
@@ -186,7 +183,6 @@ export function FamilyChrome({
               Sign out
             </button>
           ) : null}
-          {consentError ? <span className="w-full text-xs text-red-700" role="alert">{consentError}</span> : null}
         </div>
       </div>
     </header>

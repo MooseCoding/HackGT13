@@ -3,6 +3,8 @@
 import { AddMemberPanel } from "@/components/family/AddMemberPanel";
 import { useFamily } from "@/components/family/FamilyChrome";
 import {
+  FAMILY_GC_LABEL,
+  familyInitials,
   GROUP_THREAD,
   formatChatTime,
   isGroupThread,
@@ -11,9 +13,36 @@ import {
   threadForDm,
   threadLabel,
 } from "@/lib/chat";
-import type { Member, Post } from "@/lib/types";
+import { calendarHintsForText, shouldSuppressCalendarHints, type CalendarChatHint } from "@/lib/chat-calendar-hints";
+import { formatWhen } from "@/lib/clock";
+import { suggestScheduleFromText } from "@/lib/schedule-detect";
+import { isWeeklyFamilyCall } from "@/lib/family-call-schedule";
+import type { CalendarEvent, Member, Post } from "@/lib/types";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+function CalendarHintChips({ hints, compact }: { hints: CalendarChatHint[]; compact?: boolean }) {
+  if (!hints.length) return null;
+  return (
+    <div className={`flex flex-wrap gap-1 ${compact ? "mt-1" : ""}`}>
+      {hints.map((h) => (
+        <Link
+          key={h.event.id}
+          href="/family/calendar"
+          className="inline-flex max-w-full items-center gap-1 rounded-full border border-ember/30 bg-paper px-2 py-0.5 text-[11px] text-ember-dark hover:bg-cream"
+        >
+          <span aria-hidden>📅</span>
+          <span className="truncate">
+            On the calendar: {h.label}
+            <span className="text-mute"> · {h.when}</span>
+            {h.clues?.length ? <span className="text-mute"> · {h.clues.slice(0, 2).join(", ")}</span> : null}
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 function Avatar({ member, size = 40 }: { member?: Member; size?: number }) {
   return (
@@ -30,10 +59,12 @@ export function ChatApp({
   posts,
   members,
   familyName,
+  events = [],
 }: {
   posts: Post[];
   members: Member[];
   familyName: string;
+  events?: CalendarEvent[];
 }) {
   const { me, easy } = useFamily();
   const router = useRouter();
@@ -44,13 +75,18 @@ export function ChatApp({
   const [kind, setKind] = useState<"text" | "voice" | "photo" | "status">("text");
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [listening, setListening] = useState(false);
-  const [mobileShowChat, setMobileShowChat] = useState(withParam !== GROUP_THREAD || false);
+  const [mobileShowChat, setMobileShowChat] = useState(withParam === GROUP_THREAD);
   const [showAddMember, setShowAddMember] = useState(false);
   const [scheduleHint, setScheduleHint] = useState<{
     title: string;
     suggestedText: string;
     reason: string;
+    weeklyFamilyCall?: boolean;
   } | null>(null);
+  const [calendarAdded, setCalendarAdded] = useState<{ title: string; when: string; count?: number } | null>(
+    null,
+  );
+  const hasWeeklyCalls = events.some(isWeeklyFamilyCall);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
@@ -74,8 +110,8 @@ export function ChatApp({
       {
         id: GROUP_THREAD,
         key: GROUP_THREAD,
-        label: familyName,
-        preview: "",
+        label: FAMILY_GC_LABEL,
+        preview: familyName,
         time: "",
         sortAt: "",
       },
@@ -94,6 +130,8 @@ export function ChatApp({
         item.preview = lastPreview(last);
         item.time = formatChatTime(last.createdAt);
         item.sortAt = last.createdAt;
+      } else if (item.key === GROUP_THREAD) {
+        item.preview = familyName;
       }
     }
     list.sort((a, b) => {
@@ -111,6 +149,21 @@ export function ChatApp({
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [posts, threadId],
   );
+
+  const lastThreadText = messages.length
+    ? messages[messages.length - 1].transcript || messages[messages.length - 1].body
+    : "";
+  const draftSchedule = useMemo(
+    () =>
+      body.trim()
+        ? suggestScheduleFromText(body, members, events, { familyId: me.familyId, createdBy: me.id })
+        : null,
+    [body, members, events, me.familyId, me.id],
+  );
+  const draftHints = useMemo(() => {
+    if (!body.trim() || draftSchedule || shouldSuppressCalendarHints(body)) return [];
+    return calendarHintsForText(body, events, lastThreadText);
+  }, [body, events, lastThreadText, draftSchedule]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
@@ -174,9 +227,20 @@ export function ChatApp({
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
-      scheduleSuggestion?: { title: string; suggestedText: string; reason: string };
+      scheduleSuggestion?: { title: string; suggestedText: string; reason: string; weeklyFamilyCall?: boolean };
+      calendarEvent?: CalendarEvent;
+      calendarEvents?: CalendarEvent[];
     };
     setScheduleHint(data.scheduleSuggestion ?? null);
+    if (data.calendarEvent) {
+      setCalendarAdded({
+        title: data.calendarEvent.title,
+        when: formatWhen(data.calendarEvent.startsAt),
+        count: data.calendarEvents?.length,
+      });
+    } else {
+      setCalendarAdded(null);
+    }
     setBody("");
     setPhotoUrl(undefined);
     setKind("text");
@@ -227,7 +291,7 @@ export function ChatApp({
                 >
                   {t.key === GROUP_THREAD ? (
                     <span className="grid h-10 w-10 place-items-center rounded-full bg-ember text-sm font-semibold text-white">
-                      AC
+                      {familyInitials(familyName)}
                     </span>
                   ) : (
                     <Avatar member={t.avatar} size={40} />
@@ -261,7 +325,7 @@ export function ChatApp({
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{headerTitle}</p>
               {isGroupThread(threadId) ? (
-                <p className="text-xs text-mute">{members.map((m) => m.name.split(" ")[0]).join(", ")}</p>
+                <p className="text-xs text-mute">{familyName} · {members.map((m) => m.name.split(" ")[0]).join(", ")}</p>
               ) : (
                 <p className="text-xs text-mute">{headerMember?.role}</p>
               )}
@@ -270,36 +334,55 @@ export function ChatApp({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto bg-transparent px-4 py-4">
-          {messages.map((p) => {
+          {messages.map((p, i) => {
             const mine = p.authorId === me.id;
             const author = byId[p.authorId];
             const text = p.transcript || p.body;
             const showName = isGroupThread(threadId) && !mine;
+            const prior = i > 0 ? messages[i - 1].transcript || messages[i - 1].body : "";
+            const scheduleProposal = suggestScheduleFromText(text, members, events, {
+              familyId: me.familyId,
+              createdBy: p.authorId,
+            });
+            const hints =
+              scheduleProposal || shouldSuppressCalendarHints(text)
+                ? []
+                : calendarHintsForText(text, events, prior);
 
             if (mine) {
               return (
                 <div key={p.id} className="flex items-end justify-end gap-2">
-                  <div className="glass max-w-[75%] rounded-2xl rounded-br-md px-4 py-2.5">
-                    {p.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-xl object-cover" />
-                    ) : null}
-                    {p.kind === "voice" ? (
-                      <button
-                        type="button"
-                        onClick={() => speak(`${author?.name}. ${text}`)}
-                        className="flex items-center gap-2 text-sm font-medium text-ember-dark"
-                      >
-                        ▶ Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
-                      </button>
-                    ) : (
-                      <p className={`whitespace-pre-wrap leading-relaxed ${easy ? "text-base" : "text-[15px]"}`}>
-                        {text}
+                  <div className="flex max-w-[75%] flex-col items-end">
+                    <div className="glass rounded-2xl rounded-br-md px-4 py-2.5">
+                      {p.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-xl object-cover" />
+                      ) : null}
+                      {p.kind === "voice" ? (
+                        <button
+                          type="button"
+                          onClick={() => speak(`${author?.name}. ${text}`)}
+                          className="flex items-center gap-2 text-sm font-medium text-ember-dark"
+                        >
+                          ▶ Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
+                        </button>
+                      ) : (
+                        <p className={`whitespace-pre-wrap leading-relaxed ${easy ? "text-base" : "text-[15px]"}`}>
+                          {text}
+                        </p>
+                      )}
+                      <p className="mt-1 text-right text-[11px] text-mute">
+                        {formatChatTime(p.createdAt)}
                       </p>
-                    )}
-                    <p className="mt-1 text-right text-[11px] text-mute">
-                      {formatChatTime(p.createdAt)}
-                    </p>
+                    </div>
+                    <CalendarHintChips hints={hints} compact />
+                    {scheduleProposal ? (
+                      <p className="mt-1 text-right text-[11px] text-ember">
+                        {scheduleProposal.weeklyFamilyCall
+                          ? `Reply “sure” to ${hasWeeklyCalls ? "reschedule" : "schedule"} weekly family calls`
+                          : "Reply “sure” to add this to the family calendar"}
+                      </p>
+                    ) : null}
                   </div>
                   <Avatar member={author} size={32} />
                 </div>
@@ -334,6 +417,14 @@ export function ChatApp({
                       {formatChatTime(p.createdAt)}
                     </p>
                   </div>
+                  <CalendarHintChips hints={hints} compact />
+                  {scheduleProposal ? (
+                    <p className="mt-1 ml-1 text-[11px] text-ember">
+                      {scheduleProposal.weeklyFamilyCall
+                        ? `Reply “sure” to ${hasWeeklyCalls ? "reschedule" : "schedule"} weekly family calls`
+                        : "Reply “sure” to add this to the family calendar"}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             );
@@ -341,21 +432,58 @@ export function ChatApp({
           <div ref={bottomRef} />
         </div>
 
+        {calendarAdded ? (
+          <div className="mx-3 mb-2 rounded-2xl border border-ember/30 bg-ember/10 px-3 py-2 text-sm shadow-sm">
+            <p className="font-medium text-ink">
+              Added to calendar{calendarAdded.count && calendarAdded.count > 1 ? ` (${calendarAdded.count} events)` : ""}:{" "}
+              {calendarAdded.title}
+            </p>
+            <p className="text-xs text-mute">{calendarAdded.when}</p>
+            <div className="mt-1 flex gap-3">
+              <Link href="/family/calendar" className="font-medium text-ember underline-offset-2 hover:underline">
+                View calendar
+              </Link>
+              <button type="button" onClick={() => setCalendarAdded(null)} className="text-mute hover:text-ink">
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {scheduleHint ? (
           <div className="mx-3 mb-2 rounded-2xl border border-white/60 bg-white/70 px-3 py-2 text-sm shadow-sm">
             <p className="font-medium text-ink">Add to calendar? {scheduleHint.title}</p>
-            <p className="text-xs text-mute">{scheduleHint.reason}</p>
+            <p className="text-xs text-mute">
+              {scheduleHint.reason} Or have someone reply &ldquo;sure&rdquo; in the chat.
+            </p>
             <div className="mt-1 flex gap-3">
               <a
-                href={`/family/calendar?draft=${encodeURIComponent(scheduleHint.suggestedText)}`}
+                href={
+                  scheduleHint.weeklyFamilyCall
+                    ? "/family/calendar?autoCall=1"
+                    : `/family/calendar?draft=${encodeURIComponent(scheduleHint.suggestedText)}`
+                }
                 className="font-medium text-ember underline-offset-2 hover:underline"
               >
-                Schedule it
+                {scheduleHint.weeklyFamilyCall
+                  ? hasWeeklyCalls
+                    ? "Reschedule weekly calls"
+                    : "Schedule weekly calls"
+                  : "Add to calendar"}
               </a>
               <button type="button" onClick={() => setScheduleHint(null)} className="text-mute hover:text-ink">
                 Dismiss
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {draftHints.length ? (
+          <div className="mx-3 mb-2 rounded-2xl border border-white/60 bg-white/70 px-3 py-2">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-mute">
+              Calendar reminder
+            </p>
+            <CalendarHintChips hints={draftHints} />
           </div>
         ) : null}
 

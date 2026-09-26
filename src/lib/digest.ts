@@ -1,8 +1,11 @@
 import { groqDigestStory } from "./ai/digest";
 import { groqConfigured } from "./ai/config";
 import { now, startOfWeek } from "./clock";
-import { generateStory } from "./local-ml";
+import { generateStory, pickWeekHighlights } from "./local-ml";
 import type { CalendarEvent, Digest, Member, Post } from "./types";
+
+/** Weekly digest — Hestia, Greek goddess of the hearth and home. */
+export const DIGEST_NAME = "Hestia";
 
 function weekKey(d = startOfWeek()) {
   return d.toISOString().slice(0, 10);
@@ -22,12 +25,7 @@ function upcomingSnippet(events: CalendarEvent[], weekStart: Date): string {
 }
 
 function localHighlights(weekPosts: Post[], members: Member[]) {
-  const highlights: string[] = [];
-  for (const p of weekPosts) {
-    const bit = (p.transcript || p.body).slice(0, 110);
-    highlights.push(`${by(members, p.authorId)}: ${bit}${bit.length >= 110 ? "…" : ""}`);
-  }
-  return highlights.slice(-8);
+  return pickWeekHighlights(weekPosts, (id) => by(members, id), 5);
 }
 
 /** Sync local fallback (Markov / templates). Prefer `buildDigest` when possible. */
@@ -85,15 +83,13 @@ export async function buildDigest(
       weekOf,
     });
     if (ai) {
-      const highlights =
-        ai.highlights.length > 0 ? ai.highlights : localHighlights(weekPosts, members);
       return {
         id: `digest-${familyId}-${weekOf}`,
         familyId,
         weekOf,
         title: ai.title,
         narrative: ai.narrative + upcomingSnippet(events, start),
-        highlights,
+        highlights: localHighlights(weekPosts, members),
         theme: ai.theme,
         generatedAt: new Date().toISOString(),
         source: "groq",

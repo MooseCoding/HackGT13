@@ -76,6 +76,14 @@ export function addEvent(event: CalendarEvent) {
   return event;
 }
 
+export function patchEvent(id: string, familyId: string, patch: Partial<CalendarEvent>) {
+  const store = db();
+  const idx = store.events.findIndex((e) => e.id === id && e.familyId === familyId);
+  if (idx < 0) return null;
+  store.events[idx] = { ...store.events[idx], ...patch };
+  return store.events[idx];
+}
+
 export function deleteEvent(id: string, familyId: string) {
   const store = db();
   const before = store.events.length;

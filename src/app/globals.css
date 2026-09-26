@@ -91,9 +91,9 @@ a {
   font-weight: 700;
 }
 
-/* Frosted-glass chat look */
+/* Chat background */
 .chat-surface {
-  background: linear-gradient(135deg, #e3def5 0%, #ece3f1 38%, #f7e7ee 68%, #e9edf7 100%);
+  background: var(--cream);
 }
 
 .glass {

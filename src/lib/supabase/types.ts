@@ -293,6 +293,10 @@ export type Database = {
         Args: { token_input: string };
         Returns: boolean;
       };
+      set_active_family: {
+        Args: { family_id_input: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

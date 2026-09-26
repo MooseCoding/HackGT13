@@ -63,8 +63,11 @@ export type CalendarEvent = {
   attendees: MemberId[];
   sourceText: string;
   createdBy: MemberId;
+  /** Which board this event belongs on. Google events and new local events set this explicitly. */
+  calendarScope?: "family" | "mine";
   isGoogleSynced?: boolean;
   googleEventId?: string | null;
+  googleCalendarId?: string | null;
 };
 
 export type Family = {
