@@ -12,7 +12,7 @@ Status key: **Done** · **In progress** · **Next** · **Ask Impiricus** · **Pi
 | Fix previous event syncing into the app | **In progress** | Cookie/refresh unified; pull up to 40 past + 40 future Google events; show Google events on Family view; Connect button on Calendar. Needs `GOOGLE_CLIENT_*` in `.env.local`. |
 | Additional UI/UX | **In progress** | Instagram Sans + frosted chat exist. Landing still placeholder — polish next. |
 | Demo mode only at the beginning | **Done** | Removed in-app Demo toggle. Landing “Preview the demo family” only; header shows read-only “Sample family” badge. Google sign-in clears demo. |
-| Clean out database | **Next** | Truncate live test rows in Supabase (keep seed Alvarez/Okonkwo or re-seed). Confirm before wipe. |
+| Clean out database | **Done** | Removed test families (`fam-*`); kept Alvarez + Okonkwo seed. Digests cleared (regenerable). |
 
 ---
 
