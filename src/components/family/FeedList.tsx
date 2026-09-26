@@ -1,0 +1,109 @@
+"use client";
+
+import { useFamily } from "@/components/family/FamilyChrome";
+import { formatWhen } from "@/lib/clock";
+import type { Member, Post } from "@/lib/types";
+
+export function FeedList({ posts, members }: { posts: Post[]; members: Member[] }) {
+  const { easy } = useFamily();
+  const byId = Object.fromEntries(members.map((m) => [m.id, m]));
+
+  function speak(text: string) {
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.92;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  return (
+    <ol className="mt-6 space-y-6">
+      {posts.map((p) => {
+        const m = byId[p.authorId];
+        const text = p.transcript || p.body;
+
+        if (p.kind === "status") {
+          return (
+            <li key={p.id} className="border-l-2 border-ember/40 pl-4">
+              <p className={`leading-7 text-mute ${easy ? "text-xl leading-9" : "text-[17px]"}`}>
+                <span className="font-semibold text-ink">{m?.name.split(" ")[0]}</span>
+                {" — "}
+                {text}
+              </p>
+              <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt)}</p>
+            </li>
+          );
+        }
+
+        if (p.kind === "photo" && p.photoUrl) {
+          return (
+            <li key={p.id}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={p.photoUrl}
+                alt={p.photoAlt || "Family photo"}
+                className="max-h-80 w-full rounded-surface object-cover"
+              />
+              <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
+              <p className="mt-1 text-sm text-mute">
+                {m?.name} · {formatWhen(p.createdAt)}
+              </p>
+              <button
+                type="button"
+                onClick={() => speak(`${m?.name}. ${text}`)}
+                className={`mt-2 rounded-full border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
+              >
+                Play aloud
+              </button>
+            </li>
+          );
+        }
+
+        if (p.kind === "voice") {
+          return (
+            <li key={p.id} className="rounded-surface border border-line bg-paper/60 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
+                  style={{ background: m?.color ?? "#92400e" }}
+                >
+                  {m?.initials}
+                </span>
+                <p className="text-sm text-mute">
+                  Heard from {m?.name.split(" ")[0]}
+                  {p.voiceSeconds ? ` · ${p.voiceSeconds}s` : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => speak(`${m?.name}. ${text}`)}
+                  className={`rounded-full bg-ember px-4 font-semibold text-paper ${easy ? "h-12 text-base" : "h-9 text-sm"}`}
+                >
+                  Play aloud
+                </button>
+              </div>
+              <p className={`mt-2 leading-7 text-mute ${easy ? "text-lg leading-8" : "text-[15px]"}`}>
+                {text}
+              </p>
+            </li>
+          );
+        }
+
+        return (
+          <li key={p.id} className="rounded-note border border-line bg-paper px-4 py-3 shadow-paper">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <p className="font-semibold">{m?.name}</p>
+              <p className="ml-auto text-xs text-mute">{formatWhen(p.createdAt)}</p>
+            </div>
+            <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
+            <button
+              type="button"
+              onClick={() => speak(`${m?.name}. ${text}`)}
+              className={`mt-3 rounded-full border border-line px-4 font-semibold ${easy ? "h-12" : "h-9 text-sm"}`}
+            >
+              Play aloud
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
