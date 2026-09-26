@@ -1,13 +1,14 @@
 import { now } from "@/lib/clock";
-import { addPost, membersOf, postsForThread, postsOf } from "@/lib/store";
+import { addPostRow, membersOf, postsForThread, postsOf } from "@/lib/data";
+import { isDemoMode } from "@/lib/mode-server";
 import type { Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const familyId = req.nextUrl.searchParams.get("familyId") || "alvarez";
   const threadId = req.nextUrl.searchParams.get("threadId");
-  const posts = threadId ? postsForThread(familyId, threadId) : postsOf(familyId);
-  return NextResponse.json({ posts, members: membersOf(familyId) });
+  const posts = threadId ? await postsForThread(familyId, threadId) : await postsOf(familyId);
+  return NextResponse.json({ posts, members: await membersOf(familyId) });
 }
 
 export async function POST(req: NextRequest) {
@@ -18,13 +19,12 @@ export async function POST(req: NextRequest) {
     authorId: body.authorId,
     kind: (body.kind as PostKind) || "text",
     body: body.body || "",
-    createdAt: now(),
+    createdAt: (await isDemoMode()) ? now() : new Date().toISOString(),
     photoUrl: body.photoUrl,
     photoAlt: body.photoAlt,
     voiceSeconds: body.voiceSeconds,
     transcript: body.transcript,
     threadId: body.threadId,
   };
-  addPost(post);
-  return NextResponse.json(post);
+  return NextResponse.json(await addPostRow(post));
 }

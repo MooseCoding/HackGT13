@@ -1,4 +1,4 @@
-import { db, optedInPatients } from "@/lib/store";
+import { allMembers, optedInPatients } from "@/lib/data";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +10,8 @@ function statusLabel(flags: { severity: string }[]) {
   return "Stable";
 }
 
-export default function HcpHome() {
-  const patients = optedInPatients();
-  const members = db().members;
+export default async function HcpHome() {
+  const [patients, members] = await Promise.all([optedInPatients(), allMembers()]);
 
   return (
     <div>

@@ -1,10 +1,10 @@
 import { FamilyChrome, FamilyProvider } from "@/components/family/FamilyChrome";
-import { membersOf } from "@/lib/store";
+import { membersOf } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
-export default function FamilyLayout({ children }: { children: React.ReactNode }) {
-  const members = membersOf("alvarez");
+export default async function FamilyLayout({ children }: { children: React.ReactNode }) {
+  const members = await membersOf("alvarez");
   return (
     <FamilyProvider members={members}>
       <div className="min-h-full bg-cream">

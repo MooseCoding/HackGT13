@@ -1,6 +1,6 @@
 import { LineChart, Metric } from "@/components/hcp/Charts";
 import { formatWhen } from "@/lib/clock";
-import { patientById } from "@/lib/store";
+import { patientById } from "@/lib/data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = patientById(id);
+  const row = await patientById(id);
   if (!row) notFound();
   const { member, family, snapshot, posts } = row;
   const s = snapshot;

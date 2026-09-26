@@ -4,6 +4,8 @@ import { templateDigest } from "./digest";
 import { events as seedEvents, families, members, posts as seedPosts } from "./seed";
 import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post } from "./types";
 
+/** In-memory mock backend used when demo mode is on. */
+
 type Store = {
   families: Family[];
   members: Member[];

@@ -24,4 +24,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Stack
 
-Next.js (App Router) · TypeScript · Tailwind CSS v4 · on-device NLP for Phase 2 metrics.
+Next.js (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres) · on-device NLP for Phase 2 metrics.
+
+## Backend and demo mode
+
+- **Demo mode** (default when Supabase keys are missing, or when you toggle **Demo** in the header) keeps the original in-memory mock Alvarez / Okonkwo families from `src/lib/seed.ts`.
+- **Live mode** reads and writes the same shapes from the Supabase project. Copy `.env.example` to `.env.local`, then uncheck Demo.
+
+Schema lives in `supabase/migrations/`.

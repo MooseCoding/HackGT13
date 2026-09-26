@@ -1,11 +1,18 @@
+import { DemoModeSwitch } from "@/components/DemoModeSwitch";
+import { isSupabaseConfigured } from "@/lib/mode";
+import { isDemoMode } from "@/lib/mode-server";
 import Link from "next/link";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const demo = await isDemoMode();
   return (
     <div className="min-h-full bg-paper">
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-4xl items-center px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <span className="text-lg font-semibold">Hearth</span>
+          <DemoModeSwitch demo={demo} canGoLive={isSupabaseConfigured()} />
         </div>
       </header>
 
@@ -15,7 +22,8 @@ export default function Home() {
         </h1>
         <p className="mt-4 max-w-xl text-base leading-7 text-mute">
           Family messaging, a shared calendar, and a weekly summary — plus a clinician view for
-          opted-in members between visits.
+          opted-in members between visits. Demo mode keeps the original mock families; turn it off
+          to use the Supabase backend.
         </p>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
