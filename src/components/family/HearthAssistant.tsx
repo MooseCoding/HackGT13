@@ -163,7 +163,7 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
             <button
               type="submit"
               disabled={!input.trim() || sending}
-              className="min-h-11 rounded-xl bg-ember px-4 text-sm font-medium text-white hover:bg-ember-dark disabled:opacity-50"
+              className="min-h-11 rounded-xl bg-ember px-4 text-sm font-medium text-white disabled:opacity-50"
             >
               {sending ? "Thinking…" : "Send"}
             </button>
