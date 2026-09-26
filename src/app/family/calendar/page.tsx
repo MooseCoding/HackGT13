@@ -4,11 +4,20 @@ import { getPublicSupabaseConfig } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
-export default async function CalendarPage() {
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ draft?: string }>;
+}) {
   const familyId = await resolveFamilyId();
+  const q = await searchParams;
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <CalendarBoard familyId={familyId} supabaseConfig={getPublicSupabaseConfig()} />
+      <CalendarBoard
+        familyId={familyId}
+        supabaseConfig={getPublicSupabaseConfig()}
+        initialDraft={q.draft?.trim() || ""}
+      />
     </div>
   );
 }

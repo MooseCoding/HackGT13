@@ -11,7 +11,9 @@ import {
 import { isDemoMode } from "@/lib/mode-server";
 import { NextRequest, NextResponse } from "next/server";
 
-const GOOGLE_EVENT_COUNT = 5;
+/** How many past + future Google events to surface inside the Hearth window. */
+const GOOGLE_PAST = 40;
+const GOOGLE_FUTURE = 40;
 
 export async function GET(req: NextRequest) {
   const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
@@ -21,23 +23,34 @@ export async function GET(req: NextRequest) {
   const local = (await eventsOf(familyId)).filter((e) => inCalendarWindow(e.startsAt, anchor));
 
   let google: Awaited<ReturnType<typeof fetchGoogleEvents>> = [];
+  let googleConnected = false;
   try {
     const token = await googleAccessToken(clientToken);
+    googleConnected = Boolean(token);
     if (token) {
       const { min, max } = windowBounds(anchor);
       const all = await fetchGoogleEvents(familyId, token, min, max);
       const now = anchor.getTime();
       const past = all.filter((e) => new Date(e.startsAt).getTime() < now);
       const future = all.filter((e) => new Date(e.startsAt).getTime() >= now);
-      google = [...past.slice(-GOOGLE_EVENT_COUNT), ...future.slice(0, GOOGLE_EVENT_COUNT)];    
+      google = [...past.slice(-GOOGLE_PAST), ...future.slice(0, GOOGLE_FUTURE)];
     }
   } catch (err) {
     console.error("Google Calendar fetch error:", err);
   }
 
+  // Prefer Google copy when the same title+start was also saved locally after sync.
+  const googleKeys = new Set(
+    google.map((e) => `${e.title.trim().toLowerCase()}|${new Date(e.startsAt).toISOString()}`),
+  );
+  const localDeduped = local.filter(
+    (e) => !googleKeys.has(`${e.title.trim().toLowerCase()}|${new Date(e.startsAt).toISOString()}`),
+  );
+
   return NextResponse.json({
-    events: [...local, ...google],
-    googleConnected: Boolean(await googleAccessToken(clientToken)),
+    events: [...localDeduped, ...google].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    googleConnected,
+    googleCount: google.length,
   });
 }
 

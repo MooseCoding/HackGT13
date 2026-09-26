@@ -2,9 +2,32 @@ import { cookies } from "next/headers";
 import { createSupabaseServer } from "./supabase/server";
 import type { CalendarEvent } from "./types";
 
+/** Canonical cookies used by Supabase OAuth callback + dedicated Google Calendar OAuth. */
 const ACCESS = "hearth_google_access";
 const REFRESH = "hearth_google_refresh";
+/** Legacy cookie from /api/auth/google/callback */
+const LEGACY_REFRESH = "google_refresh_token";
 const TZ = "America/New_York";
+
+async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { access_token?: string };
+  return data.access_token ?? null;
+}
 
 export async function saveGoogleTokens(session: {
   provider_token?: string | null;
@@ -33,34 +56,71 @@ export async function saveGoogleTokens(session: {
 
 export async function googleAccessToken(clientToken?: string | null) {
   if (clientToken?.trim()) return clientToken.trim();
-  const supabase = await createSupabaseServer();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.provider_token) return session.provider_token;
+
+  try {
+    const supabase = await createSupabaseServer();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.provider_token) {
+      await saveGoogleTokens(session);
+      return session.provider_token;
+    }
+  } catch {
+    // Demo / missing Supabase
+  }
+
   const jar = await cookies();
-  return jar.get(ACCESS)?.value ?? null;
+  const cached = jar.get(ACCESS)?.value;
+  if (cached) return cached;
+
+  const refresh = jar.get(REFRESH)?.value || jar.get(LEGACY_REFRESH)?.value;
+  if (!refresh) return null;
+
+  const access = await refreshAccessToken(refresh);
+  if (access) {
+    jar.set(ACCESS, access, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 55,
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+  return access;
 }
 
-export async function fetchGoogleEvents(familyId: string, token: string, min: Date, max: Date): Promise<CalendarEvent[]> {
+export async function fetchGoogleEvents(
+  familyId: string,
+  token: string,
+  min: Date,
+  max: Date,
+): Promise<CalendarEvent[]> {
   const params = new URLSearchParams({
     timeMin: min.toISOString(),
     timeMax: max.toISOString(),
     singleEvents: "true",
     orderBy: "startTime",
-    maxResults: "20",
+    maxResults: "100",
   });
   const res = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    { headers: { Authorization: `Bearer ${token}` } },
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error("Google Calendar list failed", res.status, await res.text().catch(() => ""));
+    return [];
+  }
   const data = await res.json();
-  return ((data.items || []) as Array<{
-    id: string;
-    summary?: string;
-    start?: { dateTime?: string; date?: string };
-    end?: { dateTime?: string; date?: string };
-    location?: string;
-  }>).map((ge) => ({
+  return (
+    (data.items || []) as Array<{
+      id: string;
+      summary?: string;
+      start?: { dateTime?: string; date?: string };
+      end?: { dateTime?: string; date?: string };
+      location?: string;
+    }>
+  ).map((ge) => ({
     id: `google_${ge.id}`,
     familyId,
     title: ge.summary || "Google event",

@@ -46,6 +46,11 @@ export function ChatApp({
   const [listening, setListening] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(withParam !== GROUP_THREAD || false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [scheduleHint, setScheduleHint] = useState<{
+    title: string;
+    suggestedText: string;
+    reason: string;
+  } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
@@ -154,7 +159,7 @@ export function ChatApp({
   async function send() {
     const text = body.trim();
     if (!text && !photoUrl) return;
-    await fetch("/api/posts", {
+    const res = await fetch("/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -168,6 +173,10 @@ export function ChatApp({
         voiceSeconds: kind === "voice" ? Math.max(4, Math.round(text.split(" ").length / 2)) : undefined,
       }),
     });
+    const data = (await res.json().catch(() => ({}))) as {
+      scheduleSuggestion?: { title: string; suggestedText: string; reason: string };
+    };
+    setScheduleHint(data.scheduleSuggestion ?? null);
     setBody("");
     setPhotoUrl(undefined);
     setKind("text");
@@ -331,6 +340,24 @@ export function ChatApp({
           })}
           <div ref={bottomRef} />
         </div>
+
+        {scheduleHint ? (
+          <div className="mx-3 mb-2 rounded-2xl border border-white/60 bg-white/70 px-3 py-2 text-sm shadow-sm">
+            <p className="font-medium text-ink">Add to calendar? {scheduleHint.title}</p>
+            <p className="text-xs text-mute">{scheduleHint.reason}</p>
+            <div className="mt-1 flex gap-3">
+              <a
+                href={`/family/calendar?draft=${encodeURIComponent(scheduleHint.suggestedText)}`}
+                className="font-medium text-ember underline-offset-2 hover:underline"
+              >
+                Schedule it
+              </a>
+              <button type="button" onClick={() => setScheduleHint(null)} className="text-mute hover:text-ink">
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {photoUrl ? (
           <div className="px-3">

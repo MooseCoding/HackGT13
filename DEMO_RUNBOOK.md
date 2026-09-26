@@ -8,7 +8,7 @@
 4. In profile A, create a family with both people. Copy the invite code from the family header.
 5. In profile B, choose **Join a circle**, enter the code, and claim the exact member name created in step 4.
 6. Send a harmless test post from profile A. Confirm it appears in profile B within four seconds and remains after refresh. Delete test-only data in Supabase before judging if desired.
-7. Return both profiles to the family chat. Keep the demo-mode Alvarez family ready in a third tab as an offline fallback.
+7. Return both profiles to the family chat. Keep the Alvarez sample family ready via the homepage **Preview the demo family** button (demo is entry-only — there is no in-app Demo toggle).
 
 ## 90-second live path
 
@@ -31,4 +31,6 @@ Record the same five beats above at 1440×900, with browser zoom at 100%. Keep i
 - Consent off/on and clinician list change
 - Elena insight evidence and check-in link
 - Ruth insufficient-data state
-- Demo/live toggle and sign-out
+- Homepage demo entry + Google sign-in clears demo
+- Sign-out
+- Calendar → Connect Google Calendar → prior events appear

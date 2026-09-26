@@ -1,6 +1,5 @@
 "use client";
 
-import { DemoModeSwitch } from "@/components/DemoModeSwitch";
 import type { Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -57,13 +56,12 @@ export function FamilyProvider({
 
 export function FamilyChrome({
   demo,
-  canGoLive,
   signedIn,
   inviteCode,
   identityLocked,
 }: {
   demo: boolean;
-  canGoLive: boolean;
+  canGoLive?: boolean;
   signedIn: boolean;
   inviteCode?: string;
   identityLocked: boolean;
@@ -168,7 +166,14 @@ export function FamilyChrome({
               </option>
             ))}
           </select>
-          <DemoModeSwitch demo={demo} canGoLive={canGoLive} compact />
+          {demo ? (
+            <span
+              className="rounded-md bg-cream px-2 py-1 text-xs font-medium text-mute"
+              title="Started from Preview the demo family on the homepage"
+            >
+              Sample family
+            </span>
+          ) : null}
           {signedIn ? (
             <button
               type="button"

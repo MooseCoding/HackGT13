@@ -22,7 +22,9 @@ function monthGrid(focus: Date) {
 }
 
 function isFamilyEvent(e: CalendarEvent) {
-  return !e.isGoogleSynced && e.attendees.length > 1;
+  // Family circle events + anything synced from Google so prior Google history shows up.
+  if (e.isGoogleSynced) return true;
+  return e.attendees.length > 1;
 }
 
 function isMineEvent(e: CalendarEvent, meId: string) {
@@ -32,9 +34,11 @@ function isMineEvent(e: CalendarEvent, meId: string) {
 export function CalendarBoard({
   familyId,
   supabaseConfig,
+  initialDraft = "",
 }: {
   familyId: string;
   supabaseConfig: PublicSupabaseConfig | null;
+  initialDraft?: string;
 }) {
   const { me, easy } = useFamily();
   const [demo, setDemo] = useState(true);
@@ -42,7 +46,7 @@ export function CalendarBoard({
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [googleConnected, setGoogleConnected] = useState(false);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialDraft);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [view, setView] = useState<"family" | "mine">("family");
@@ -183,9 +187,21 @@ export function CalendarBoard({
         </div>
       </div>
       <p className="mt-1 text-xs text-mute">
-        {view === "family" ? "Shared events for everyone" : "Your events and Google Calendar"}
-        {!demo && !googleConnected ? " · Sign in with Google to see your other calendar" : ""}
+        {view === "family"
+          ? "Shared family events plus Google Calendar history when connected"
+          : "Your personal events and Google Calendar"}
       </p>
+      {!demo && !googleConnected ? (
+        <p className="mt-2 text-sm">
+          <a href="/api/auth/google" className="font-medium text-ember underline-offset-2 hover:underline">
+            Connect Google Calendar
+          </a>{" "}
+          to pull in previous and upcoming events.
+        </p>
+      ) : null}
+      {!demo && googleConnected ? (
+        <p className="mt-2 text-xs text-mute">Google Calendar connected · prior events sync into this view.</p>
+      ) : null}
       {msg ? <p className="mt-2 text-sm text-ember-dark">{msg}</p> : null}
 
       <div className="mt-3 flex items-center justify-between border border-line bg-paper px-3 py-2">
