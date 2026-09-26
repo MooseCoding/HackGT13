@@ -61,7 +61,7 @@ export function SettingsMenu({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="min-h-11 rounded-sm border border-chrome-border px-3 text-sm text-chrome-fg hover:bg-white/10"
+        className="min-h-11 rounded-xl border border-line bg-paper/80 px-3 text-sm text-ink hover:bg-white"
       >
         Settings
       </button>
@@ -69,7 +69,7 @@ export function SettingsMenu({
         <div
           role="dialog"
           aria-label="Settings"
-          className="absolute right-0 z-40 mt-2 w-72 border border-rule bg-surface p-4 text-ink shadow-sm"
+          className="glass absolute right-0 z-40 mt-2 w-72 rounded-2xl p-4 text-ink"
         >
           {signedIn && userDisplayName ? (
             <p className="mb-3 truncate text-sm text-mute">
