@@ -6,7 +6,7 @@ export default function HcpLayout({ children }: { children: React.ReactNode }) {
       <header className="border-b border-line bg-paper">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
           <div>
-            <Link href="/" className="text-base font-semibold">
+            <Link href="/" className="font-brand text-base">
               Hearth
             </Link>
             <p className="text-xs text-mute">Clinician view</p>

@@ -4,13 +4,14 @@ export default function Home() {
   return (
     <div className="min-h-full bg-paper">
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-4xl items-center px-6 py-4">
-          <span className="text-lg font-semibold">Hearth</span>
+        <div className="mx-auto flex max-w-4xl items-center gap-3 px-6 py-4">
+          <span className="font-brand text-lg">Hearth</span>
+          <span className="font-brand text-sm text-mute">Family, in one place</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-3xl font-semibold leading-tight text-ink sm:text-4xl">
+        <h1 className="font-brand text-3xl leading-tight text-ink sm:text-4xl">
           Come home to the story, not the group chat.
         </h1>
         <p className="mt-4 max-w-xl text-base leading-7 text-mute">

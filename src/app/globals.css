@@ -45,6 +45,12 @@ a {
   text-decoration: none;
 }
 
+/* Brand lockup: Instagram Sans Bold */
+.font-brand {
+  font-family: "Instagram Sans", "Instagram Sans Headline", -apple-system, "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+
 .easy body,
 html.easy {
   font-size: 18px;
