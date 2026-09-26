@@ -15,7 +15,7 @@ export default async function HcpLayout({ children }: { children: React.ReactNod
       <header className="border-b border-line bg-paper">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <div>
-            <Link href="/" className="font-serif text-base font-semibold tracking-tight">
+            <Link href="/" className="font-brand text-base">
               Hearth
             </Link>
             <p className="text-xs text-mute">Clinician view</p>

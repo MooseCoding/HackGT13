@@ -111,7 +111,7 @@ export function FamilyChrome({
       <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4">
         <Link
           href="/"
-          className="font-serif text-base font-semibold tracking-tight text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+          className="font-brand text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
         >
           Hearth
         </Link>

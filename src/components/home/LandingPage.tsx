@@ -44,7 +44,7 @@ export function LandingPage({
         className="border-b border-line px-4 py-4 sm:px-6"
       >
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <p className="font-serif text-xl font-semibold tracking-tight text-ink">Hearth</p>
+          <p className="font-brand text-xl tracking-tight text-ink">Hearth</p>
           {signedIn ? (
             <Link
               href={needsOnboarding ? "/onboarding" : "/family"}
@@ -62,7 +62,7 @@ export function LandingPage({
         className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 sm:px-6 sm:py-16"
       >
         <p className="text-sm font-medium uppercase tracking-wide text-ember">Family, in one place</p>
-        <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+        <h1 className="font-brand mt-3 text-4xl leading-tight tracking-tight text-ink sm:text-5xl">
           Come home to the story, not the group chat.
         </h1>
         <p className="mt-4 text-base leading-7 text-mute sm:text-lg">
