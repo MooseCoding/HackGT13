@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
       history?: AssistantTurn[];
       path?: string;
       familyId?: string;
+      postingAs?: string;
     };
     const message = body.message?.trim() || "";
     if (!message) {
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
       upcomingEvents,
       recentPosts,
       path: body.path,
+      postingAs: members.some((member) => member.name === body.postingAs) ? body.postingAs : undefined,
     };
 
     const result = await runFamilyAssistant({

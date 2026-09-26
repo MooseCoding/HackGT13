@@ -119,6 +119,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          account_role: string;
           created_at: string;
           display_name: string | null;
           family_id: string | null;
@@ -126,6 +127,7 @@ export type Database = {
           member_id: string | null;
         };
         Insert: {
+          account_role?: string;
           created_at?: string;
           display_name?: string | null;
           family_id?: string | null;
@@ -133,11 +135,117 @@ export type Database = {
           member_id?: string | null;
         };
         Update: {
+          account_role?: string;
           created_at?: string;
           display_name?: string | null;
           family_id?: string | null;
           id?: string;
           member_id?: string | null;
+        };
+        Relationships: [];
+      };
+      clinical_analysis_runs: {
+        Row: {
+          id: string;
+          started_at: string;
+          completed_at: string | null;
+          status: string;
+          patient_count: number;
+          queued_count: number;
+          error: string | null;
+        };
+        Insert: {
+          id?: string;
+          started_at?: string;
+          completed_at?: string | null;
+          status?: string;
+          patient_count?: number;
+          queued_count?: number;
+          error?: string | null;
+        };
+        Update: {
+          completed_at?: string | null;
+          status?: string;
+          patient_count?: number;
+          queued_count?: number;
+          error?: string | null;
+        };
+        Relationships: [];
+      };
+      clinical_snapshots: {
+        Row: {
+          id: string;
+          run_id: string;
+          member_id: string;
+          family_id: string;
+          risk_level: string;
+          confidence: string;
+          assessed_at: string;
+          snapshot: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          run_id: string;
+          member_id: string;
+          family_id: string;
+          risk_level: string;
+          confidence: string;
+          assessed_at: string;
+          snapshot: Json;
+          created_at?: string;
+        };
+        Update: {
+          risk_level?: string;
+          confidence?: string;
+          assessed_at?: string;
+          snapshot?: Json;
+        };
+        Relationships: [];
+      };
+      clinical_alerts: {
+        Row: {
+          id: string;
+          snapshot_id: string;
+          member_id: string;
+          family_id: string;
+          risk_level: string;
+          status: string;
+          fingerprint: string;
+          title: string;
+          summary: string;
+          suggested_action: string;
+          assigned_to: string | null;
+          created_at: string;
+          updated_at: string;
+          reviewed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          snapshot_id: string;
+          member_id: string;
+          family_id: string;
+          risk_level: string;
+          status?: string;
+          fingerprint: string;
+          title: string;
+          summary: string;
+          suggested_action: string;
+          assigned_to?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          reviewed_at?: string | null;
+        };
+        Update: {
+          snapshot_id?: string;
+          risk_level?: string;
+          status?: string;
+          title?: string;
+          summary?: string;
+          suggested_action?: string;
+          assigned_to?: string | null;
+          updated_at?: string;
+          reviewed_at?: string | null;
         };
         Relationships: [];
       };

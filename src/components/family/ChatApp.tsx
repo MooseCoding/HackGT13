@@ -19,6 +19,7 @@ import { formatWhen } from "@/lib/clock";
 import { suggestReminderFromText, type ReminderSuggestion } from "@/lib/remind-detect";
 import { suggestScheduleFromText } from "@/lib/schedule-detect";
 import { isWeeklyFamilyCall } from "@/lib/family-call-schedule";
+import type { CheckInSuggestion } from "@/lib/clinical/check-in";
 import type { CalendarEvent, Member, Post } from "@/lib/types";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -138,9 +139,13 @@ export function ChatApp({
   const [calendarAdded, setCalendarAdded] = useState<{ title: string; when: string; count?: number } | null>(
     null,
   );
+<<<<<<< HEAD
   const [reminderHint, setReminderHint] = useState<ReminderSuggestion | null>(null);
   const [reminderAdded, setReminderAdded] = useState<{ text: string; who: string; when: string } | null>(null);
   const [addingReminder, setAddingReminder] = useState(false);
+=======
+  const [checkInSuggestion, setCheckInSuggestion] = useState<CheckInSuggestion | null>(null);
+>>>>>>> 0b181cb (added UI/UX by topher)
   const hasWeeklyCalls = events.some(isWeeklyFamilyCall);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
@@ -228,7 +233,7 @@ export function ChatApp({
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, threadId]);
 
-  const headerTitle = threadLabel(threadId, me.id, members, familyName);
+  const headerTitle = threadLabel(threadId, me.id, members);
   const headerMember = isGroupThread(threadId) ? undefined : members.find((m) => m.id === withParam);
 
   function openThread(key: string) {
@@ -320,10 +325,17 @@ export function ChatApp({
       reminderSuggestion?: ReminderSuggestion;
       calendarEvent?: CalendarEvent;
       calendarEvents?: CalendarEvent[];
+<<<<<<< HEAD
       id?: string;
     };
     setScheduleHint(data.scheduleSuggestion ?? null);
     setReminderHint(data.reminderSuggestion ?? null);
+=======
+      checkInSuggestion?: CheckInSuggestion | null;
+    };
+    setScheduleHint(data.scheduleSuggestion ?? null);
+    setCheckInSuggestion(data.checkInSuggestion ?? null);
+>>>>>>> 0b181cb (added UI/UX by topher)
     if (data.calendarEvent) {
       setCalendarAdded({
         title: data.calendarEvent.title,
@@ -629,6 +641,13 @@ export function ChatApp({
                 Dismiss
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {checkInSuggestion ? (
+          <div className="mx-3 mb-2 flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+            <div><p className="font-semibold">{checkInSuggestion.title}</p><p className="mt-1 text-xs leading-5 text-amber-800">{checkInSuggestion.message}</p></div>
+            <button type="button" onClick={() => setCheckInSuggestion(null)} className="text-xs font-semibold text-amber-800">Dismiss</button>
           </div>
         ) : null}
 

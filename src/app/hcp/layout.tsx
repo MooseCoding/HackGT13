@@ -1,4 +1,4 @@
-import { getAuthUser, needsOnboarding } from "@/lib/auth";
+import { getAuthUser, isClinicianUser } from "@/lib/auth";
 import { isDemoMode } from "@/lib/mode-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HcpLayout({ children }: { children: React.ReactNode }) {
   const demo = await isDemoMode();
-  if (!demo && (await needsOnboarding())) redirect("/onboarding");
+  if (!demo && !(await isClinicianUser())) redirect("/?error=clinician-access-required");
   const user = await getAuthUser();
 
   return (

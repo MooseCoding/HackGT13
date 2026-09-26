@@ -8,7 +8,11 @@ import { addEventRow, addPostRow, membersOf, postingIdentity, postsForThread, po
 import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
 import { googleAccessToken, syncEventsToGoogle, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
+<<<<<<< HEAD
 import { suggestReminderFromText } from "@/lib/remind-detect";
+=======
+import { detectCheckInSuggestion } from "@/lib/clinical/check-in";
+>>>>>>> 0b181cb (added UI/UX by topher)
 import { findScheduleProposalForConfirmation, suggestScheduleFromText } from "@/lib/schedule-detect";
 import type { CalendarEvent, Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -124,7 +128,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+<<<<<<< HEAD
     return NextResponse.json({ ...saved, scheduleSuggestion, reminderSuggestion, calendarEvent, calendarEvents });
+=======
+    const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
+    return NextResponse.json({ ...saved, scheduleSuggestion, calendarEvent, calendarEvents, checkInSuggestion });
+>>>>>>> 0b181cb (added UI/UX by topher)
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

@@ -133,7 +133,9 @@ export function CalendarBoard({
     if (res.ok) {
       const data = await res.json();
       setEvents(data.events);
-      setGoogleConnected(Boolean(data.googleConnected));
+      const connected = Boolean(data.googleConnected);
+      setGoogleConnected(connected);
+      if (connected) setSyncToGoogle(true);
       setGooglePersonalCount(Number(data.googlePersonalCount ?? 0));
       setDemoPersonalCalendars(Boolean(data.demoPersonalCalendars));
       setEventsLoaded(true);
@@ -160,10 +162,6 @@ export function CalendarBoard({
   );
   const cells = monthGrid(displayMonth);
   const todayKey = localDateKey(anchor);
-
-  useEffect(() => {
-    if (googleConnected) setSyncToGoogle(true);
-  }, [googleConnected]);
 
   const scoped = useMemo(
     () => events.filter((e) => (view === "family" ? isFamilyEvent(e) : isMineEvent(e, me.id))),
