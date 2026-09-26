@@ -1,6 +1,6 @@
 import { Metric, TrendChart } from "@/components/hcp/Charts";
 import { formatDay, formatWhen } from "@/lib/clock";
-import { patientById } from "@/lib/data";
+import { clinicalPatientById } from "@/lib/clinical/operations";
 import type { ClinicalFlag, PatientSnapshot } from "@/lib/types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -29,7 +29,7 @@ function severityStyle(severity: ClinicalFlag["severity"]) {
 
 export default async function PatientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = await patientById(id);
+  const row = await clinicalPatientById(id);
   if (!row) notFound();
   const { member, family, snapshot: snapshot } = row;
   const checkInEvent = row.events.find(

@@ -5,7 +5,7 @@ import { DIGEST_NAME } from "@/lib/digest";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-type Turn = { role: "user" | "assistant"; content: string };
+type Turn = { role: "user" | "assistant"; content: string; source?: "groq" | "local" };
 
 const STARTERS = [
   "How do I invite someone?",
@@ -18,6 +18,7 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([
     {
       role: "assistant",
@@ -40,16 +41,39 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  function send(text?: string) {
+  async function send(text?: string) {
     const message = (text ?? input).trim();
-    if (!message) return;
+    if (!message || sending) return;
     setInput("");
-    const ctx: AssistantContext = {
-      ...context,
-      path,
-    };
-    const reply = answerFamilyAssistant(message, ctx);
-    setTurns((prev) => [...prev, { role: "user", content: message }, { role: "assistant", content: reply }]);
+    setSending(true);
+    const history = turns.filter((turn) => turn.content.trim()).slice(-8);
+    setTurns((prev) => [...prev, { role: "user", content: message }]);
+
+    try {
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history, path, postingAs: context.postingAs }),
+      });
+      const result = (await response.json()) as {
+        reply?: string;
+        source?: "groq" | "local";
+        error?: string;
+      };
+      if (!response.ok || !result.reply) throw new Error(result.error || "Assistant unavailable.");
+      setTurns((prev) => [
+        ...prev,
+        { role: "assistant", content: result.reply as string, source: result.source ?? "local" },
+      ]);
+    } catch {
+      const ctx: AssistantContext = { ...context, path };
+      setTurns((prev) => [
+        ...prev,
+        { role: "assistant", content: answerFamilyAssistant(message, ctx), source: "local" },
+      ]);
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -89,8 +113,18 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
                 }`}
               >
                 {t.content}
+                {t.role === "assistant" && t.source ? (
+                  <span className="mt-1 block text-[10px] font-medium uppercase tracking-wide text-mute">
+                    {t.source === "groq" ? "Groq AI" : "Local fallback"}
+                  </span>
+                ) : null}
               </div>
             ))}
+            {sending ? (
+              <div className="mr-auto rounded-2xl bg-cream px-3 py-2 text-sm text-mute" role="status">
+                Hearth is thinking…
+              </div>
+            ) : null}
             <div ref={bottomRef} />
           </div>
 
@@ -128,10 +162,10 @@ export function HearthAssistant({ context }: { context: AssistantContext }) {
             />
             <button
               type="submit"
-              disabled={!input.trim()}
-              className="min-h-11 rounded-sm bg-ember px-4 text-sm font-medium text-white hover:bg-ember-dark disabled:opacity-50"
+              disabled={!input.trim() || sending}
+              className="min-h-11 rounded-xl bg-ember px-4 text-sm font-medium text-white disabled:opacity-50"
             >
-              Send
+              {sending ? "Thinking…" : "Send"}
             </button>
           </form>
         </section>

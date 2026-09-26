@@ -12,6 +12,7 @@ export type GroqChatOptions = {
   maxTokens?: number;
   /** Force JSON object response when the model supports it. */
   json?: boolean;
+  reasoningEffort?: "low" | "medium" | "high";
 };
 
 export class GroqError extends Error {
@@ -41,6 +42,7 @@ export async function groqChat(options: GroqChatOptions): Promise<string> {
       messages: options.messages,
       temperature: options.temperature ?? 0.6,
       max_tokens: options.maxTokens ?? 700,
+      ...(options.reasoningEffort ? { reasoning_effort: options.reasoningEffort } : {}),
       ...(options.json ? { response_format: { type: "json_object" } } : {}),
     }),
     cache: "no-store",

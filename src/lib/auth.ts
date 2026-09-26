@@ -50,3 +50,15 @@ export async function needsOnboarding() {
   if (ownedRes.error) throw new Error(ownedRes.error.message);
   return (memberRes.count ?? 0) + (ownedRes.count ?? 0) < 1;
 }
+
+export async function isClinicianUser() {
+  if (await isDemoMode()) return true;
+  const [user, profile] = await Promise.all([getAuthUser(), getProfile()]);
+  if (!user) return false;
+  if (profile?.account_role === "clinician" || profile?.account_role === "admin") return true;
+  const allowed = (process.env.HCP_CLINICIAN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return Boolean(user.email && allowed.includes(user.email.toLowerCase()));
+}

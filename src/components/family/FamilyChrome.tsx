@@ -1,10 +1,11 @@
 "use client";
 
+import { ClinicalConsentToggle } from "@/components/family/ClinicalConsentToggle";
 import { FamilyCircleSwitcher } from "@/components/family/FamilyCircleSwitcher";
 import { HearthAssistant } from "@/components/family/HearthAssistant";
 import { SettingsMenu } from "@/components/settings/SettingsPanel";
-import { DIGEST_NAME } from "@/lib/digest";
 import type { AssistantContext } from "@/lib/ai/assistant";
+import { DIGEST_NAME } from "@/lib/digest";
 import type { Family, Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -136,8 +137,8 @@ export function FamilyChrome({
             activeFamilyId={activeFamilyId}
             activeFamilyName={activeFamilyName}
           />
-          {!demo && identityLocked && signedIn ? (
-            <ClinicalSharingToggle memberId={me?.id} initialEnabled={me?.clinicalOptIn ?? false} />
+          {!demo && identityLocked && signedIn && me ? (
+            <ClinicalConsentToggle key={me.id} member={me} />
           ) : null}
           <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
           <label className="sr-only" htmlFor="posting-as">
@@ -168,62 +169,5 @@ export function FamilyChrome({
         </div>
       </div>
     </header>
-  );
-}
-
-function ClinicalSharingToggle({
-  memberId,
-  initialEnabled,
-}: {
-  memberId?: string;
-  initialEnabled: boolean;
-}) {
-  const [enabled, setEnabled] = useState(initialEnabled);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEnabled(initialEnabled);
-  }, [initialEnabled, memberId]);
-
-  async function onChange(checked: boolean) {
-    if (!memberId || busy) return;
-    setBusy(true);
-    setError(null);
-    const res = await fetch("/api/consent", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId, enabled: checked }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError(json.error || "Could not update sharing.");
-      return;
-    }
-    setEnabled(checked);
-  }
-
-  return (
-    <div className="flex flex-col">
-      <label
-        className="flex min-h-11 items-center gap-1.5 text-sm text-chrome-fg-muted"
-        title="Share posting patterns with the clinician view"
-      >
-        <input
-          type="checkbox"
-          checked={enabled}
-          disabled={busy || !memberId}
-          onChange={(e) => onChange(e.target.checked)}
-          aria-label="Share posting patterns with clinician view"
-        />
-        Clinician sharing
-      </label>
-      {error ? (
-        <span className="text-xs text-red-300" role="alert">
-          {error}
-        </span>
-      ) : null}
-    </div>
   );
 }

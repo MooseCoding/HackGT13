@@ -68,8 +68,8 @@ export function GoogleSignInButton({
         disabled={busy || !supabaseConfig || disabled}
         className={
           variant === "primary"
-            ? "flex min-h-12 w-full items-center justify-center gap-3 rounded-sm bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
-            : "flex min-h-12 w-full items-center justify-center gap-3 rounded-sm border border-line bg-surface px-4 text-base font-semibold text-ink hover:border-ink disabled:opacity-60"
+            ? "flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
+            : "flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-line bg-paper/80 px-4 text-base font-semibold text-ink hover:border-ember disabled:opacity-60"
         }
       >
         <GoogleMark />

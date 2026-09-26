@@ -45,7 +45,10 @@ Next.js (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres) · 
 - The collector derives interaction metadata from opted-in members only: lexical diversity, sentence length, repetition, sentiment range, engagement cadence, response latency, and time-of-day shifts.
 - The triage engine compares the latest 14 days with that member's prior 30-day baseline and emits explainable cognitive-communication, social-engagement, and affect signals.
 - `/hcp` is the Impiricus review queue; `/hcp/patients/[id]` shows the generated pre-visit brief, trend evidence, confidence, and suggested next step.
-- `/api/clinical/analyze` is the protected autonomous worker endpoint. `vercel.json` schedules it daily at 12:00 UTC; set `CRON_SECRET` in deployed environments.
+- Analysis runs, snapshots, and deduplicated alerts are persisted in Supabase. Clinicians can move alerts through `new`, `reviewing`, `contacted`, and `dismissed` states.
+- `/api/clinical/analyze` is the protected autonomous worker endpoint. `vercel.json` schedules it daily at 12:00 UTC; set `CRON_SECRET` and the server-only `SUPABASE_SERVICE_ROLE_KEY` in deployed environments.
+- Live clinician access requires either `profiles.account_role = 'clinician'` (or `admin`) or an email listed in `HCP_CLINICIAN_EMAILS`. Never expose the service-role key through a `NEXT_PUBLIC_*` variable.
+- A single concerning family message can prompt a gentle check-in, but does not create a clinical alert; longitudinal baseline shifts drive the review queue.
 
 The output is clinical decision support, not a diagnosis or treatment recommendation. Changes can reflect language, device access, travel, illness, or family communication patterns and require clinician confirmation.
 
