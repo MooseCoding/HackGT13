@@ -322,17 +322,47 @@ export function ChatApp({
         ) : null}
 
         <div className="px-3 pb-3">
-          <div className="glass flex items-end gap-2 rounded-2xl px-3 py-2">
-            <label className="cursor-pointer px-1 py-2 text-sm text-mute hover:text-ink">
-              📷
+          <div className="glass flex items-end gap-1 rounded-2xl px-3 py-2">
+            <label
+              className="cursor-pointer rounded-lg px-1.5 py-2 text-ember-dark/70 hover:bg-[#128c7e]/10 hover:text-ember-dark"
+              title="Attach a photo"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             </label>
             <button
               type="button"
               onClick={startVoice}
-              className={`px-1 py-2 text-sm ${listening ? "text-ember" : "text-mute hover:text-ink"}`}
+              title="Dictate a message"
+              className={`rounded-lg px-1.5 py-2 ${listening ? "bg-[#128c7e]/10 text-ember" : "text-ember-dark/70 hover:bg-[#128c7e]/10 hover:text-ember-dark"}`}
             >
-              🎤
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                <line x1="12" y1="18" x2="12" y2="22" />
+              </svg>
             </button>
             <textarea
               value={body}
@@ -345,9 +375,9 @@ export function ChatApp({
               }}
               placeholder="Type a message"
               rows={1}
-              className={`max-h-28 min-h-[40px] flex-1 resize-none rounded-xl border border-white/60 bg-white/50 px-3 py-2 outline-none focus:border-ember ${
-                easy ? "text-base" : "text-sm"
-              }`}
+            className={`max-h-28 min-h-[40px] flex-1 resize-none rounded-xl border border-[#128c7e]/25 bg-[#128c7e]/[.07] px-3 py-2 outline-none placeholder:text-mute focus:border-ember ${
+              easy ? "text-base" : "text-sm"
+            }`}
             />
             <button
               type="button"
