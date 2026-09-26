@@ -1,5 +1,6 @@
 -- Persisted clinical operations: clinician authorization, analysis runs,
 -- longitudinal snapshots, and a reviewable alert lifecycle.
+-- Idempotent: safe if objects/policies already exist from a prior partial apply.
 
 alter table public.profiles
   add column if not exists account_role text not null default 'family'
@@ -78,12 +79,19 @@ alter table public.clinical_analysis_runs enable row level security;
 alter table public.clinical_snapshots enable row level security;
 alter table public.clinical_alerts enable row level security;
 
+drop policy if exists "clinicians read analysis runs" on public.clinical_analysis_runs;
 create policy "clinicians read analysis runs" on public.clinical_analysis_runs
   for select to authenticated using (public.is_clinician());
+
+drop policy if exists "clinicians read snapshots" on public.clinical_snapshots;
 create policy "clinicians read snapshots" on public.clinical_snapshots
   for select to authenticated using (public.is_clinician());
+
+drop policy if exists "clinicians read alerts" on public.clinical_alerts;
 create policy "clinicians read alerts" on public.clinical_alerts
   for select to authenticated using (public.is_clinician());
+
+drop policy if exists "clinicians update alerts" on public.clinical_alerts;
 create policy "clinicians update alerts" on public.clinical_alerts
   for update to authenticated using (public.is_clinician()) with check (public.is_clinician());
 
