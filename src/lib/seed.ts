@@ -164,6 +164,15 @@ export const posts: Post[] = [
     transcript:
       "Mija I am so proud of you. I will wear the yellow scarf your grandfather liked. Tell coach I still remember how to yell.",
     voiceSeconds: 18,
+    channel: "whatsapp",
+    rawRetained: false,
+    audioMetrics: {
+      durationSeconds: 18,
+      wordsPerMinute: 96,
+      pauseRatio: 0.12,
+      averagePauseSeconds: 0.4,
+      hesitationRate: 0.02,
+    },
     createdAt: atDay(36, 17, 5),
   },
   {
@@ -267,6 +276,15 @@ export const posts: Post[] = [
     transcript:
       "The tomatoes. I told you about the tomatoes. Did I tell you about the tomatoes. Where is my purse.",
     voiceSeconds: 22,
+    channel: "whatsapp",
+    rawRetained: false,
+    audioMetrics: {
+      durationSeconds: 22,
+      wordsPerMinute: 61,
+      pauseRatio: 0.38,
+      averagePauseSeconds: 1.4,
+      hesitationRate: 0.14,
+    },
     createdAt: atDay(5, 0, 47),
   },
   {
@@ -365,6 +383,25 @@ export const posts: Post[] = [
     kind: "text",
     body: "Obviously. Tell Abuela to wear the yellow scarf.",
     createdAt: atDay(2, 19, 22),
+  },
+  {
+    id: "r-baseline",
+    familyId: "okonkwo",
+    authorId: "ruth",
+    kind: "voice",
+    body: "Voice update",
+    transcript: "The garden club met by the library this morning. We planned the autumn beds, shared tea, and made a list for next week.",
+    voiceSeconds: 18,
+    channel: "whatsapp",
+    rawRetained: false,
+    audioMetrics: {
+      durationSeconds: 18,
+      wordsPerMinute: 103,
+      pauseRatio: 0.1,
+      averagePauseSeconds: 0.35,
+      hesitationRate: 0.01,
+    },
+    createdAt: atDay(35, 9, 25),
   },
   {
     id: "r0",

@@ -38,7 +38,9 @@ export function FamilyProvider({
   useEffect(() => {
     if (currentMemberId) return;
     const saved = localStorage.getItem("hearth-me");
-    if (saved && members.some((m) => m.id === saved)) setMeId(saved);
+    if (!saved || !members.some((m) => m.id === saved)) return;
+    const timer = window.setTimeout(() => setMeId(saved), 0);
+    return () => window.clearTimeout(timer);
   }, [currentMemberId, members]);
 
   useEffect(() => {
@@ -74,9 +76,10 @@ export function FamilyChrome({
   const [consentError, setConsentError] = useState("");
   const sharing = sharingOverrides[me?.id] ?? me?.clinicalOptIn ?? false;
   const links = [
-    { href: "/family", label: "Chats" },
+    { href: "/family", label: "Family feed" },
     { href: "/family/calendar", label: "Calendar" },
     { href: "/family/digest", label: "This week" },
+    { href: "/hcp/live", label: "Live demo" },
     { href: "/hcp", label: "Clinician" },
   ];
 

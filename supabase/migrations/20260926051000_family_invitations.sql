@@ -23,14 +23,17 @@ create unique index if not exists family_invitations_pending_email_idx
 
 alter table public.family_invitations enable row level security;
 
+drop policy if exists "family members read invitations" on public.family_invitations;
 create policy "family members read invitations" on public.family_invitations
   for select to authenticated
   using (public.has_family_access(family_id));
 
+drop policy if exists "family members create invitations" on public.family_invitations;
 create policy "family members create invitations" on public.family_invitations
   for insert to authenticated
   with check (public.has_family_access(family_id));
 
+drop policy if exists "family members update invitations" on public.family_invitations;
 create policy "family members update invitations" on public.family_invitations
   for update to authenticated
   using (public.has_family_access(family_id))
@@ -138,6 +141,7 @@ grant execute on function public.accept_family_invitation(text) to authenticated
 
 -- Members of a family can insert new member stubs when inviting.
 drop policy if exists "insert own members" on public.members;
+drop policy if exists "insert members for family" on public.members;
 create policy "insert members for family" on public.members
   for insert to authenticated
   with check (public.has_family_access(family_id) or public.is_family_owner(family_id));

@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
       voiceSeconds: body.voiceSeconds,
       transcript: body.transcript,
       threadId: body.threadId,
+      channel: body.channel ?? "hearth",
+      audioMetrics: body.audioMetrics,
+      rawRetained: body.rawRetained ?? true,
     };
     const saved = await addPostRow(post);
     const members = await membersOf(identity.familyId);

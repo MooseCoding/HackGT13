@@ -21,7 +21,7 @@ import {
 } from "./store";
 import { createSupabaseServer } from "./supabase/server";
 import type { Database } from "./supabase/types";
-import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post, PostKind } from "./types";
+import type { AudioMetrics, CalendarEvent, Digest, Family, IntakeChannel, Member, PatientSnapshot, Post, PostKind } from "./types";
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
@@ -71,6 +71,10 @@ function mapPost(row: PostRow): Post {
     photoAlt: row.photo_alt ?? undefined,
     voiceSeconds: row.voice_seconds ?? undefined,
     transcript: row.transcript ?? undefined,
+    channel: (row.source_channel as IntakeChannel) || "hearth",
+    externalMessageId: row.external_message_id ?? undefined,
+    audioMetrics: (row.audio_metrics as AudioMetrics | null) ?? undefined,
+    rawRetained: row.raw_retained,
   };
 }
 
@@ -187,6 +191,10 @@ export async function addPostRow(post: Post): Promise<Post> {
       photo_alt: post.photoAlt ?? null,
       voice_seconds: post.voiceSeconds ?? null,
       transcript: post.transcript ?? null,
+      source_channel: post.channel ?? "hearth",
+      external_message_id: post.externalMessageId ?? null,
+      audio_metrics: post.audioMetrics ?? null,
+      raw_retained: post.rawRetained ?? true,
     })
     .select("*")
     .single();
@@ -271,7 +279,8 @@ export async function optedInPatients(): Promise<PatientSnapshot[]> {
   const { data, error } = await supabase.from("posts").select("*").in("family_id", familyIds);
   throwIfError(error);
   const posts = (data ?? []).map(mapPost);
-  return members.map((m) => analyzeMember(m.id, posts.filter((p) => p.familyId === m.familyId)));
+  const referenceDate = new Date();
+  return members.map((m) => analyzeMember(m.id, posts.filter((p) => p.familyId === m.familyId), referenceDate));
 }
 
 export async function patientById(id: string) {
@@ -295,7 +304,7 @@ export async function patientById(id: string) {
   return {
     member,
     family,
-    snapshot: analyzeMember(id, familyPosts),
+    snapshot: analyzeMember(id, familyPosts, new Date()),
     posts,
     events: (eventRes.data ?? []).map(mapEvent),
   };

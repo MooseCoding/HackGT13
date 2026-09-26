@@ -214,6 +214,10 @@ export type Database = {
           thread_id: string | null;
           transcript: string | null;
           voice_seconds: number | null;
+          source_channel: string;
+          external_message_id: string | null;
+          audio_metrics: Json | null;
+          raw_retained: boolean;
         };
         Insert: {
           author_id: string;
@@ -227,6 +231,10 @@ export type Database = {
           thread_id?: string | null;
           transcript?: string | null;
           voice_seconds?: number | null;
+          source_channel?: string;
+          external_message_id?: string | null;
+          audio_metrics?: Json | null;
+          raw_retained?: boolean;
         };
         Update: {
           author_id?: string;
@@ -240,6 +248,10 @@ export type Database = {
           thread_id?: string | null;
           transcript?: string | null;
           voice_seconds?: number | null;
+          source_channel?: string;
+          external_message_id?: string | null;
+          audio_metrics?: Json | null;
+          raw_retained?: boolean;
         };
         Relationships: [];
       };

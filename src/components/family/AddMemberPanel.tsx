@@ -1,7 +1,7 @@
 "use client";
 
 import type { FamilyInvitation } from "@/lib/invitations-types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function AddMemberPanel({
   familyId,
@@ -21,15 +21,16 @@ export function AddMemberPanel({
   const [invites, setInvites] = useState<FamilyInvitation[]>([]);
   const [copied, setCopied] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const res = await fetch(`/api/invitations?familyId=${encodeURIComponent(familyId)}`);
     const json = await res.json();
     if (res.ok) setInvites(json.invitations ?? []);
-  }
+  }, [familyId]);
 
   useEffect(() => {
-    void load();
-  }, [familyId]);
+    const timeout = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timeout);
+  }, [load]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();

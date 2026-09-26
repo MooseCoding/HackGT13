@@ -40,6 +40,27 @@ Site URL: `http://localhost:3000`.
 
 Next.js (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres) · on-device NLP for Phase 2 metrics.
 
+## Phase 2 clinical engine
+
+- The collector derives interaction metadata from opted-in members only: lexical diversity, sentence length, repetition, sentiment range, engagement cadence, response latency, and time-of-day shifts.
+- The triage engine compares the latest 14 days with that member's prior 30-day baseline and emits explainable cognitive-communication, social-engagement, and affect signals.
+- `/hcp` is the Impiricus review queue; `/hcp/patients/[id]` shows the generated pre-visit brief, trend evidence, confidence, and suggested next step.
+- `/api/clinical/analyze` is the protected autonomous worker endpoint. `vercel.json` schedules it daily at 12:00 UTC; set `CRON_SECRET` in deployed environments.
+
+The output is clinical decision support, not a diagnosis or treatment recommendation. Changes can reflect language, device access, travel, illness, or family communication patterns and require clinician confirmation.
+
+### Ambient WhatsApp and voice intake
+
+Hearth is designed as a signal layer for communication families already use, not as a replacement messenger.
+
+- Configure Meta's WhatsApp Business webhook callback as `/api/webhooks/whatsapp` and copy the `WHATSAPP_*` values from `.env.example`.
+- Incoming opted-in text messages and voice notes are normalized into the existing longitudinal timeline.
+- Voice notes are transcribed with Groq Whisper and reduced to speech pace, pause share, average pause, and hesitation markers. Original media is not stored by Hearth.
+- Sender-to-patient mapping is explicit through `WHATSAPP_PATIENT_MAP`; unrecognized or non-consented senders are ignored.
+- `/hcp/live` provides a deterministic judge demo of the complete flow when external credentials or venue Wi-Fi are unavailable.
+
+For a real Meta test-number setup, expose the local app through an HTTPS tunnel, register the callback URL and verify token in Meta's developer dashboard, subscribe the app to WhatsApp message webhooks, and map the sender's E.164 phone number to an opted-in demo patient.
+
 ## Backend and demo mode
 
 - **Demo mode** (default when Supabase keys are missing, or when you toggle **Demo** in the header) keeps the original in-memory mock Alvarez / Okonkwo families from `src/lib/seed.ts`.
