@@ -102,39 +102,57 @@ export type Database = {
       members: {
         Row: {
           age: number;
+          apt: string;
+          city: string;
           clinical_opt_in: boolean;
           color: string;
+          country: string;
           easy_mode_default: boolean;
           family_id: string;
           id: string;
           initials: string;
           location: string;
           name: string;
+          postal_code: string;
           role: string;
+          state: string;
+          street: string;
         };
         Insert: {
           age: number;
+          apt?: string;
+          city?: string;
           clinical_opt_in?: boolean;
           color: string;
+          country?: string;
           easy_mode_default?: boolean;
           family_id: string;
           id: string;
           initials: string;
           location: string;
           name: string;
+          postal_code?: string;
           role: string;
+          state?: string;
+          street?: string;
         };
         Update: {
           age?: number;
+          apt?: string;
+          city?: string;
           clinical_opt_in?: boolean;
           color?: string;
+          country?: string;
           easy_mode_default?: boolean;
           family_id?: string;
           id?: string;
           initials?: string;
           location?: string;
           name?: string;
+          postal_code?: string;
           role?: string;
+          state?: string;
+          street?: string;
         };
         Relationships: [];
       };

@@ -11,7 +11,14 @@ export type Member = {
   age: number;
   initials: string;
   color: string;
+  /** Display summary; prefer street/city/state/postal when present. */
   location: string;
+  street?: string;
+  apt?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
   clinicalOptIn: boolean;
   easyModeDefault?: boolean;
 };

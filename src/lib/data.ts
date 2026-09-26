@@ -1,3 +1,4 @@
+import { formatAddress, type Address } from "./address";
 import { getAuthUser, getProfile } from "./auth";
 import { analyzeMember } from "./analysis";
 import { postThreadId } from "./chat";
@@ -45,6 +46,12 @@ function mapMember(row: MemberRow): Member {
     initials: row.initials,
     color: row.color,
     location: row.location,
+    street: row.street || undefined,
+    apt: row.apt || undefined,
+    city: row.city || undefined,
+    state: row.state || undefined,
+    postalCode: row.postal_code || undefined,
+    country: row.country || undefined,
     clinicalOptIn: row.clinical_opt_in,
     easyModeDefault: row.easy_mode_default,
   };
@@ -283,8 +290,8 @@ export type NewMemberInput = {
   name: string;
   role: string;
   age: number;
-  location: string;
-  clinicalOptIn: boolean;
+  location?: string;
+  address?: Address;
   isYou?: boolean;
 };
 
@@ -311,6 +318,8 @@ export async function createFamilyWithMembers(input: {
 
   const rows = input.members.map((m, i) => {
     const name = m.name.trim();
+    const address = m.address;
+    const location = address ? formatAddress(address) : m.location?.trim() || "Home";
     return {
       id: slugId("m"),
       family_id: familyId,
@@ -319,8 +328,14 @@ export async function createFamilyWithMembers(input: {
       age: Number.isFinite(m.age) ? m.age : 0,
       initials: initialsFrom(name),
       color: MEMBER_COLORS[i % MEMBER_COLORS.length],
-      location: m.location.trim() || "Home",
-      clinical_opt_in: Boolean(m.clinicalOptIn),
+      location,
+      street: address?.street?.trim() || "",
+      apt: address?.apt?.trim() || "",
+      city: address?.city?.trim() || "",
+      state: address?.state?.trim() || "",
+      postal_code: address?.postalCode?.trim() || "",
+      country: address?.country?.trim() || "United States",
+      clinical_opt_in: false,
       easy_mode_default: Boolean(m.isYou),
     };
   });

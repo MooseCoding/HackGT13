@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressFields } from "@/components/onboarding/AddressFields";
+import { emptyAddress, formatAddress, type Address } from "@/lib/address";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -7,15 +9,14 @@ type DraftMember = {
   name: string;
   role: string;
   age: string;
-  location: string;
-  clinicalOptIn: boolean;
+  address: Address;
   isYou: boolean;
 };
 
 const ROLES = ["Grandparent", "Parent", "Partner", "Child", "Grandchild", "Aunt/Uncle", "Family"];
 
 function emptyMember(isYou = false, name = ""): DraftMember {
-  return { name, role: isYou ? "Me" : "Family", age: "", location: "", clinicalOptIn: false, isYou };
+  return { name, role: isYou ? "Me" : "Family", age: "", address: emptyAddress(), isYou };
 }
 
 export function OnboardingForm({ defaultName }: { defaultName: string }) {
@@ -48,6 +49,11 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
       setError("Add yourself, then anyone else you want in the circle.");
       return;
     }
+    const missingAddress = filled.find((m) => !m.address.street.trim() || !m.address.city.trim());
+    if (missingAddress) {
+      setError(`Add a street and city for ${missingAddress.name.trim() || "each person"}.`);
+      return;
+    }
     setBusy(true);
     const res = await fetch("/api/onboarding", {
       method: "POST",
@@ -58,8 +64,8 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
           name: m.name,
           role: m.role,
           age: Number(m.age) || 0,
-          location: m.location,
-          clinicalOptIn: m.clinicalOptIn,
+          location: formatAddress(m.address),
+          address: m.address,
           isYou: m.isYou,
         })),
       }),
@@ -120,6 +126,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
                 <input
                   id={`name-${i}`}
                   required
+                  autoComplete={m.isYou ? "name" : "off"}
                   value={m.name}
                   onChange={(e) => update(i, { name: e.target.value })}
                   className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember focus-visible:ring-2 focus-visible:ring-ember/30"
@@ -152,19 +159,13 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
                   className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember focus-visible:ring-2 focus-visible:ring-ember/30"
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm text-mute" htmlFor={`loc-${i}`}>
-                  Location (optional)
-                </label>
-                <input
-                  id={`loc-${i}`}
-                  value={m.location}
-                  onChange={(e) => update(i, { location: e.target.value })}
-                  className="mt-1 min-h-12 w-full rounded-lg border border-line px-3 text-base outline-none focus-visible:border-ember focus-visible:ring-2 focus-visible:ring-ember/30"
-                />
-              </div>
+              <AddressFields
+                idPrefix={`member-${i}`}
+                value={m.address}
+                onChange={(address) => update(i, { address })}
+              />
             </div>
-            <div className="mt-3 flex flex-col gap-2 text-sm">
+            <div className="mt-3 text-sm">
               <label className="flex min-h-11 items-center gap-2">
                 <input
                   type="radio"
@@ -173,14 +174,6 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
                   onChange={() => update(i, { isYou: true })}
                 />
                 This is me
-              </label>
-              <label className="flex min-h-11 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={m.clinicalOptIn}
-                  onChange={(e) => update(i, { clinicalOptIn: e.target.checked })}
-                />
-                Opt in to clinician view (optional)
               </label>
             </div>
           </div>
