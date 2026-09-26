@@ -1,5 +1,6 @@
 "use client";
 
+import { demoUpdateAlertStatus } from "@/lib/demo-client";
 import type { ClinicalAlertStatus } from "@/lib/clinical/operations";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,11 +8,19 @@ import { useState } from "react";
 const labels: Record<ClinicalAlertStatus, string> = {
   new: "New",
   reviewing: "Reviewing",
-  contacted: "Contacted",
+  contacted: "Reached out",
   dismissed: "Dismissed",
 };
 
-export function ClinicalAlertActions({ alertId, initialStatus }: { alertId: string; initialStatus: ClinicalAlertStatus }) {
+export function ClinicalAlertActions({
+  alertId,
+  initialStatus,
+  demo = false,
+}: {
+  alertId: string;
+  initialStatus: ClinicalAlertStatus;
+  demo?: boolean;
+}) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
   const [saving, setSaving] = useState(false);
@@ -21,6 +30,12 @@ export function ClinicalAlertActions({ alertId, initialStatus }: { alertId: stri
     if (saving || next === status) return;
     setSaving(true);
     setError("");
+    if (demo) {
+      demoUpdateAlertStatus(alertId, next);
+      setStatus(next);
+      setSaving(false);
+      return;
+    }
     const response = await fetch(`/api/clinical/alerts/${encodeURIComponent(alertId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -45,12 +60,12 @@ export function ClinicalAlertActions({ alertId, initialStatus }: { alertId: stri
         value={status}
         disabled={saving}
         onChange={(event) => update(event.target.value as ClinicalAlertStatus)}
-        className="min-h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700"
+        className="min-h-9 rounded-sm border border-line bg-surface px-2 text-xs font-semibold text-ink"
       >
         {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-      {saving ? <span className="text-xs text-slate-400" role="status">Saving…</span> : null}
-      {error ? <span className="text-xs text-rose-600" role="alert">{error}</span> : null}
+      {saving ? <span className="text-xs text-mute" role="status">Saving…</span> : null}
+      {error ? <span className="text-xs text-rose-700" role="alert">{error}</span> : null}
     </div>
   );
 }

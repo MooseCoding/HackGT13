@@ -1,5 +1,14 @@
 import { analyzeMember } from "@/lib/analysis";
 import { isClinicianUser } from "@/lib/auth";
+import { autoAssignInNetworkPatients, getAutoAcceptPatients } from "@/lib/clinical/auto-assign";
+import {
+  assignmentForMember,
+  currentClinicianId,
+  listPatientAssignments,
+  type PatientAssignment,
+  seedDemoPatientAssignments,
+} from "@/lib/clinical/assignments";
+import { isPatientInClinicianNetwork } from "@/lib/clinical/insurance";
 import { DEMO_NOW } from "@/lib/clock";
 import { allMembers, optedInPatients } from "@/lib/data";
 import { isDemoMode } from "@/lib/mode-server";
@@ -27,8 +36,14 @@ export type ClinicalDashboardData = {
   patients: PatientSnapshot[];
   members: Member[];
   alerts: ClinicalAlert[];
+  assignments: PatientAssignment[];
+  clinicianId: string | null;
+  rosterCounts: { mine: number; available: number };
+  autoAcceptPatients: boolean;
   lastRunAt: string | null;
 };
+
+export type ClinicalRosterView = "mine" | "available";
 
 function mapMember(row: Record<string, unknown>): Member {
   return {
@@ -48,6 +63,21 @@ function mapMember(row: Record<string, unknown>): Member {
     country: String(row.country ?? "US"),
     clinicalOptIn: Boolean(row.clinical_opt_in),
     easyModeDefault: Boolean(row.easy_mode_default),
+    insurance: parseMemberInsurance(row),
+  };
+}
+
+function parseMemberInsurance(row: Record<string, unknown>) {
+  const raw = row.insurance;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const carrierId = (raw as { carrierId?: unknown }).carrierId;
+  if (typeof carrierId !== "string" || !carrierId) return undefined;
+  const policyMemberId = (raw as { policyMemberId?: unknown }).policyMemberId;
+  const groupId = (raw as { groupId?: unknown }).groupId;
+  return {
+    carrierId,
+    policyMemberId: typeof policyMemberId === "string" ? policyMemberId : undefined,
+    groupId: typeof groupId === "string" ? groupId : undefined,
   };
 }
 
@@ -189,11 +219,23 @@ export async function runPersistedClinicalAnalysis() {
   }
 }
 
-export async function clinicalDashboardData(): Promise<ClinicalDashboardData> {
+export async function clinicalDashboardData(view: ClinicalRosterView = "mine"): Promise<ClinicalDashboardData> {
+  const clinicianId = await currentClinicianId();
+  const autoAcceptPatients = clinicianId ? getAutoAcceptPatients(clinicianId) : false;
   if (await isDemoMode()) {
-    const [patients, members] = await Promise.all([optedInPatients(), allMembers()]);
+    seedDemoPatientAssignments();
+    if (clinicianId && autoAcceptPatients) {
+      await autoAssignInNetworkPatients(clinicianId);
+    }
+    const [patients, members, assignments] = await Promise.all([
+      optedInPatients(),
+      allMembers(),
+      listPatientAssignments(),
+    ]);
+    const scopedPatients = filterPatientsByRoster(patients, assignments, members, clinicianId, view);
+    const memberIds = new Set(scopedPatients.map((patient) => patient.memberId));
     const alerts = patients
-      .filter((patient) => patient.riskLevel !== "stable")
+      .filter((patient) => patient.riskLevel !== "stable" && memberIds.has(patient.memberId))
       .map((patient) => ({
         id: `demo-${patient.memberId}`,
         memberId: patient.memberId,
@@ -206,17 +248,31 @@ export async function clinicalDashboardData(): Promise<ClinicalDashboardData> {
         createdAt: DEMO_NOW.toISOString(),
         updatedAt: DEMO_NOW.toISOString(),
       }));
-    return { patients, members, alerts, lastRunAt: DEMO_NOW.toISOString() };
+    return {
+      patients: scopedPatients,
+      members,
+      alerts,
+      assignments,
+      clinicianId,
+      rosterCounts: rosterCounts(patients, assignments, members, clinicianId),
+      autoAcceptPatients,
+      lastRunAt: DEMO_NOW.toISOString(),
+    };
   }
 
   if (!(await isClinicianUser())) throw new Error("Clinician access required.");
 
+  if (clinicianId && autoAcceptPatients) {
+    await autoAssignInNetworkPatients(clinicianId);
+  }
+
   const admin = createSupabaseAdmin();
-  const [snapshotResult, memberResult, alertResult, runResult] = await Promise.all([
+  const [snapshotResult, memberResult, alertResult, runResult, assignments] = await Promise.all([
     admin.from("clinical_snapshots").select("*").order("assessed_at", { ascending: false }),
     admin.from("members").select("*").eq("clinical_opt_in", true),
     admin.from("clinical_alerts").select("*").order("updated_at", { ascending: false }),
     admin.from("clinical_analysis_runs").select("*").eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+    listPatientAssignments(),
   ]);
   for (const error of [snapshotResult.error, memberResult.error, alertResult.error, runResult.error]) {
     if (error) throw new Error(error.message);
@@ -227,15 +283,77 @@ export async function clinicalDashboardData(): Promise<ClinicalDashboardData> {
     seen.add(row.member_id);
     return [row.snapshot as unknown as PatientSnapshot];
   });
+  const members = (memberResult.data ?? []).map((row) => mapMember(row));
+  const scopedPatients = filterPatientsByRoster(patients, assignments, members, clinicianId, view);
+  const memberIds = new Set(scopedPatients.map((patient) => patient.memberId));
   return {
-    patients,
-    members: (memberResult.data ?? []).map((row) => mapMember(row)),
-    alerts: (alertResult.data ?? []).map((row) => mapAlert(row)),
+    patients: scopedPatients,
+    members,
+    alerts: (alertResult.data ?? []).map((row) => mapAlert(row)).filter((alert) => memberIds.has(alert.memberId)),
+    assignments,
+    clinicianId,
+    rosterCounts: rosterCounts(patients, assignments, members, clinicianId),
+    autoAcceptPatients,
     lastRunAt: runResult.data?.completed_at ?? null,
   };
 }
 
+function isAvailableInNetwork(
+  patient: PatientSnapshot,
+  byMember: Map<string, PatientAssignment>,
+  memberById: Map<string, Member>,
+  clinicianId: string | null,
+) {
+  if (byMember.has(patient.memberId) || !clinicianId) return false;
+  const member = memberById.get(patient.memberId);
+  return member ? isPatientInClinicianNetwork(clinicianId, member) : false;
+}
+
+function rosterCounts(
+  patients: PatientSnapshot[],
+  assignments: PatientAssignment[],
+  members: Member[],
+  clinicianId: string | null,
+) {
+  const byMember = new Map(assignments.map((assignment) => [assignment.memberId, assignment]));
+  const memberById = new Map(members.map((member) => [member.id, member]));
+  const available = patients.filter((patient) =>
+    isAvailableInNetwork(patient, byMember, memberById, clinicianId),
+  ).length;
+  const mine = clinicianId
+    ? patients.filter((patient) => byMember.get(patient.memberId)?.clinicianId === clinicianId).length
+    : 0;
+  return { mine, available };
+}
+
+function filterPatientsByRoster(
+  patients: PatientSnapshot[],
+  assignments: PatientAssignment[],
+  members: Member[],
+  clinicianId: string | null,
+  view: ClinicalRosterView,
+) {
+  const byMember = new Map(assignments.map((assignment) => [assignment.memberId, assignment]));
+  const memberById = new Map(members.map((member) => [member.id, member]));
+  if (view === "available") {
+    return patients.filter((patient) => isAvailableInNetwork(patient, byMember, memberById, clinicianId));
+  }
+  if (!clinicianId) return [];
+  return patients.filter((patient) => byMember.get(patient.memberId)?.clinicianId === clinicianId);
+}
+
+export async function canClinicianAccessPatient(memberId: string) {
+  const clinicianId = await currentClinicianId();
+  const assignment = await assignmentForMember(memberId);
+  if (!assignment) return { allowed: true, assigned: false, clinicianId };
+  if (!clinicianId) return { allowed: false, assigned: true, clinicianId };
+  return { allowed: assignment.clinicianId === clinicianId, assigned: true, clinicianId };
+}
+
 export async function clinicalPatientById(id: string) {
+  const access = await canClinicianAccessPatient(id);
+  if (!access.allowed) return null;
+
   if (await isDemoMode()) return demoPatientById(id);
   if (!(await isClinicianUser())) throw new Error("Clinician access required.");
   const admin = createSupabaseAdmin();

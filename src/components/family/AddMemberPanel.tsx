@@ -5,10 +5,14 @@ import { useCallback, useEffect, useState } from "react";
 
 export function AddMemberPanel({
   familyId,
+  inviteCode,
+  familyName,
   onClose,
   onChanged,
 }: {
   familyId: string;
+  inviteCode?: string;
+  familyName?: string;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -20,6 +24,7 @@ export function AddMemberPanel({
   const [created, setCreated] = useState<FamilyInvitation | null>(null);
   const [invites, setInvites] = useState<FamilyInvitation[]>([]);
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/invitations?familyId=${encodeURIComponent(familyId)}`);
@@ -55,14 +60,34 @@ export function AddMemberPanel({
     onChanged();
   }
 
-  async function copyLink(url: string) {
+  async function copyText(text: string, which: "link" | "code") {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      if (which === "link") {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      } else {
+        setCodeCopied(true);
+        window.setTimeout(() => setCodeCopied(false), 2000);
+      }
     } catch {
-      setError("Could not copy the link. Select it and copy manually.");
+      setError(which === "link" ? "Could not copy the link. Select it and copy manually." : "Could not copy the code.");
     }
+  }
+
+  async function shareInviteCode() {
+    if (!inviteCode) return;
+    const label = familyName ? `${familyName} on Familyr` : "Familyr";
+    const text = `Join ${label} with invite code ${inviteCode}.`;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `Join ${label}`, text });
+        return;
+      } catch {
+        /* user cancelled or share unavailable */
+      }
+    }
+    await copyText(inviteCode, "code");
   }
 
   const pending = invites.filter((i) => i.status === "pending");
@@ -78,10 +103,10 @@ export function AddMemberPanel({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 id="add-member-title" className="text-lg font-semibold">
-              Add family member
+              Invite to the circle
             </h2>
             <p className="mt-1 text-sm leading-6 text-mute">
-              Send an invite link. When they accept with Google, they join the circle and can chat.
+              Share your invite code, or send a personal link by email.
             </p>
           </div>
           <button type="button" onClick={onClose} className="min-h-11 px-2 text-sm text-mute hover:text-ink">
@@ -89,7 +114,34 @@ export function AddMemberPanel({
           </button>
         </div>
 
+        {inviteCode ? (
+          <div className="mt-4 border border-line bg-ground p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-mute">Invite code</p>
+            <p className="mt-0.5 font-mono text-lg font-semibold text-ink">{inviteCode}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => copyText(inviteCode, "code")}
+                className="min-h-11 rounded-sm border border-line px-3 text-sm font-medium text-ink hover:bg-accent-tint"
+              >
+                {codeCopied ? "Copied." : "Copy code"}
+              </button>
+              <button
+                type="button"
+                onClick={() => shareInviteCode()}
+                className="min-h-11 rounded-sm bg-ember px-3 text-sm font-semibold text-white hover:bg-ember-dark"
+              >
+                Share
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-mute">
+              They tap your circle name → Join with code, then enter this code and their name.
+            </p>
+          </div>
+        ) : null}
+
         <form onSubmit={send} className="mt-4 space-y-3">
+          <p className="text-sm font-medium text-ink">Or invite by email</p>
           <div>
             <label htmlFor="invite-name" className="block text-sm text-mute">
               Their name
@@ -148,7 +200,7 @@ export function AddMemberPanel({
             <p className="mt-1 break-all font-mono text-xs text-mute">{created.inviteUrl}</p>
             <button
               type="button"
-              onClick={() => copyLink(created.inviteUrl!)}
+              onClick={() => copyText(created.inviteUrl!, "link")}
               className="mt-2 min-h-11 text-sm font-medium text-accent hover:underline"
             >
               {copied ? "Link copied." : "Copy invite link"}
@@ -170,7 +222,7 @@ export function AddMemberPanel({
                   {i.inviteUrl ? (
                     <button
                       type="button"
-                      onClick={() => copyLink(i.inviteUrl!)}
+                      onClick={() => copyText(i.inviteUrl!, "link")}
                       className="mt-1 text-xs font-medium text-accent hover:underline"
                     >
                       Copy link

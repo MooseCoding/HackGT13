@@ -3,7 +3,14 @@
 import { useFamily } from "@/components/family/FamilyChrome";
 import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { CAL_WEEKS, localDateKey } from "@/lib/calendar-window";
+import {
+  SCHEDULE_CONFLICT_DEMO_DRAFT,
+  conflictWarningText,
+  findScheduleConflicts,
+} from "@/lib/calendar-conflicts";
+import { parseEvent } from "@/lib/calendar-parse";
 import { searchEventsByClues } from "@/lib/chat-calendar-hints";
+import { demoPlaceCommerceOrder } from "@/lib/demo-client";
 import { calendarAnchor, formatLongDate, formatMonthYear, formatTime } from "@/lib/clock";
 import { personalCalendarRows } from "@/lib/demo-personal-calendars";
 import {
@@ -22,7 +29,10 @@ import {
 } from "@/lib/family-call-schedule";
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
-import type { CalendarEvent } from "@/lib/types";
+import { canRsvp, nextAttending, rsvpCounts } from "@/lib/event-rsvp";
+import { canClaimSupplies, ensureEventSupplies, nextSupplyClaim } from "@/lib/event-supplies";
+import { EventBringList } from "@/components/family/EventBringList";
+import type { CalendarEvent, CommerceSuggestion, RsvpStatus } from "@/lib/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -61,12 +71,16 @@ function isMineEvent(e: CalendarEvent, meId: string) {
 export function CalendarBoard({
   familyId,
   supabaseConfig,
+  initialEvents = [],
+  demo: demoProp,
   initialDraft = "",
   offerWeeklyCalls = false,
   autoAddFamilyCalls = true,
 }: {
   familyId: string;
   supabaseConfig: PublicSupabaseConfig | null;
+  initialEvents?: CalendarEvent[];
+  demo?: boolean;
   initialDraft?: string;
   offerWeeklyCalls?: boolean;
   autoAddFamilyCalls?: boolean;
@@ -75,7 +89,7 @@ export function CalendarBoard({
   const easy = useLargerText();
   const timeZone = useTimezone();
   const hour12 = useHour12();
-  const [demo, setDemo] = useState(true);
+  const [demo, setDemo] = useState(demoProp ?? true);
   const [anchor, setAnchor] = useState(() => calendarAnchor(true));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
@@ -94,9 +108,19 @@ export function CalendarBoard({
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const [demoPersonalCalendars, setDemoPersonalCalendars] = useState(false);
   const [familyCallFrequency, setFamilyCallFrequency] = useState<FamilyCallFrequency>(DEFAULT_FAMILY_CALL_FREQUENCY);
+  const [rsvpBusyId, setRsvpBusyId] = useState<string | null>(null);
+  const [supplyBusyId, setSupplyBusyId] = useState<string | null>(null);
+  const [orderingSupplyId, setOrderingSupplyId] = useState<string | null>(null);
   const autoScheduledRef = useRef(false);
+  const addEventRef = useRef<HTMLElement>(null);
+  const demoDayPickedRef = useRef(false);
 
   useEffect(() => {
+    if (demoProp !== undefined) {
+      setDemo(demoProp);
+      setAnchor(calendarAnchor(demoProp));
+      return;
+    }
     fetch("/api/demo")
       .then((r) => r.json())
       .then((d) => {
@@ -104,7 +128,13 @@ export function CalendarBoard({
         setAnchor(calendarAnchor(Boolean(d.demo)));
       })
       .catch(() => {});
-  }, []);
+  }, [demoProp]);
+
+  useEffect(() => {
+    if (!demo || familyId !== "alvarez" || demoDayPickedRef.current) return;
+    demoDayPickedRef.current = true;
+    setPick("2026-09-26");
+  }, [demo, familyId]);
 
   useEffect(() => {
     if (demo || !supabaseConfig) return;
@@ -130,20 +160,26 @@ export function CalendarBoard({
   }, [demo]);
 
   const load = useCallback(async () => {
+    if (demo) {
+      setEvents(initialEvents.map((e) => ensureEventSupplies(e)));
+      setGoogleConnected(false);
+      setGooglePersonalCount(0);
+      setDemoPersonalCalendars(familyId === "alvarez");
+      setEventsLoaded(true);
+      return;
+    }
     const q = new URLSearchParams({ familyId });
     if (googleToken) q.set("googleToken", googleToken);
     const res = await fetch(`/api/events?${q}`, { credentials: "include" });
     if (res.ok) {
       const data = await res.json();
-      setEvents(data.events);
-      const connected = Boolean(data.googleConnected);
-      setGoogleConnected(connected);
-      if (connected) setSyncToGoogle(true);
+      setEvents((data.events ?? []).map((e: CalendarEvent) => ensureEventSupplies(e)));
+      setGoogleConnected(Boolean(data.googleConnected));
       setGooglePersonalCount(Number(data.googlePersonalCount ?? 0));
       setDemoPersonalCalendars(Boolean(data.demoPersonalCalendars));
       setEventsLoaded(true);
     }
-  }, [familyId, googleToken]);
+  }, [demo, familyId, googleToken, initialEvents]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void load(), 0);
@@ -166,12 +202,41 @@ export function CalendarBoard({
   const cells = monthGrid(displayMonth);
   const todayKey = localDateKey(anchor);
 
+  useEffect(() => {
+    if (googleConnected) setSyncToGoogle(true);
+  }, [googleConnected]);
+
   const scoped = useMemo(
     () => events.filter((e) => (view === "family" ? isFamilyEvent(e) : isMineEvent(e, me.id))),
     [events, view, me.id],
   );
 
   const shown = useMemo(() => searchEventsByClues(query, scoped), [query, scoped]);
+
+  const scheduleConflicts = useMemo(
+    () => findScheduleConflicts(text, events, members, me.id, familyId, anchor, timeZone),
+    [text, events, members, me.id, familyId, anchor, timeZone],
+  );
+  const conflictWarning = conflictWarningText(scheduleConflicts);
+
+  const conflictDemoDay = useMemo(() => {
+    const soccer = events.find((e) => /soccer/i.test(e.title));
+    return soccer ? localDateKey(soccer.startsAt) : null;
+  }, [events]);
+
+  function loadConflictDemo() {
+    setText(SCHEDULE_CONFLICT_DEMO_DRAFT);
+    setView("family");
+    if (conflictDemoDay) setPick(conflictDemoDay);
+    addEventRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  useEffect(() => {
+    if (text.trim() === SCHEDULE_CONFLICT_DEMO_DRAFT && conflictDemoDay) {
+      setPick(conflictDemoDay);
+      setView("family");
+    }
+  }, [text, conflictDemoDay]);
 
   const weeklyProposal = useMemo(
     () =>
@@ -231,6 +296,16 @@ export function CalendarBoard({
     const rescheduling = events.some(isWeeklyFamilyCall);
     setSchedulingCalls(true);
     setMsg("");
+    if (demo) {
+      setEvents((prev) => [...prev, ...weeklyProposal.map((e) => ensureEventSupplies(e))]);
+      const rhythm = familyCallFrequencyLabel(familyCallFrequency).toLowerCase();
+      setMsg(`${rescheduling ? "Updated" : "Added"} ${weeklyProposal.length} ${rhythm} family call${weeklyProposal.length === 1 ? "" : "s"} to the calendar.`);
+      if (weeklyProposal[0]) setPick(localDateKey(weeklyProposal[0].startsAt));
+      setView("family");
+      setSchedulingCalls(false);
+      setEventsLoaded(true);
+      return;
+    }
     try {
       const res = await fetch("/api/events", {
         method: "POST",
@@ -270,6 +345,21 @@ export function CalendarBoard({
     if (!text.trim() || busy) return;
     setBusy(true);
     setMsg("");
+    if (demo) {
+      const parsed = parseEvent(text, members, me.id, familyId, anchor);
+      const next: CalendarEvent = ensureEventSupplies({
+        ...parsed,
+        id: `evt-demo-${Date.now()}`,
+        calendarScope: view,
+        attendees: view === "family" ? members.map((m) => m.id) : [me.id],
+      });
+      setEvents((prev) => [...prev, next]);
+      setMsg(view === "family" ? "Saved to the family calendar." : "Saved to your calendar.");
+      setText("");
+      setPick(localDateKey(next.startsAt));
+      setBusy(false);
+      return;
+    }
     try {
       const res = await fetch("/api/events", {
         method: "POST",
@@ -324,10 +414,119 @@ export function CalendarBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot after events load
   }, [eventsLoaded, shouldAutoSchedule, needsWeeklyCalls, schedulingCalls]);
 
+  async function setRsvp(event: CalendarEvent, status: RsvpStatus) {
+    if (rsvpBusyId || !canRsvp(event)) return;
+    const attending = nextAttending(event, me.id, status);
+    const previous = events;
+    setRsvpBusyId(event.id);
+    setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, attending } : e)));
+    if (demo) {
+      setRsvpBusyId(null);
+      return;
+    }
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: event.id,
+          familyId: event.familyId,
+          memberId: me.id,
+          status,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as CalendarEvent & { error?: string };
+      if (!res.ok) throw new Error(data.error || "Couldn't update RSVP.");
+      setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, ...data } : e)));
+    } catch (err) {
+      setEvents(previous);
+      setMsg(err instanceof Error ? err.message : "Couldn't update RSVP.");
+    } finally {
+      setRsvpBusyId(null);
+    }
+  }
+
+  async function claimSupply(event: CalendarEvent, supplyId: string) {
+    if (supplyBusyId || !canClaimSupplies(event)) return;
+    const supplies = nextSupplyClaim(event, supplyId, me.id);
+    const previous = events;
+    setSupplyBusyId(supplyId);
+    setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, supplies } : e)));
+    if (demo) {
+      setSupplyBusyId(null);
+      return;
+    }
+    try {
+      const res = await fetch("/api/events", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: event.id,
+          familyId: event.familyId,
+          memberId: me.id,
+          supplyId,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as CalendarEvent & { error?: string };
+      if (!res.ok) throw new Error(data.error || "Couldn't update bring list.");
+      setEvents((prev) => prev.map((e) => (e.id === event.id ? { ...e, ...data } : e)));
+    } catch (err) {
+      setEvents(previous);
+      setMsg(err instanceof Error ? err.message : "Couldn't update bring list.");
+    } finally {
+      setSupplyBusyId(null);
+    }
+  }
+
+  async function orderSupply(suggestion: CommerceSuggestion) {
+    if (orderingSupplyId) return;
+    setOrderingSupplyId(suggestion.supplyId ?? null);
+    try {
+      if (demo) {
+        const recipient = members.find((m) => m.id === suggestion.recipientId);
+        const data = demoPlaceCommerceOrder({
+          recipientName: recipient?.name.split(" ")[0] ?? "family",
+          title: suggestion.title,
+          kind: suggestion.kind,
+          location: recipient?.location,
+        });
+        setMsg(data.message);
+        return;
+      }
+      const res = await fetch("/api/commerce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId,
+          authorId: me.id,
+          recipientId: suggestion.recipientId,
+          kind: suggestion.kind,
+          title: suggestion.title,
+          sourceText: suggestion.sourceText,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { message?: string };
+        setMsg(data.message ?? "Demo order placed — delivery on the way.");
+      }
+    } finally {
+      setOrderingSupplyId(null);
+    }
+  }
+
   async function remove(e: CalendarEvent) {
     if (deletingId) return;
     setDeletingId(e.id);
     setMsg("");
+    if (demo) {
+      setEvents((prev) => prev.filter((x) => x.id !== e.id));
+      if (pick && picked.length <= 1) setPick(null);
+      setMsg(isWeeklyFamilyCall(e) ? "Call removed. Set new times below." : "Removed from the calendar.");
+      setDeletingId(null);
+      return;
+    }
     try {
       const q = new URLSearchParams({ id: e.id, familyId: e.familyId });
       if (e.googleEventId) q.set("googleEventId", e.googleEventId);
@@ -406,6 +605,13 @@ export function CalendarBoard({
             Link Google Calendar
           </a>{" "}
           to show your schedule next to the family&apos;s.
+        </p>
+      ) : null}
+
+      {demo && familyId === "alvarez" && view === "family" ? (
+        <p className="mt-3 rounded-sm border border-rule bg-accent-tint px-3 py-2 text-sm text-ink">
+          Demo: Saturday&apos;s soccer tournament has sample RSVPs — tap <span className="font-medium">Going</span>,{" "}
+          <span className="font-medium">Maybe</span>, or <span className="font-medium">Can&apos;t make it</span> to try it.
         </p>
       ) : null}
 
@@ -660,26 +866,47 @@ export function CalendarBoard({
               {picked.map((e) => (
                 <li
                   key={e.id}
-                  className={`flex items-start justify-between gap-3 rounded-sm border border-rule p-3 ${isWeeklyFamilyCall(e) ? "bg-accent-tint" : "bg-ground"}`}
+                  className={`rounded-sm border border-rule p-3 ${isWeeklyFamilyCall(e) ? "bg-accent-tint" : "bg-ground"}`}
                 >
-                  <div className="min-w-0">
-                    <p className="font-medium">{e.title}</p>
-                    <p className="mt-0.5 text-sm text-mute">
-                      {formatTime(e.startsAt, { timeZone, hour12 })}
-                      {e.location ? ` · ${e.location}` : ""}
-                    </p>
-                    {e.isGoogleSynced ? (
-                      <p className="mt-1 text-xs text-clinic">Synced from Google Calendar</p>
-                    ) : null}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium">{e.title}</p>
+                      <p className="mt-0.5 text-sm text-mute">
+                        {formatTime(e.startsAt, { timeZone, hour12 })}
+                        {e.location ? ` · ${e.location}` : ""}
+                      </p>
+                      {e.isGoogleSynced ? (
+                        <p className="mt-1 text-xs text-clinic">Synced from Google Calendar</p>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => remove(e)}
+                      disabled={deletingId === e.id}
+                      className="shrink-0 text-xs font-medium text-ember hover:underline disabled:opacity-50"
+                    >
+                      {deletingId === e.id ? "Removing…" : "Remove from calendar"}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => remove(e)}
-                    disabled={deletingId === e.id}
-                    className="shrink-0 text-xs font-medium text-ember hover:underline disabled:opacity-50"
-                  >
-                    {deletingId === e.id ? "Removing…" : "Remove from calendar"}
-                  </button>
+                  {view === "family" && isFamilyEvent(e) && canRsvp(e) ? (
+                    <EventRsvpPills
+                      event={e}
+                      memberId={me.id}
+                      busy={rsvpBusyId === e.id}
+                      onSelect={(status) => void setRsvp(e, status)}
+                    />
+                  ) : null}
+                  {view === "family" && isFamilyEvent(e) && canClaimSupplies(e) && (e.supplies?.length ?? 0) > 0 ? (
+                    <EventBringList
+                      event={e}
+                      members={members}
+                      meId={me.id}
+                      busySupplyId={supplyBusyId}
+                      orderingSupplyId={orderingSupplyId}
+                      onClaim={(supplyId) => void claimSupply(e, supplyId)}
+                      onOrder={(suggestion) => void orderSupply(suggestion)}
+                    />
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -689,9 +916,28 @@ export function CalendarBoard({
         <p className="mt-3 text-sm text-mute">Pick a day to see what&apos;s on it.</p>
       )}
 
-      <section className="mt-6 border border-rule bg-surface p-4" aria-labelledby="add-event-heading">
+      <section
+        ref={addEventRef}
+        className="mt-6 border border-rule bg-surface p-4"
+        aria-labelledby="add-event-heading"
+      >
         <h3 id="add-event-heading" className="font-semibold">Add an event</h3>
         <p className="mt-1 text-sm text-mute">Just type it naturally — &quot;family dinner Sunday at 6&quot; works fine.</p>
+        {demo ? (
+          <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+            <p className="font-medium">Try the conflict check</p>
+            <p className="mt-1 text-xs text-amber-900">
+              Schedule something near Sofia&apos;s soccer tournament — Hearth flags overlaps before you save.
+            </p>
+            <button
+              type="button"
+              onClick={loadConflictDemo}
+              className="mt-2 rounded-sm border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-950 hover:bg-amber-100"
+            >
+              Load example
+            </button>
+          </div>
+        ) : null}
         <div className="mt-3 flex flex-wrap gap-2">
           {QUICK.map((q) => (
             <button
@@ -710,6 +956,14 @@ export function CalendarBoard({
           placeholder={view === "family" ? "Family dinner Sunday at 6, at home" : "Dentist Tuesday at 3 PM"}
           className={`mt-3 w-full rounded-sm border border-rule bg-surface px-3 py-2 ${easy ? "min-h-24 text-base" : "min-h-16 text-sm"}`}
         />
+        {conflictWarning ? (
+          <p
+            className="mt-2 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+            role="status"
+          >
+            ⚠️ {conflictWarning}
+          </p>
+        ) : null}
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {!demo && googleConnected ? (
             <label className="flex cursor-pointer items-center gap-2 text-sm text-mute">
@@ -732,6 +986,60 @@ export function CalendarBoard({
           </button>
         </div>
       </section>
+    </div>
+  );
+}
+
+const RSVP_OPTIONS: { status: RsvpStatus; label: string }[] = [
+  { status: "yes", label: "Going" },
+  { status: "maybe", label: "Maybe" },
+  { status: "no", label: "Can't make it" },
+];
+
+function EventRsvpPills({
+  event,
+  memberId,
+  busy,
+  onSelect,
+}: {
+  event: CalendarEvent;
+  memberId: string;
+  busy: boolean;
+  onSelect: (status: RsvpStatus) => void;
+}) {
+  const counts = rsvpCounts(event.attending);
+  const mine = event.attending?.[memberId];
+
+  return (
+    <div className="mt-3 border-t border-rule pt-3">
+      <p className="text-xs font-medium text-mute">Who&apos;s coming?</p>
+      <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="RSVP">
+        {RSVP_OPTIONS.map(({ status, label }) => {
+          const count = counts[status];
+          const active = mine === status;
+          return (
+            <button
+              key={status}
+              type="button"
+              disabled={busy}
+              aria-pressed={active}
+              onClick={() => onSelect(status)}
+              className={[
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                active
+                  ? status === "yes"
+                    ? "bg-ember text-white"
+                    : status === "maybe"
+                      ? "bg-clinic text-white"
+                      : "bg-mute text-white"
+                  : "border border-rule bg-surface text-ink hover:border-ember hover:text-ember",
+              ].join(" ")}
+            >
+              {label} ({count})
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { DIGEST_NAME } from "../digest";
-import { groqConfigured } from "./config";
-import { groqChat } from "./groq";
+import { DIGEST_NAME } from "../digest-constants";
+import { aiConfigured } from "./config";
+import { aiChat } from "./chat";
 import { ASSISTANT_SYSTEM_PROMPT } from "./prompts";
 
 export type AssistantTurn = {
@@ -29,13 +29,13 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
   const who = ctx?.postingAs ? `You’re posting as ${ctx.postingAs}. ` : "";
 
   if (q.includes("switch") || q.includes("another circle") || q.includes("other family")) {
-    return `${who}Tap your circle name in the header to switch circles, or add a new one from there.`;
+    return `${who}Open Settings and choose a different circle under Circle, or join or create one there.`;
   }
 
   if (q.includes("invite") || q.includes("add member") || q.includes("join") || q.includes("code")) {
     return ctx?.inviteCode
-      ? `${who}To invite someone: Chats → Add family member, or share invite code ${ctx.inviteCode}. To join another circle yourself, tap your circle name in the header.`
-      : `${who}To invite someone: Chats → Add family member, or share the invite code in the header. You can belong to multiple circles — tap your circle name to switch.`;
+      ? `${who}To invite someone: open your family chat and tap Invite to copy your code or send an email link. To join another circle yourself, open Settings → Circle.`
+      : `${who}To invite someone: open your family chat and tap Invite. You can belong to multiple circles — switch under Settings → Circle.`;
   }
 
   if (
@@ -58,7 +58,7 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
   }
 
   if (q.includes("easy") || q.includes("larger text") || q.includes("bigger text") || q.includes("settings")) {
-    return "Open Settings in the header for theme, time zone, larger text, and sign out.";
+    return "Open Settings in the header for theme, time zone, time format, Hestia generation, larger text, and sign out.";
   }
 
   if (q.includes("dark") || q.includes("light mode") || q.includes("theme")) {
@@ -88,11 +88,11 @@ export async function runFamilyAssistant(input: {
   message: string;
   history?: AssistantTurn[];
   context?: AssistantContext;
-}): Promise<{ reply: string; source: "groq" | "local" }> {
+}): Promise<{ reply: string; source: "muse" | "groq" | "local" }> {
   const message = input.message.trim();
   if (!message) throw new Error("Say something first.");
 
-  if (groqConfigured()) {
+  if (aiConfigured()) {
     try {
       const context = input.context ?? {};
       const contextMessage = [
@@ -112,7 +112,7 @@ export async function runFamilyAssistant(input: {
         .slice(-8)
         .map((turn) => ({ role: turn.role, content: turn.content.slice(0, 1000) }));
 
-      const reply = await groqChat({
+      const { content, source } = await aiChat({
         reasoningEffort: "low",
         temperature: 0.35,
         maxTokens: 500,
@@ -123,9 +123,9 @@ export async function runFamilyAssistant(input: {
           { role: "user", content: message },
         ],
       });
-      return { reply, source: "groq" };
+      return { reply: content, source };
     } catch (error) {
-      console.error("Hearth Assistant Groq request failed; using local fallback.", error);
+      console.error("Hearth Assistant AI request failed; using local fallback.", error);
     }
   }
 

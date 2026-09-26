@@ -1,6 +1,10 @@
 import { analyzeMember } from "./analysis";
+import { seedDemoPatientAssignments } from "./clinical/assignments";
+import { atDay } from "./clock";
 import { GROUP_THREAD, postThreadId, threadForDm } from "./chat";
+import { aiConfigured, groqConfigured, museConfigured } from "./ai/config";
 import { buildDigest } from "./digest";
+import { enrichDigestTimeMachine } from "./digest-time-machine";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
 import { events as seedEvents, families, members, posts as seedPosts, reminders as seedReminders } from "./seed";
 import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post, Reminder } from "./types";
@@ -19,7 +23,7 @@ type Store = {
 const g = globalThis as typeof globalThis & { __hearth?: Store };
 
 function empty(): Store {
-  return {
+  const store = {
     families: structuredClone(families),
     members: structuredClone(members),
     posts: structuredClone(seedPosts),
@@ -27,6 +31,9 @@ function empty(): Store {
     reminders: structuredClone(seedReminders),
     digests: [],
   };
+  seedDemoCheckInState();
+  seedDemoPatientAssignments();
+  return store;
 }
 
 function hydrateStore(store: Store): Store {
@@ -41,6 +48,21 @@ export function db(): Store {
 
 export function resetStore() {
   g.__hearth = empty();
+  seedDemoCheckInState();
+}
+
+/** Pre-seed safe check-in alert stage for Alvarez demo (prompt sent morning of demo day). */
+export function seedDemoCheckInState() {
+  const gCheck = globalThis as typeof globalThis & {
+    __hearthCheckIns?: Array<{ familyId: string; memberId: string; promptSentAt?: string }>;
+  };
+  gCheck.__hearthCheckIns = [
+    {
+      familyId: "alvarez",
+      memberId: "elena",
+      promptSentAt: atDay(0, 6, 0),
+    },
+  ];
 }
 
 export function familyById(id: string) {
@@ -133,11 +155,32 @@ export function patchReminder(id: string, familyId: string, patch: Partial<Remin
   return store.reminders[idx];
 }
 
-export async function digestFor(familyId: string, refresh = false) {
+function digestMatchesPreference(digest: Digest, preferLocal: boolean) {
+  const source = digest.source ?? "local";
+  if (preferLocal) return source === "local";
+  if (museConfigured()) return source === "muse";
+  if (groqConfigured()) return source === "groq";
+  if (aiConfigured()) return source !== "local";
+  return source === "local";
+}
+
+export async function digestFor(familyId: string, refresh = false, preferLocal = false) {
   const store = db();
   const existing = store.digests.find((d) => d.familyId === familyId);
-  if (existing && !refresh) return existing;
-  const digest = await buildDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
+  const needsRebuild = refresh || !existing || !digestMatchesPreference(existing, preferLocal);
+
+  if (existing && !needsRebuild) {
+    const woven = existing.storybook?.some((p) => p.id === "memories-divider");
+    if (existing.onThisDay?.length && woven) return existing;
+    const enriched = enrichDigestTimeMachine(existing, membersOf(familyId), postsOf(familyId), true);
+    store.digests = store.digests.filter((d) => d.familyId !== familyId);
+    store.digests.push(enriched);
+    return enriched;
+  }
+  const digest = await buildDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId), {
+    demo: true,
+    preferLocal,
+  });
   store.digests = store.digests.filter((d) => d.familyId !== familyId);
   store.digests.push(digest);
   return digest;

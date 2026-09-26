@@ -67,6 +67,14 @@ export async function saveGoogleTokens(session: {
   }
 }
 
+/** Drop cached OAuth tokens after 401/403 or explicit disconnect. */
+export async function clearGoogleTokens() {
+  const jar = await cookies();
+  jar.delete(ACCESS);
+  jar.delete(REFRESH);
+  jar.delete(LEGACY_REFRESH);
+}
+
 export async function googleAccessToken(clientToken?: string | null) {
   if (clientToken?.trim()) return clientToken.trim();
 
@@ -76,7 +84,6 @@ export async function googleAccessToken(clientToken?: string | null) {
       data: { session },
     } = await supabase.auth.getSession();
     if (session?.provider_token) {
-      await saveGoogleTokens(session);
       return session.provider_token;
     }
   } catch {
@@ -84,23 +91,25 @@ export async function googleAccessToken(clientToken?: string | null) {
   }
 
   const jar = await cookies();
+  const refresh = jar.get(REFRESH)?.value || jar.get(LEGACY_REFRESH)?.value;
+  if (refresh) {
+    const access = await refreshAccessToken(refresh);
+    if (access) {
+      jar.set(ACCESS, access, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 55,
+        secure: process.env.NODE_ENV === "production",
+      });
+      return access;
+    }
+  }
+
   const cached = jar.get(ACCESS)?.value;
   if (cached) return cached;
 
-  const refresh = jar.get(REFRESH)?.value || jar.get(LEGACY_REFRESH)?.value;
-  if (!refresh) return null;
-
-  const access = await refreshAccessToken(refresh);
-  if (access) {
-    jar.set(ACCESS, access, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 55,
-      secure: process.env.NODE_ENV === "production",
-    });
-  }
-  return access;
+  return null;
 }
 
 async function listEventPage(token: string, params: Record<string, string>) {
@@ -114,8 +123,12 @@ async function listEventPage(token: string, params: Record<string, string>) {
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" },
   );
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      await clearGoogleTokens();
+      return { items: [] as GCalEvent[], nextPageToken: undefined as string | undefined };
+    }
     const err = await res.text().catch(() => "");
-    console.error(`Google Calendar list failed (${res.status}):`, err.slice(0, 300));
+    console.warn(`Google Calendar list failed (${res.status}):`, err.slice(0, 200));
     return { items: [] as GCalEvent[], nextPageToken: undefined as string | undefined };
   }
   const data = await res.json();

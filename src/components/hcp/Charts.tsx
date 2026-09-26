@@ -17,7 +17,7 @@ function chartGeometry(points: DailyPoint[], accessor: (point: DailyPoint) => nu
 export function Sparkline({
   points,
   accessor,
-  color = "#2563eb",
+  color = "#c99500",
   label,
 }: {
   points: DailyPoint[];
@@ -40,7 +40,7 @@ export function Sparkline({
 export function TrendChart({
   points,
   accessor,
-  color = "#2563eb",
+  color = "#c99500",
   label,
 }: {
   points: DailyPoint[];
@@ -62,17 +62,19 @@ export function TrendChart({
             y1={height * fraction - pad / 2}
             x2={width - pad}
             y2={height * fraction - pad / 2}
-            stroke="#e2e8f0"
+            stroke="var(--rule)"
             strokeDasharray="4 5"
           />
         ))}
         <polygon points={area} fill={color} opacity="0.07" />
         <polyline fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={line} />
         {coordinates.map(({ x, y }, index) =>
-          accessor(points[index]) > 0 ? <circle key={points[index].date} cx={x} cy={y} r="3" fill="white" stroke={color} strokeWidth="2" /> : null,
+          accessor(points[index]) > 0 ? (
+            <circle key={points[index].date} cx={x} cy={y} r="3" fill="var(--surface)" stroke={color} strokeWidth="2" />
+          ) : null,
         )}
       </svg>
-      <div className="mt-1 flex justify-between text-[11px] text-slate-400">
+      <div className="mt-1 flex justify-between text-[11px] text-mute">
         <span>{points.at(0)?.date.slice(5)}</span>
         <span>{points.at(-1)?.date.slice(5)}</span>
       </div>
@@ -96,16 +98,20 @@ export function Metric({
   const changed = delta !== null && Math.abs(delta) > 0.02;
   const adverse = delta !== null && (invert ? delta > 0.02 : delta < -0.02);
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</p>
+    <div className="border border-line bg-ground p-4">
+      <p className="text-xs font-medium text-mute">{label}</p>
       <div className="mt-2 flex items-end justify-between gap-3">
-        <p className="text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
-        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${adverse ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+        <p className="text-2xl font-bold tracking-tight text-ink">{value}</p>
+        <span
+          className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
+            adverse ? "border-amber-200 bg-amber-50 text-amber-800" : "border-line bg-surface text-mute"
+          }`}
+        >
           {delta === null ? "No baseline" : `${delta >= 0 ? "+" : ""}${Math.round(delta * 100)}%`}
         </span>
       </div>
-      <p className="mt-2 text-xs text-slate-400">
-        {baseline ? `Personal baseline ${baseline}` : changed ? "Compared with personal baseline" : "Within personal baseline"}
+      <p className="mt-2 text-xs text-mute">
+        {baseline ? `Their usual baseline: ${baseline}` : changed ? "Compared with their baseline" : "Within their baseline"}
       </p>
     </div>
   );

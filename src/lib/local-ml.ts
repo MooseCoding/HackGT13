@@ -212,12 +212,25 @@ export function pickWeekHighlights(
 // ── context clues (keyword relevance for HCP evidence) ──────────────
 
 const CLUE_PATTERNS: { tag: string; keywords: string[]; weight: number }[] = [
-  { tag: "late-night", keywords: ["can't sleep", "awake", "insomnia", "2am", "3am", "midnight", "late"], weight: 3 },
-  { tag: "confusion", keywords: ["forgot", "forgotten", "lost", "confused", "where", "can't find", "misplaced"], weight: 3 },
-  { tag: "loneliness", keywords: ["lonely", "alone", "miss", "wish", "nobody", "quiet house"], weight: 2 },
-  { tag: "worry", keywords: ["worried", "anxious", "scared", "afraid", "nervous", "stress"], weight: 2 },
-  { tag: "repetition", keywords: ["again", "already said", "told you", "like i said"], weight: 2 },
-  { tag: "withdrawal", keywords: ["don't want", "leave me", "not today", "cancel", "skip"], weight: 2 },
+  { tag: "late-night", keywords: ["can't sleep", "awake", "insomnia", "2am", "3am", "midnight", "late", "nightmare"], weight: 3 },
+  { tag: "confusion", keywords: ["forgot", "forgotten", "lost", "confused", "where", "can't find", "misplaced", "train of thought"], weight: 3 },
+  { tag: "bipolar", keywords: ["bipolar", "manic episode", "hypomanic", "mood swing", "mood cycling", "depressive episode"], weight: 4 },
+  { tag: "depression", keywords: ["depression", "depressive disorder", "clinical depression", "depressive episode", "depressive spiral"], weight: 4 },
+  { tag: "ptsd", keywords: ["ptsd", "post-traumatic", "posttraumatic", "trauma is back"], weight: 4 },
+  { tag: "ocd", keywords: ["ocd", "obsessive-compulsive", "intrusive thoughts", "can't stop checking", "compulsion"], weight: 4 },
+  { tag: "adhd", keywords: ["adhd", "attention deficit", "can't focus", "scatterbrained", "hyperactive"], weight: 3 },
+  { tag: "schizophrenia", keywords: ["schizophrenia", "psychotic episode", "psychosis"], weight: 4 },
+  { tag: "low-mood", keywords: ["hopeless", "worthless", "empty", "numb", "depressed", "crying", "no energy", "don't care"], weight: 3 },
+  { tag: "anxiety", keywords: ["anxious", "panic", "racing thoughts", "on edge", "dread", "can't breathe", "heart pounding"], weight: 3 },
+  { tag: "psychosis", keywords: ["hearing voices", "not real", "watching me", "paranoia", "out to get"], weight: 4 },
+  { tag: "mania", keywords: ["haven't slept", "unstoppable", "spending spree", "invincible", "talking too fast"], weight: 3 },
+  { tag: "trauma", keywords: ["flashback", "triggered", "reliving", "panic attack", "startled"], weight: 3 },
+  { tag: "substance", keywords: ["drinking again", "relapse", "need a drink", "using again", "pills again"], weight: 3 },
+  { tag: "eating", keywords: ["not eating", "binge", "throwing up", "hate my body", "fasting"], weight: 3 },
+  { tag: "loneliness", keywords: ["lonely", "alone", "miss", "wish", "nobody", "quiet house", "no one cares"], weight: 2 },
+  { tag: "worry", keywords: ["worried", "scared", "afraid", "nervous", "stress", "overwhelmed"], weight: 2 },
+  { tag: "repetition", keywords: ["again", "already said", "told you", "like i said", "keep forgetting"], weight: 2 },
+  { tag: "withdrawal", keywords: ["don't want", "leave me", "not today", "cancel", "skip", "stay in bed"], weight: 2 },
   { tag: "positive", keywords: ["love", "happy", "glad", "wonderful", "grateful", "thankful", "proud"], weight: -1 },
 ];
 

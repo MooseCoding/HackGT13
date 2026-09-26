@@ -5,6 +5,8 @@ export type Database = {
     Tables: {
       calendar_events: {
         Row: {
+          attending: Json;
+          supplies: Json;
           attendees: string[];
           created_by: string;
           ends_at: string | null;
@@ -16,6 +18,8 @@ export type Database = {
           title: string;
         };
         Insert: {
+          attending?: Json;
+          supplies?: Json;
           attendees?: string[];
           created_by: string;
           ends_at?: string | null;
@@ -27,6 +31,8 @@ export type Database = {
           title: string;
         };
         Update: {
+          attending?: Json;
+          supplies?: Json;
           attendees?: string[];
           created_by?: string;
           ends_at?: string | null;
@@ -270,6 +276,23 @@ export type Database = {
         };
         Relationships: [];
       };
+      clinical_patient_assignments: {
+        Row: {
+          member_id: string;
+          clinician_id: string;
+          assigned_at: string;
+        };
+        Insert: {
+          member_id: string;
+          clinician_id: string;
+          assigned_at?: string;
+        };
+        Update: {
+          clinician_id?: string;
+          assigned_at?: string;
+        };
+        Relationships: [];
+      };
       members: {
         Row: {
           age: number;
@@ -347,6 +370,7 @@ export type Database = {
           external_message_id: string | null;
           audio_metrics: Json | null;
           raw_retained: boolean;
+          linked_event_id: string | null;
         };
         Insert: {
           author_id: string;
@@ -364,6 +388,7 @@ export type Database = {
           external_message_id?: string | null;
           audio_metrics?: Json | null;
           raw_retained?: boolean;
+          linked_event_id?: string | null;
         };
         Update: {
           author_id?: string;
@@ -381,6 +406,7 @@ export type Database = {
           external_message_id?: string | null;
           audio_metrics?: Json | null;
           raw_retained?: boolean;
+          linked_event_id?: string | null;
         };
         Relationships: [];
       };

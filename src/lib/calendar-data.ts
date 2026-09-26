@@ -28,19 +28,21 @@ export async function mergedEventsOf(
   const local = (await eventsOf(familyId)).filter((e) => inCalendarWindow(e.startsAt, anchor));
 
   let google: CalendarEvent[] = [];
-  try {
-    const token = await googleAccessToken(opts?.clientToken);
-    if (token) {
-      const pull = opts?.googlePull ?? "window";
-      if (pull === "sample") {
-        // Always sample from real wall-clock time — Google is the user's actual calendar.
-        google = await fetchGoogleAroundNow(familyId, token, new Date(), GOOGLE_EVENT_COUNT);
-      } else {
-        google = await fetchGoogleInWindow(familyId, token, anchor);
+  if (!demo) {
+    try {
+      const token = await googleAccessToken(opts?.clientToken);
+      if (token) {
+        const pull = opts?.googlePull ?? "window";
+        if (pull === "sample") {
+          // Always sample from real wall-clock time — Google is the user's actual calendar.
+          google = await fetchGoogleAroundNow(familyId, token, new Date(), GOOGLE_EVENT_COUNT);
+        } else {
+          google = await fetchGoogleInWindow(familyId, token, anchor);
+        }
       }
+    } catch (err) {
+      console.warn("Google Calendar fetch error:", err);
     }
-  } catch (err) {
-    console.error("Google Calendar fetch error:", err);
   }
 
   return mergeCalendarEvents(local, google);

@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: HearthSettings = {
   theme: "light",
   timezone: "auto",
   timeFormat: "12h",
-  hestiaGeneration: "local",
+  hestiaGeneration: "auto",
 };
 
 export const THEME_OPTIONS: { value: ThemeSetting; label: string }[] = [
@@ -83,7 +83,7 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
   hestiaGeneration: {
     label: "Hestia generation",
     description:
-      "Built-in uses the on-device storyteller. AI mode uses Meta Muse 1.3, or Meta's latest model, when configured.",
+      "Built-in uses the on-device storyteller. AI mode uses Meta Muse 1.3 when configured. Real accounts default to AI; sample family preview uses built-in.",
     group: "Hestia",
     control: {
       type: "select",

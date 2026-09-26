@@ -4,10 +4,13 @@ import { decorateDemoPersonalEvents } from "@/lib/demo-personal-calendars";
 import { CAL_WEEKS, inCalendarWindow } from "@/lib/calendar-window";
 import { calendarAnchor } from "@/lib/clock";
 import { scheduleFamilyCallsForCircle } from "@/lib/auto-family-calls";
-import { addEventRow, deleteEventRow, membersOf, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
-import { deleteGoogleEvent, googleAccessToken, syncEventToGoogle } from "@/lib/google-calendar";
+import { nextAttending } from "@/lib/event-rsvp";
+import { defaultSuppliesForEvent, isGatheringEvent, nextSupplyClaim } from "@/lib/event-supplies";
+import { addEventRow, deleteEventRow, eventsOf, membersOf, patchEventRow, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
+import { broadcastEventPin } from "@/lib/event-pin";
+import { createGoogleEvent, deleteGoogleEvent, googleAccessToken, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
-import type { CalendarEvent } from "@/lib/types";
+import type { CalendarEvent, RsvpStatus } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -109,6 +112,11 @@ export async function POST(req: NextRequest) {
     };
 
     let saved = await addEventRow(event);
+    if (scope === "family" && isGatheringEvent(saved) && !saved.supplies?.length) {
+      saved = (await patchEventRow(saved.id, saved.familyId, {
+        supplies: defaultSuppliesForEvent(saved),
+      })) ?? saved;
+    }
     const wantsGoogle = body.syncToGoogle !== false;
 
     if (wantsGoogle && token) {
@@ -128,10 +136,96 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (scope === "family") {
+      await broadcastEventPin(saved, identity.memberId).catch((err) => {
+        console.error("Event pin broadcast failed:", err);
+      });
+    }
+
     return NextResponse.json(saved);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create event." },
+      { status: 403 },
+    );
+  }
+}
+
+/** Push an existing family event to the requesting member's Google Calendar. */
+export async function PUT(req: NextRequest) {
+  try {
+    const body = (await req.json()) as {
+      id: string;
+      familyId: string;
+      memberId: string;
+      googleToken?: string;
+    };
+    const identity = await postingIdentity(body.familyId, body.memberId);
+    if (!body.id) return NextResponse.json({ error: "Missing event id." }, { status: 400 });
+
+    const events = await eventsOf(identity.familyId);
+    const event = events.find((e) => e.id === body.id);
+    if (!event) return NextResponse.json({ error: "Event not found." }, { status: 404 });
+
+    const token = await googleAccessToken(body.googleToken);
+    if (!token) {
+      return NextResponse.json(
+        { error: "Sign in with Google to add this to your calendar." },
+        { status: 401 },
+      );
+    }
+
+    const created = await createGoogleEvent(token, event);
+    return NextResponse.json({ ok: true, googleEventId: created.id });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not add to Google Calendar." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = (await req.json()) as {
+      id: string;
+      familyId: string;
+      memberId: string;
+      status?: RsvpStatus;
+      supplyId?: string;
+    };
+    const identity = await postingIdentity(body.familyId, body.memberId);
+    if (!body.id) return NextResponse.json({ error: "Missing event id." }, { status: 400 });
+
+    const events = await eventsOf(identity.familyId);
+    const event = events.find((e) => e.id === body.id);
+    if (!event) return NextResponse.json({ error: "Event not found." }, { status: 404 });
+    if (event.isGoogleSynced || event.id.startsWith("google_")) {
+      return NextResponse.json(
+        { error: "Updates are only available for family events saved in Hearth." },
+        { status: 400 },
+      );
+    }
+
+    if (body.supplyId) {
+      const supplies = nextSupplyClaim(event, body.supplyId, identity.memberId);
+      const saved = await patchEventRow(event.id, identity.familyId, { supplies });
+      if (!saved) return NextResponse.json({ error: "Could not update bring list." }, { status: 404 });
+      return NextResponse.json(saved);
+    }
+
+    if (body.status !== "yes" && body.status !== "maybe" && body.status !== "no") {
+      return NextResponse.json({ error: "Invalid RSVP status." }, { status: 400 });
+    }
+
+    const attending = nextAttending(event, identity.memberId, body.status);
+    const saved = await patchEventRow(event.id, identity.familyId, { attending });
+    if (!saved) return NextResponse.json({ error: "Could not update RSVP." }, { status: 404 });
+
+    return NextResponse.json(saved);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not update event." },
       { status: 403 },
     );
   }

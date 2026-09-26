@@ -271,6 +271,22 @@ function SettingsPanel({
             </section>
           ))}
 
+          <section className="px-4 py-4" aria-labelledby="settings-insurance-heading">
+            <h3 id="settings-insurance-heading" className="text-sm font-semibold text-ink">
+              Insurance
+            </h3>
+            <p className="mt-2 text-sm text-mute">
+              Add coverage so clinicians in network can find your family member in the care-team portal.
+            </p>
+            <Link
+              href="/family/settings/insurance"
+              onClick={onClose}
+              className="mt-3 inline-flex min-h-11 items-center rounded-sm border border-rule px-4 text-sm font-medium text-ink hover:bg-accent-tint"
+            >
+              Manage insurance
+            </Link>
+          </section>
+
           {showClinicalSharing ? (
             <section className="px-4 py-4" aria-labelledby="settings-clinical-heading">
               <h3 id="settings-clinical-heading" className="text-sm font-semibold text-ink">

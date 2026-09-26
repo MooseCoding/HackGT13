@@ -52,7 +52,7 @@ export function AcceptInvite({
     <main className="min-h-dvh bg-ground px-4 py-10">
       <div className="mb-6 flex items-center gap-2 border-b border-line pb-4">
         <HearthMark className="h-8 w-8" />
-        <p className="font-brand text-2xl">Hearth</p>
+        <p className="font-brand text-2xl">Familyr</p>
       </div>
 
       <h1 className="text-2xl font-bold text-ink">Join {invitation.familyName}</h1>
@@ -95,6 +95,9 @@ export function AcceptInvite({
             disabled={!generalConsent}
             healthcareConsent={healthcareConsent}
             familyCallFrequency={familyCallFrequency}
+            storePendingConsent
+            authFlow="signup"
+            label="Sign up with Google"
           />
         </div>
       ) : null}

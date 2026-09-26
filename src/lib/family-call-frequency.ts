@@ -1,60 +1,67 @@
-export type FamilyCallFrequency = "weekly" | "biweekly" | "monthly" | "none";
+export const FAMILY_CALL_FREQUENCIES = ["weekly", "biweekly", "monthly", "none"] as const;
+export type FamilyCallFrequency = (typeof FAMILY_CALL_FREQUENCIES)[number];
 
 export const DEFAULT_FAMILY_CALL_FREQUENCY: FamilyCallFrequency = "weekly";
 
-export const FAMILY_CALL_FREQUENCY_OPTIONS: ReadonlyArray<{
-  value: FamilyCallFrequency;
-  label: string;
-}> = [
-  { value: "weekly", label: "Weekly" },
-  { value: "biweekly", label: "Every 2 weeks" },
-  { value: "monthly", label: "Monthly" },
-  { value: "none", label: "Off" },
+export const FAMILY_CALL_FREQUENCY_OPTIONS: { value: FamilyCallFrequency; label: string; hint: string }[] = [
+  { value: "weekly", label: "Weekly", hint: "One call each week" },
+  { value: "biweekly", label: "Every two weeks", hint: "One call every other week" },
+  { value: "monthly", label: "Monthly", hint: "One call each month" },
+  { value: "none", label: "Don't schedule", hint: "No automatic call suggestions" },
 ];
 
-export function familyCallFrequencyLabel(freq: FamilyCallFrequency): string {
-  switch (freq) {
-    case "weekly":
-      return "Weekly";
-    case "biweekly":
-      return "Biweekly";
-    case "monthly":
-      return "Monthly";
-    case "none":
-      return "Off";
+export function parseFamilyCallFrequency(raw: unknown): FamilyCallFrequency {
+  if (typeof raw === "string" && (FAMILY_CALL_FREQUENCIES as readonly string[]).includes(raw)) {
+    return raw as FamilyCallFrequency;
   }
+  return DEFAULT_FAMILY_CALL_FREQUENCY;
 }
 
-/** Singular period noun; CalendarBoard appends "es" for plurals. */
-export function familyCallPeriodNoun(freq: FamilyCallFrequency): string {
-  switch (freq) {
-    case "weekly":
-      return "week";
-    case "biweekly":
-      return "biweek";
-    case "monthly":
-      return "month";
-    case "none":
-      return "period";
-  }
+export function familyCallFrequencyLabel(frequency: FamilyCallFrequency) {
+  return FAMILY_CALL_FREQUENCY_OPTIONS.find((o) => o.value === frequency)?.label ?? "Weekly";
 }
 
-export function familyCallSetupHeading(freq: FamilyCallFrequency, hasExistingCalls: boolean): string {
-  const rhythm = familyCallFrequencyLabel(freq).toLowerCase();
-  if (freq === "none") return "Family calls are off";
-  if (hasExistingCalls) return `Add missing ${rhythm} family calls`;
-  return `Set up ${rhythm} family calls`;
-}
-
-export function familyCallTitle(freq: FamilyCallFrequency): string {
-  switch (freq) {
+export function familyCallTitle(frequency: FamilyCallFrequency) {
+  switch (frequency) {
     case "weekly":
       return "Weekly family call";
     case "biweekly":
       return "Biweekly family call";
     case "monthly":
       return "Monthly family call";
-    case "none":
+    default:
       return "Family call";
+  }
+}
+
+export function familyCallPeriodNoun(frequency: FamilyCallFrequency) {
+  switch (frequency) {
+    case "weekly":
+      return "week";
+    case "biweekly":
+      return "two-week stretch";
+    case "monthly":
+      return "month";
+    default:
+      return "period";
+  }
+}
+
+export function familyCallSetupHeading(frequency: FamilyCallFrequency, rescheduling: boolean) {
+  if (frequency === "none") return "";
+  const rhythm = familyCallFrequencyLabel(frequency).toLowerCase();
+  return rescheduling ? `Adjust your ${rhythm} family calls` : `Line up ${rhythm} family calls`;
+}
+
+export function familyCallReminderSource(frequency: FamilyCallFrequency = DEFAULT_FAMILY_CALL_FREQUENCY) {
+  switch (frequency) {
+    case "weekly":
+      return "Weekly Family Call from Familyr";
+    case "biweekly":
+      return "Biweekly Family Call from Familyr";
+    case "monthly":
+      return "Monthly Family Call from Familyr";
+    default:
+      return "Family Call from Familyr";
   }
 }

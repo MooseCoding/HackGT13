@@ -12,6 +12,9 @@ export function GoogleSignInButton({
   disabled = false,
   healthcareConsent = false,
   familyCallFrequency = "weekly",
+  storePendingConsent = false,
+  authFlow = "login",
+  label = "Continue with Google",
   variant = "secondary",
 }: {
   next?: string;
@@ -19,6 +22,9 @@ export function GoogleSignInButton({
   disabled?: boolean;
   healthcareConsent?: boolean;
   familyCallFrequency?: FamilyCallFrequency;
+  storePendingConsent?: boolean;
+  authFlow?: "login" | "signup";
+  label?: string;
   variant?: "primary" | "secondary";
 }) {
   const [busy, setBusy] = useState(false);
@@ -31,7 +37,9 @@ export function GoogleSignInButton({
       if (!supabaseConfig) {
         throw new Error("Sign-in did not finish. Try again.");
       }
-      writePendingConsent({ healthcare: healthcareConsent, familyCallFrequency });
+      if (storePendingConsent) {
+        writePendingConsent({ healthcare: healthcareConsent, familyCallFrequency });
+      }
       const supabase = createSupabaseBrowser(supabaseConfig);
       await fetch("/api/demo", {
         method: "POST",
@@ -42,7 +50,7 @@ export function GoogleSignInButton({
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}&flow=${authFlow}`,
           scopes: "https://www.googleapis.com/auth/calendar",
           queryParams: {
             access_type: "offline",
@@ -73,7 +81,7 @@ export function GoogleSignInButton({
         }
       >
         <GoogleMark />
-        {busy ? "Opening Google…" : "Continue with Google"}
+        {busy ? "Opening Google…" : label}
       </button>
       {!supabaseConfig ? (
         <p className="mt-3 text-sm text-red-700" role="alert">

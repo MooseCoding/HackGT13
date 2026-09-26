@@ -1,6 +1,8 @@
-import { groqChat, parseModelJson } from "./groq";
+import { aiChat } from "./chat";
+import { aiConfigured } from "./config";
+import { parseModelJson } from "./groq";
 import { DIGEST_SYSTEM_PROMPT } from "./prompts";
-import { groqConfigured } from "./config";
+import type { AiSource } from "./chat";
 import type { CalendarEvent, Member, Post } from "../types";
 
 export type AiDigestDraft = {
@@ -8,7 +10,7 @@ export type AiDigestDraft = {
   narrative: string;
   highlights: string[];
   theme: string;
-  source: "groq";
+  source: AiSource;
 };
 
 function memberName(members: Member[], id: string) {
@@ -48,20 +50,21 @@ function buildUserPayload(
   ].join("\n");
 }
 
-/** Generate a weekly digest with Groq. Returns null if unconfigured or on failure. */
-export async function groqDigestStory(input: {
+/** Generate a weekly digest with Meta Muse (preferred) or Groq. Returns null if unconfigured or on failure. */
+export async function aiDigestStory(input: {
   posts: Post[];
   members: Member[];
   events: CalendarEvent[];
   weekOf: string;
 }): Promise<AiDigestDraft | null> {
-  if (!groqConfigured()) return null;
+  if (!aiConfigured()) return null;
 
   try {
-    const raw = await groqChat({
+    const { content, source } = await aiChat({
       json: true,
       temperature: 0.55,
       maxTokens: 800,
+      reasoningEffort: "low",
       messages: [
         { role: "system", content: DIGEST_SYSTEM_PROMPT },
         {
@@ -75,7 +78,7 @@ export async function groqDigestStory(input: {
       narrative?: string;
       highlights?: string[];
       theme?: string;
-    }>(raw);
+    }>(content);
 
     const title = parsed.title?.trim();
     const narrative = parsed.narrative?.trim();
@@ -88,10 +91,13 @@ export async function groqDigestStory(input: {
         ? parsed.highlights.map((h) => String(h).trim()).filter(Boolean).slice(0, 8)
         : [],
       theme: parsed.theme?.trim() || "connection",
-      source: "groq",
+      source,
     };
   } catch (err) {
-    console.error("Groq digest failed; using local fallback.", err);
+    console.error("AI digest failed; using local fallback.", err);
     return null;
   }
 }
+
+/** @deprecated Use `aiDigestStory` */
+export const groqDigestStory = aiDigestStory;

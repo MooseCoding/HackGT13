@@ -66,7 +66,7 @@ export function DemoBanner({ demo, canGoLive }: { demo: boolean; canGoLive: bool
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
         <p className="text-xs text-mute">
           {demo
-            ? "Sample mode uses the Alvarez and Okonkwo mock families."
+            ? "Sample mode uses the Alvarez and Okonkwo mock families. Open Chats → group thread for Social Good demos."
             : "Live mode reads and writes your Supabase project."}
         </p>
         <DemoModeSwitch demo={demo} canGoLive={canGoLive} compact />

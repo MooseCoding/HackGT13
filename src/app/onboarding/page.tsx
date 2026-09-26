@@ -1,6 +1,5 @@
 import { OnboardingForm } from "@/components/onboarding/OnboardingForm";
 import { getAuthUser, needsOnboarding } from "@/lib/auth";
-import { needsTermsAcceptance } from "@/lib/consent-server";
 import { isDemoMode } from "@/lib/mode-server";
 import { redirect } from "next/navigation";
 
@@ -9,14 +8,13 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   if (await isDemoMode()) redirect("/family");
   const user = await getAuthUser();
-  if (!user) redirect("/");
-  if (await needsTermsAcceptance()) redirect("/?next=/onboarding");
+  if (!user) redirect("/login?next=/onboarding");
   if (!(await needsOnboarding())) redirect("/family");
 
   return (
     <div className="min-h-full bg-ground">
-      <header className="bg-ink px-4 py-4">
-        <p className="font-brand text-xl">Hearth</p>
+      <header className="border-b border-chrome-border bg-chrome-bg px-4 py-4 text-chrome-fg">
+        <p className="font-brand text-xl">Familyr</p>
       </header>
       <main id="main-content" className="max-w-xl px-4 py-8 sm:py-12">
         <h1 className="text-2xl font-bold text-ink">Set up your circle</h1>
