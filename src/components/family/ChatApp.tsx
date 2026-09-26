@@ -108,6 +108,10 @@ export function ChatApp({
     [posts, threadId],
   );
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length, threadId]);
+
   const headerTitle = threadLabel(threadId, me.id, members, familyName);
   const headerMember = isGroupThread(threadId) ? undefined : members.find((m) => m.id === withParam);
 
