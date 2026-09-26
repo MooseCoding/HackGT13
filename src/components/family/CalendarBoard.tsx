@@ -1,7 +1,7 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
-import { useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
+import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { CAL_WEEKS, localDateKey } from "@/lib/calendar-window";
 import { searchEventsByClues } from "@/lib/chat-calendar-hints";
 import { calendarAnchor, formatLongDate, formatMonthYear, formatTime } from "@/lib/clock";
@@ -63,15 +63,18 @@ export function CalendarBoard({
   supabaseConfig,
   initialDraft = "",
   offerWeeklyCalls = false,
+  autoAddFamilyCalls = true,
 }: {
   familyId: string;
   supabaseConfig: PublicSupabaseConfig | null;
   initialDraft?: string;
   offerWeeklyCalls?: boolean;
+  autoAddFamilyCalls?: boolean;
 }) {
   const { me, members } = useFamily();
   const easy = useLargerText();
   const timeZone = useTimezone();
+  const hour12 = useHour12();
   const [demo, setDemo] = useState(true);
   const [anchor, setAnchor] = useState(() => calendarAnchor(true));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -306,10 +309,12 @@ export function CalendarBoard({
     }
   }
 
+  const shouldAutoSchedule = offerWeeklyCalls || autoAddFamilyCalls;
+
   useEffect(() => {
     if (
       !eventsLoaded ||
-      !offerWeeklyCalls ||
+      !shouldAutoSchedule ||
       !needsWeeklyCalls ||
       autoScheduledRef.current ||
       schedulingCalls
@@ -319,7 +324,7 @@ export function CalendarBoard({
     autoScheduledRef.current = true;
     void addWeeklyCalls();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot after events load
-  }, [eventsLoaded, offerWeeklyCalls, needsWeeklyCalls, schedulingCalls]);
+  }, [eventsLoaded, shouldAutoSchedule, needsWeeklyCalls, schedulingCalls]);
 
   async function remove(e: CalendarEvent) {
     if (deletingId) return;
@@ -662,7 +667,7 @@ export function CalendarBoard({
                   <div className="min-w-0">
                     <p className="font-medium">{e.title}</p>
                     <p className="mt-0.5 text-sm text-mute">
-                      {formatTime(e.startsAt, { timeZone })}
+                      {formatTime(e.startsAt, { timeZone, hour12 })}
                       {e.location ? ` · ${e.location}` : ""}
                     </p>
                     {e.isGoogleSynced ? (

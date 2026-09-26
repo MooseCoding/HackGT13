@@ -41,7 +41,13 @@ function iso(value: string) {
 }
 
 function mapFamily(row: FamilyRow): Family {
-  return { id: row.id, name: row.name, tagline: row.tagline, inviteCode: row.join_code };
+  return {
+    id: row.id,
+    name: row.name,
+    tagline: row.tagline,
+    inviteCode: row.join_code,
+    autoAddFamilyCalls: row.auto_add_family_calls ?? true,
+  };
 }
 
 function mapMember(row: MemberRow): Member {
@@ -572,5 +578,31 @@ export async function createFamilyWithMembers(input: {
   ]);
   const family = requireData(familyResult.data, familyResult.error);
   throwIfError(memberResult.error);
-  return { family: mapFamily(family), members: (memberResult.data ?? []).map(mapMember) };
+  const mappedFamily = mapFamily(family);
+  const mappedMembers = (memberResult.data ?? []).map(mapMember);
+
+  if (mappedFamily.autoAddFamilyCalls) {
+    try {
+      const { scheduleFamilyCallsForCircle } = await import("./auto-family-calls");
+      await scheduleFamilyCallsForCircle(mappedFamily.id, you.id);
+    } catch (err) {
+      console.error("Auto family calls on circle creation:", err);
+    }
+  }
+
+  return { family: mappedFamily, members: mappedMembers };
+}
+
+export async function updateFamilyAutoAddFamilyCalls(familyId: string, enabled: boolean) {
+  if (await isDemoMode()) {
+    throw new Error("Sign in to update circle settings.");
+  }
+  await requireFamilyAccess(familyId);
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase
+    .from("families")
+    .update({ auto_add_family_calls: enabled })
+    .eq("id", familyId);
+  throwIfError(error);
+  return { autoAddFamilyCalls: enabled };
 }

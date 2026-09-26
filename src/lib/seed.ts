@@ -9,12 +9,14 @@ export const families: Family[] = [
     name: "The Alvarez Circle",
     tagline: "Atlanta · three generations",
     inviteCode: "ALVAREZ42",
+    autoAddFamilyCalls: true,
   },
   {
     id: "okonkwo",
     name: "The Okonkwo Circle",
     tagline: "Decatur · three generations",
     inviteCode: "OKONKWO42",
+    autoAddFamilyCalls: true,
   },
 ];
 

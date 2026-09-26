@@ -3,15 +3,9 @@ import { mergedEventsOf } from "@/lib/calendar-data";
 import { decorateDemoPersonalEvents } from "@/lib/demo-personal-calendars";
 import { CAL_WEEKS, inCalendarWindow } from "@/lib/calendar-window";
 import { calendarAnchor } from "@/lib/clock";
+import { scheduleFamilyCallsForCircle } from "@/lib/auto-family-calls";
 import { addEventRow, deleteEventRow, membersOf, postingIdentity, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
-import { getAccountConsent } from "@/lib/consent-server";
-import { proposeFamilyCalls } from "@/lib/family-call-schedule";
-import {
-  deleteGoogleEvent,
-  googleAccessToken,
-  syncEventsToGoogle,
-  syncEventToGoogle,
-} from "@/lib/google-calendar";
+import { deleteGoogleEvent, googleAccessToken, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
 import type { CalendarEvent } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -76,44 +70,20 @@ export async function POST(req: NextRequest) {
     const token = await googleAccessToken(body.googleToken);
 
     if (body.autoWeeklyCalls) {
-      const merged = await mergedEventsOf(identity.familyId, {
-        clientToken: body.googleToken,
-        anchor,
+      const result = await scheduleFamilyCallsForCircle(identity.familyId, identity.memberId, {
+        googleToken: token ?? undefined,
+        force: true,
       });
-      const { familyCallFrequency } = await getAccountConsent();
-      const proposed = proposeFamilyCalls(merged, {
-        familyId: identity.familyId,
-        createdBy: identity.memberId,
-        members,
-        anchor,
-        frequency: familyCallFrequency,
-      });
-      const localRows: CalendarEvent[] = [];
-      for (const event of proposed) {
-        localRows.push(await addEventRow(event));
-      }
 
-      let saved = localRows;
-      let googleSynced = 0;
       let warning: string | undefined;
-      if (token && localRows.length) {
-        const result = await syncEventsToGoogle(token, localRows);
-        saved = result.events;
-        googleSynced = result.synced;
-        if (result.errors.length) {
-          warning =
-            googleSynced > 0
-              ? `Scheduled ${googleSynced} call${googleSynced === 1 ? "" : "s"} on Google Calendar. ${localRows.length - googleSynced} could not sync — try reconnecting Google.`
-              : "Added to family calendar, but couldn't add to Google Calendar. Try reconnecting Google.";
-        }
-      } else if (localRows.length && !token) {
+      if (result.count && !token) {
         warning = "Added to family calendar. Connect Google Calendar to also add them there.";
       }
 
       return NextResponse.json({
-        events: saved,
-        count: saved.length,
-        googleSynced,
+        events: result.events,
+        count: result.count,
+        googleSynced: result.googleSynced,
         warning,
       });
     }

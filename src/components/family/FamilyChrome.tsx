@@ -129,7 +129,13 @@ export function FamilyChrome({
               Invite <strong className="font-mono text-chrome-fg">{inviteCode}</strong>
             </span>
           ) : null}
-          <SettingsMenu signedIn={signedIn} userDisplayName={userDisplayName} />
+          <SettingsMenu
+            signedIn={signedIn}
+            userDisplayName={userDisplayName}
+            families={families}
+            activeFamilyId={activeFamilyId}
+            activeFamilyName={activeFamilyName}
+          />
           {!demo && identityLocked && signedIn ? (
             <ClinicalSharingToggle memberId={me?.id} initialEnabled={me?.clinicalOptIn ?? false} />
           ) : null}

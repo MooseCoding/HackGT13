@@ -112,9 +112,30 @@ export type Database = {
         Relationships: [];
       };
       families: {
-        Row: { id: string; join_code: string; name: string; owner_id: string | null; tagline: string };
-        Insert: { id: string; join_code?: string; name: string; owner_id?: string | null; tagline?: string };
-        Update: { id?: string; join_code?: string; name?: string; owner_id?: string | null; tagline?: string };
+        Row: {
+          auto_add_family_calls: boolean;
+          id: string;
+          join_code: string;
+          name: string;
+          owner_id: string | null;
+          tagline: string;
+        };
+        Insert: {
+          auto_add_family_calls?: boolean;
+          id: string;
+          join_code?: string;
+          name: string;
+          owner_id?: string | null;
+          tagline?: string;
+        };
+        Update: {
+          auto_add_family_calls?: boolean;
+          id?: string;
+          join_code?: string;
+          name?: string;
+          owner_id?: string | null;
+          tagline?: string;
+        };
         Relationships: [];
       };
       profiles: {

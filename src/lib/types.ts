@@ -94,6 +94,8 @@ export type Family = {
   name: string;
   tagline: string;
   inviteCode?: string;
+  /** When true, Hearth schedules family calls without a manual "Add to calendar" step. */
+  autoAddFamilyCalls?: boolean;
 };
 
 export type Digest = {
