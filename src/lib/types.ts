@@ -68,6 +68,8 @@ export type Digest = {
   highlights: string[];
   theme?: string;
   generatedAt: string;
+  /** How the story was written — Groq when key present, else local templates. */
+  source?: "groq" | "local";
 };
 
 export type DailyPoint = {

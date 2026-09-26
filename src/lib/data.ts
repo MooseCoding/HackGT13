@@ -2,7 +2,7 @@ import { formatAddress, type Address } from "./address";
 import { getAuthUser, getProfile } from "./auth";
 import { analyzeMember } from "./analysis";
 import { postThreadId } from "./chat";
-import { templateDigest } from "./digest";
+import { buildDigest } from "./digest";
 import { DEFAULT_FAMILY_ID, initialsFrom, MEMBER_COLORS, slugId } from "./ids";
 import { isDemoMode } from "./mode-server";
 import {
@@ -231,7 +231,7 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
 }
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {
-  if (await isDemoMode()) return digestForDemo(familyId, refresh);
+  if (await isDemoMode()) return await digestForDemo(familyId, refresh);
   const supabase = await createSupabaseServer();
   if (!refresh) {
     const existing = await supabase.from("digests").select("*").eq("family_id", familyId).maybeSingle();
@@ -243,7 +243,7 @@ export async function digestFor(familyId: string, refresh = false): Promise<Dige
     postsOf(familyId),
     eventsOf(familyId),
   ]);
-  const digest = templateDigest(familyId, members, posts, events);
+  const digest = await buildDigest(familyId, members, posts, events);
   const { error } = await supabase.from("digests").delete().eq("family_id", familyId);
   throwIfError(error);
   const inserted = await supabase

@@ -1,6 +1,6 @@
 import { analyzeMember } from "./analysis";
 import { GROUP_THREAD, postThreadId, threadForDm } from "./chat";
-import { templateDigest } from "./digest";
+import { buildDigest } from "./digest";
 import { events as seedEvents, families, members, posts as seedPosts } from "./seed";
 import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post } from "./types";
 
@@ -83,11 +83,11 @@ export function deleteEvent(id: string, familyId: string) {
   return store.events.length < before;
 }
 
-export function digestFor(familyId: string, refresh = false) {
+export async function digestFor(familyId: string, refresh = false) {
   const store = db();
   const existing = store.digests.find((d) => d.familyId === familyId);
   if (existing && !refresh) return existing;
-  const digest = templateDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
+  const digest = await buildDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
   store.digests = store.digests.filter((d) => d.familyId !== familyId);
   store.digests.push(digest);
   return digest;
