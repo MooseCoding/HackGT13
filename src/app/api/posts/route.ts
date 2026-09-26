@@ -1,11 +1,11 @@
 import { now } from "@/lib/clock";
-import { addPostRow, membersOf, postsForThread, postsOf } from "@/lib/data";
+import { addPostRow, membersOf, postsForThread, postsOf, resolveFamilyId } from "@/lib/data";
 import { isDemoMode } from "@/lib/mode-server";
 import type { Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const familyId = req.nextUrl.searchParams.get("familyId") || "alvarez";
+  const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
   const threadId = req.nextUrl.searchParams.get("threadId");
   const posts = threadId ? await postsForThread(familyId, threadId) : await postsOf(familyId);
   return NextResponse.json({ posts, members: await membersOf(familyId) });

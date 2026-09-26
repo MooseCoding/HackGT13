@@ -1,9 +1,9 @@
 import { parseEvent } from "@/lib/calendar-parse";
-import { addEventRow, eventsOf, membersOf } from "@/lib/data";
+import { addEventRow, eventsOf, membersOf, resolveFamilyId } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const familyId = req.nextUrl.searchParams.get("familyId") || "alvarez";
+  const familyId = req.nextUrl.searchParams.get("familyId") || (await resolveFamilyId());
   return NextResponse.json({ events: await eventsOf(familyId) });
 }
 

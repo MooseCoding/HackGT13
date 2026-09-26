@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoModeSwitch } from "@/components/DemoModeSwitch";
 import type { Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -54,44 +55,68 @@ export function FamilyProvider({
   return <FamilyCtx.Provider value={value}>{children}</FamilyCtx.Provider>;
 }
 
-export function FamilyChrome() {
+export function FamilyChrome({
+  demo,
+  canGoLive,
+  signedIn,
+}: {
+  demo: boolean;
+  canGoLive: boolean;
+  signedIn: boolean;
+}) {
   const { members, me, setMeId, easy, setEasy } = useFamily();
   const path = usePathname();
   const links = [
     { href: "/family", label: "Chats" },
     { href: "/family/calendar", label: "Calendar" },
     { href: "/family/digest", label: "This week" },
+    { href: "/hcp", label: "Clinician" },
   ];
+
+  async function signOut() {
+    await fetch("/api/auth/signout", { method: "POST" });
+    window.location.href = "/";
+  }
 
   return (
     <header className="border-b border-line bg-paper">
-      <div className="flex items-center gap-4 px-4 py-2.5">
-        <Link href="/" className="text-base font-semibold text-ink">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4">
+        <Link
+          href="/"
+          className="font-serif text-base font-semibold tracking-tight text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember"
+        >
           Hearth
         </Link>
-        <nav className="flex gap-1">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`px-3 py-1.5 text-sm ${
-                path === l.href ? "font-semibold text-ember" : "text-mute hover:text-ink"
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+        <nav className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto" aria-label="Family">
+          {links.map((l) => {
+            const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={current ? "page" : undefined}
+                className={`min-h-11 shrink-0 px-3 py-2 text-sm ${
+                  current ? "font-semibold text-ember" : "text-mute hover:text-ink"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-sm text-mute">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
+          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
             <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
             Easy
           </label>
+          <label className="sr-only" htmlFor="posting-as">
+            Posting as
+          </label>
           <select
-            value={me.id}
+            id="posting-as"
+            value={me?.id ?? ""}
             onChange={(e) => setMeId(e.target.value)}
-            className="rounded-sm border border-line bg-paper px-2 py-1 text-sm"
-            aria-label="You are"
+            className="min-h-11 min-w-32 flex-1 rounded-md border border-line bg-paper px-2 py-1 text-sm sm:flex-none"
           >
             {members.map((m) => (
               <option key={m.id} value={m.id}>
@@ -99,6 +124,16 @@ export function FamilyChrome() {
               </option>
             ))}
           </select>
+          <DemoModeSwitch demo={demo} canGoLive={canGoLive} compact />
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={signOut}
+              className="min-h-11 text-sm text-mute hover:text-ink"
+            >
+              Sign out
+            </button>
+          ) : null}
         </div>
       </div>
     </header>

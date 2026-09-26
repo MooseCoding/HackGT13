@@ -70,9 +70,33 @@ export type Database = {
         Relationships: [];
       };
       families: {
-        Row: { id: string; name: string; tagline: string };
-        Insert: { id: string; name: string; tagline?: string };
-        Update: { id?: string; name?: string; tagline?: string };
+        Row: { id: string; name: string; owner_id: string | null; tagline: string };
+        Insert: { id: string; name: string; owner_id?: string | null; tagline?: string };
+        Update: { id?: string; name?: string; owner_id?: string | null; tagline?: string };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          created_at: string;
+          display_name: string | null;
+          family_id: string | null;
+          id: string;
+          member_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          display_name?: string | null;
+          family_id?: string | null;
+          id: string;
+          member_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          display_name?: string | null;
+          family_id?: string | null;
+          id?: string;
+          member_id?: string | null;
+        };
         Relationships: [];
       };
       members: {

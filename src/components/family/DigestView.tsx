@@ -5,7 +5,7 @@ import type { Digest } from "@/lib/types";
 import { useState } from "react";
 
 export function DigestView({ initial }: { initial: Digest }) {
-  const { easy } = useFamily();
+  const { easy, me } = useFamily();
   const [digest, setDigest] = useState(initial);
   const [busy, setBusy] = useState(false);
 
@@ -18,7 +18,7 @@ export function DigestView({ initial }: { initial: Digest }) {
 
   async function refresh() {
     setBusy(true);
-    const res = await fetch("/api/digest?familyId=alvarez&refresh=1");
+    const res = await fetch(`/api/digest?familyId=${encodeURIComponent(me.familyId)}&refresh=1`);
     setDigest(await res.json());
     setBusy(false);
   }
@@ -33,7 +33,7 @@ export function DigestView({ initial }: { initial: Digest }) {
           onClick={narrate}
           className={`bg-ember px-4 font-medium text-white ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
         >
-          Listen
+          Listen to this week
         </button>
         <button
           type="button"

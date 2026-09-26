@@ -1,6 +1,3 @@
-import { DemoBanner } from "@/components/DemoModeSwitch";
-import { isSupabaseConfigured } from "@/lib/mode";
-import { isDemoMode } from "@/lib/mode-server";
 import type { Metadata } from "next";
 import { Fraunces, Nunito } from "next/font/google";
 import "./globals.css";
@@ -8,11 +5,13 @@ import "./globals.css";
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -21,11 +20,15 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const demo = await isDemoMode();
   return (
     <html lang="en" className={`${nunito.variable} ${fraunces.variable} h-full`}>
-      <body className="min-h-full font-sans antialiased">
-        <DemoBanner demo={demo} canGoLive={isSupabaseConfigured()} />
+      <body className="min-h-full font-sans text-base leading-6 antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-paper focus:px-3 focus:py-2 focus:text-ink focus:shadow"
+        >
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>

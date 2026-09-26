@@ -1,6 +1,8 @@
+import { getAuthUser, getProfile } from "./auth";
 import { analyzeMember } from "./analysis";
 import { postThreadId } from "./chat";
 import { templateDigest } from "./digest";
+import { DEFAULT_FAMILY_ID, initialsFrom, MEMBER_COLORS, slugId } from "./ids";
 import { isDemoMode } from "./mode-server";
 import {
   addEvent,
@@ -102,7 +104,7 @@ function requireData<T>(data: T | null, error: { message: string } | null): T {
 
 export async function familyById(id: string): Promise<Family> {
   if (await isDemoMode()) return familyByIdDemo(id);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase.from("families").select("*").eq("id", id).maybeSingle();
   throwIfError(error);
   if (data) return mapFamily(data);
@@ -114,7 +116,7 @@ export async function familyById(id: string): Promise<Family> {
 
 export async function allMembers(): Promise<Member[]> {
   if (await isDemoMode()) return db().members;
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase.from("members").select("*");
   throwIfError(error);
   return (data ?? []).map(mapMember);
@@ -122,7 +124,7 @@ export async function allMembers(): Promise<Member[]> {
 
 export async function membersOf(familyId: string): Promise<Member[]> {
   if (await isDemoMode()) return membersOfDemo(familyId);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase.from("members").select("*").eq("family_id", familyId);
   throwIfError(error);
   return (data ?? []).map(mapMember);
@@ -130,7 +132,7 @@ export async function membersOf(familyId: string): Promise<Member[]> {
 
 export async function postsOf(familyId: string): Promise<Post[]> {
   if (await isDemoMode()) return postsOfDemo(familyId);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("posts")
     .select("*")
@@ -150,7 +152,7 @@ export async function postsForThread(familyId: string, threadId: string): Promis
 
 export async function eventsOf(familyId: string): Promise<CalendarEvent[]> {
   if (await isDemoMode()) return eventsOfDemo(familyId);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("calendar_events")
     .select("*")
@@ -162,7 +164,7 @@ export async function eventsOf(familyId: string): Promise<CalendarEvent[]> {
 
 export async function addPostRow(post: Post): Promise<Post> {
   if (await isDemoMode()) return addPost(post);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("posts")
     .insert({
@@ -185,7 +187,7 @@ export async function addPostRow(post: Post): Promise<Post> {
 
 export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> {
   if (await isDemoMode()) return addEvent(event);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("calendar_events")
     .insert({
@@ -206,7 +208,7 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {
   if (await isDemoMode()) return digestForDemo(familyId, refresh);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   if (!refresh) {
     const existing = await supabase.from("digests").select("*").eq("family_id", familyId).maybeSingle();
     throwIfError(existing.error);
@@ -241,7 +243,7 @@ export async function optedInPatients(): Promise<PatientSnapshot[]> {
   const members = (await allMembers()).filter((m) => m.clinicalOptIn);
   const familyIds = [...new Set(members.map((m) => m.familyId))];
   if (familyIds.length === 0) return [];
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase.from("posts").select("*").in("family_id", familyIds);
   throwIfError(error);
   const posts = (data ?? []).map(mapPost);
@@ -250,7 +252,7 @@ export async function optedInPatients(): Promise<PatientSnapshot[]> {
 
 export async function patientById(id: string) {
   if (await isDemoMode()) return patientByIdDemo(id);
-  const supabase = createSupabaseServer();
+  const supabase = await createSupabaseServer();
   const memberRes = await supabase.from("members").select("*").eq("id", id).maybeSingle();
   throwIfError(memberRes.error);
   if (!memberRes.data || !memberRes.data.clinical_opt_in) return null;
@@ -268,4 +270,71 @@ export async function patientById(id: string) {
     snapshot: analyzeMember(id, familyPosts),
     posts,
   };
+}
+
+export async function resolveFamilyId(): Promise<string> {
+  if (await isDemoMode()) return DEFAULT_FAMILY_ID;
+  const profile = await getProfile();
+  if (profile?.family_id) return profile.family_id;
+  return DEFAULT_FAMILY_ID;
+}
+
+export type NewMemberInput = {
+  name: string;
+  role: string;
+  age: number;
+  location: string;
+  clinicalOptIn: boolean;
+  isYou?: boolean;
+};
+
+export async function createFamilyWithMembers(input: {
+  familyName: string;
+  tagline?: string;
+  members: NewMemberInput[];
+}) {
+  const user = await getAuthUser();
+  if (!user) throw new Error("Sign in to create a family.");
+  const supabase = await createSupabaseServer();
+  const familyId = slugId("fam");
+  const familyInsert = await supabase
+    .from("families")
+    .insert({
+      id: familyId,
+      name: input.familyName.trim(),
+      tagline: input.tagline?.trim() || "Our family circle",
+      owner_id: user.id,
+    })
+    .select("*")
+    .single();
+  const family = requireData(familyInsert.data, familyInsert.error);
+
+  const rows = input.members.map((m, i) => {
+    const name = m.name.trim();
+    return {
+      id: slugId("m"),
+      family_id: familyId,
+      name,
+      role: m.role.trim() || "Family",
+      age: Number.isFinite(m.age) ? m.age : 0,
+      initials: initialsFrom(name),
+      color: MEMBER_COLORS[i % MEMBER_COLORS.length],
+      location: m.location.trim() || "Home",
+      clinical_opt_in: Boolean(m.clinicalOptIn),
+      easy_mode_default: Boolean(m.isYou),
+    };
+  });
+
+  const memberInsert = await supabase.from("members").insert(rows).select("*");
+  throwIfError(memberInsert.error);
+  const youIndex = input.members.findIndex((m) => m.isYou);
+  const you = (memberInsert.data ?? rows)[youIndex >= 0 ? youIndex : 0];
+
+  const profileUpdate = await supabase
+    .from("profiles")
+    .update({ family_id: familyId, member_id: you.id, display_name: user.name })
+    .eq("id", user.id);
+  throwIfError(profileUpdate.error);
+
+  return { family: mapFamily(family), members: (memberInsert.data ?? []).map(mapMember) };
 }

@@ -12,15 +12,29 @@ HackGT 13 — a digital living room for families, with an Impiricus clinician ch
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-- Family app: `/family` — switch who you’re posting as; turn on **Easy** for large targets and read-aloud.
-- Calendar: `/family/calendar` — type a sentence like `Sofia has her soccer tournament this Saturday at 10 AM at Piedmont Park`.
-- Weekly story: `/family/digest` — local template from this week’s posts; listen with the browser voice.
-- Clinician panel: `/hcp` — compare Elena Alvarez (flags) with Ruth Okonkwo (stable).
+1. **Homepage** — Continue with Google (or preview the demo family).
+2. **Onboarding** — name the circle and add family members.
+3. **App** — chats, calendar, weekly story, clinician view.
+
+### Google sign-in
+
+In the [Supabase dashboard](https://supabase.com/dashboard) → Authentication → Providers → Google, add a Google Cloud OAuth client. Redirect URLs:
+
+- `https://nkksroiojqcwwbptplmo.supabase.co/auth/v1/callback`
+- `http://localhost:3000/auth/callback`
+
+Site URL: `http://localhost:3000`.
+
+- Family app: `/family`
+- Calendar: `/family/calendar`
+- Weekly story: `/family/digest`
+- Clinician panel: `/hcp`
 
 ## Stack
 

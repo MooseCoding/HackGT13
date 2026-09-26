@@ -1,14 +1,15 @@
 import { ChatApp } from "@/components/family/ChatApp";
-import { familyById, membersOf, postsOf } from "@/lib/data";
+import { familyById, membersOf, postsOf, resolveFamilyId } from "@/lib/data";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
 export default async function FamilyChatPage() {
+  const familyId = await resolveFamilyId();
   const [posts, members, family] = await Promise.all([
-    postsOf("alvarez"),
-    membersOf("alvarez"),
-    familyById("alvarez"),
+    postsOf(familyId),
+    membersOf(familyId),
+    familyById(familyId),
   ]);
 
   return (
