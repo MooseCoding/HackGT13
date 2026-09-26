@@ -1,5 +1,6 @@
 "use client";
 
+import { AddMemberPanel } from "@/components/family/AddMemberPanel";
 import { useFamily } from "@/components/family/FamilyChrome";
 import {
   GROUP_THREAD,
@@ -45,6 +46,7 @@ export function ChatApp({
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [listening, setListening] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(withParam !== GROUP_THREAD || false);
+  const [showAddMember, setShowAddMember] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
@@ -184,8 +186,15 @@ export function ChatApp({
           mobileShowChat ? "hidden" : "block"
         }`}
       >
-        <div className="border-b border-line bg-cream px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-line bg-cream px-4 py-3">
           <h1 className="text-lg font-semibold">Chats</h1>
+          <button
+            type="button"
+            onClick={() => setShowAddMember(true)}
+            className="min-h-10 shrink-0 rounded-sm px-2 text-sm font-semibold text-ember hover:bg-paper"
+          >
+            + Add member
+          </button>
         </div>
         <ul>
           {threads.map((t) => {
@@ -336,6 +345,14 @@ export function ChatApp({
           </button>
         </div>
       </div>
+
+      {showAddMember ? (
+        <AddMemberPanel
+          familyId={me.familyId}
+          onClose={() => setShowAddMember(false)}
+          onChanged={() => router.refresh()}
+        />
+      ) : null}
     </div>
   );
 }

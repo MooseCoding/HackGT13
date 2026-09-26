@@ -37,6 +37,12 @@ export function FamilyProvider({
   const me = members.find((m) => m.id === meId) ?? members[0];
 
   useEffect(() => {
+    if (currentMemberId) return;
+    const saved = localStorage.getItem("hearth-me");
+    if (saved && members.some((m) => m.id === saved)) setMeId(saved);
+  }, [currentMemberId, members]);
+
+  useEffect(() => {
     localStorage.setItem("hearth-easy", easy ? "1" : "0");
     document.documentElement.classList.toggle("easy", easy);
   }, [easy]);

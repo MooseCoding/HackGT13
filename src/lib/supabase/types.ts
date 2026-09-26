@@ -69,6 +69,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      family_invitations: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string;
+          email: string;
+          family_id: string;
+          id: string;
+          invited_by: string | null;
+          invitee_name: string;
+          member_id: string;
+          role: string;
+          status: string;
+          token: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email: string;
+          family_id: string;
+          id: string;
+          invited_by?: string | null;
+          invitee_name: string;
+          member_id: string;
+          role?: string;
+          status?: string;
+          token: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email?: string;
+          family_id?: string;
+          id?: string;
+          invited_by?: string | null;
+          invitee_name?: string;
+          member_id?: string;
+          role?: string;
+          status?: string;
+          token?: string;
+        };
+        Relationships: [];
+      };
       families: {
         Row: { id: string; join_code: string; name: string; owner_id: string | null; tagline: string };
         Insert: { id: string; join_code?: string; name: string; owner_id?: string | null; tagline?: string };
@@ -223,6 +265,22 @@ export type Database = {
       };
       has_family_access: { Args: { fid: string }; Returns: boolean };
       is_family_owner: { Args: { fid: string }; Returns: boolean };
+      get_invitation_by_token: {
+        Args: { token_input: string };
+        Returns: {
+          id: string;
+          family_id: string;
+          family_name: string;
+          invitee_name: string;
+          role: string;
+          email: string;
+          status: string;
+        }[];
+      };
+      accept_family_invitation: {
+        Args: { token_input: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;
