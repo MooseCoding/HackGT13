@@ -76,6 +76,12 @@ export function addEvent(event: CalendarEvent) {
   return event;
 }
 
+export function deleteEvent(id: string, familyId: string) {
+  const before = db().events.length;
+  db().events = db().events.filter((e) => !(e.id === id && e.familyId === familyId));
+  return db().events.length < before;
+}
+
 export function digestFor(familyId: string, refresh = false) {
   const store = db();
   const existing = store.digests.find((d) => d.familyId === familyId);

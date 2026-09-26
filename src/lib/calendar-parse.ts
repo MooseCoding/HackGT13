@@ -3,7 +3,7 @@ import type { CalendarEvent, Member } from "./types";
 
 const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-function nextWeekday(name: string, from = DEMO_NOW) {
+function nextWeekday(name: string, from: Date) {
   const target = DAY_NAMES.indexOf(name);
   const d = new Date(from);
   const diff = (target - d.getDay() + 7) % 7;
@@ -11,21 +11,27 @@ function nextWeekday(name: string, from = DEMO_NOW) {
   return d;
 }
 
-export function parseEvent(raw: string, members: Member[], createdBy: string, familyId: string): CalendarEvent {
+export function parseEvent(
+  raw: string,
+  members: Member[],
+  createdBy: string,
+  familyId: string,
+  anchor: Date = DEMO_NOW,
+): CalendarEvent {
   const text = raw.trim();
   const lower = text.toLowerCase();
-  let day = new Date(DEMO_NOW);
+  let day = new Date(anchor);
   for (const name of DAY_NAMES) {
     if (lower.includes(name)) {
-      day = nextWeekday(name);
+      day = nextWeekday(name, anchor);
       break;
     }
   }
   if (lower.includes("tomorrow")) {
-    day = new Date(DEMO_NOW);
+    day = new Date(anchor);
     day.setDate(day.getDate() + 1);
   }
-  if (lower.includes("today")) day = new Date(DEMO_NOW);
+  if (lower.includes("today")) day = new Date(anchor);
 
   const time = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
   let hour = 10;
