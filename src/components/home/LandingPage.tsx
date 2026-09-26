@@ -1,6 +1,7 @@
 "use client";
 
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
+import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -13,11 +14,13 @@ export function LandingPage({
   authError,
   signedIn,
   needsOnboarding,
+  supabaseConfig,
 }: {
   next: string;
   authError: boolean;
   signedIn: boolean;
   needsOnboarding: boolean;
+  supabaseConfig: PublicSupabaseConfig | null;
 }) {
   const [demoBusy, setDemoBusy] = useState(false);
 
@@ -94,7 +97,7 @@ export function LandingPage({
                 {needsOnboarding ? "Add family members" : "Go to family chats"}
               </Link>
             ) : (
-              <GoogleSignInButton next={next} />
+              <GoogleSignInButton next={next} supabaseConfig={supabaseConfig} />
             )}
           </div>
         </section>

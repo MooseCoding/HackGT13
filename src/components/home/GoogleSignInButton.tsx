@@ -1,9 +1,16 @@
 "use client";
 
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
+import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import { useState } from "react";
 
-export function GoogleSignInButton({ next = "/onboarding" }: { next?: string }) {
+export function GoogleSignInButton({
+  next = "/onboarding",
+  supabaseConfig,
+}: {
+  next?: string;
+  supabaseConfig: PublicSupabaseConfig | null;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,7 +18,12 @@ export function GoogleSignInButton({ next = "/onboarding" }: { next?: string }) 
     setBusy(true);
     setError(null);
     try {
-      const supabase = createSupabaseBrowser();
+      if (!supabaseConfig) {
+        throw new Error(
+          "Supabase env vars are missing. Copy .env.example to .env.local (URL + anon key), then restart npm run dev.",
+        );
+      }
+      const supabase = createSupabaseBrowser(supabaseConfig);
       await fetch("/api/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,16 +52,23 @@ export function GoogleSignInButton({ next = "/onboarding" }: { next?: string }) 
       <button
         type="button"
         onClick={signIn}
-        disabled={busy}
+        disabled={busy || !supabaseConfig}
         className="flex min-h-12 w-full items-center justify-center gap-3 rounded-lg border border-line bg-paper px-4 text-base font-semibold text-ink shadow-sm hover:border-ember focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ember disabled:opacity-60"
       >
         <GoogleMark />
         {busy ? "Opening Google…" : "Continue with Google"}
       </button>
+      {!supabaseConfig ? (
+        <p className="mt-3 text-sm text-red-700" role="alert">
+          Supabase isn’t wired in this environment. Add{" "}
+          <code className="rounded bg-cream px-1">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+          <code className="rounded bg-cream px-1">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (see{" "}
+          <code className="rounded bg-cream px-1">.env.example</code>), then restart the server.
+        </p>
+      ) : null}
       {error ? (
         <p className="mt-3 text-sm text-red-700" role="alert">
-          {error}. Enable the Google provider in the Supabase dashboard (Auth → Providers) and add this
-          site’s <code className="rounded bg-cream px-1">/auth/callback</code> URL.
+          {error}
         </p>
       ) : null}
     </div>

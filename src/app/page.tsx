@@ -1,5 +1,6 @@
 import { LandingPage } from "@/components/home/LandingPage";
 import { getAuthUser, needsOnboarding } from "@/lib/auth";
+import { getPublicSupabaseConfig } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function Home({
       authError={q.error === "auth"}
       signedIn={Boolean(user)}
       needsOnboarding={onboard}
+      supabaseConfig={getPublicSupabaseConfig()}
     />
   );
 }
