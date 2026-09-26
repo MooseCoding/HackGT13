@@ -31,12 +31,18 @@ export function GoogleSignInButton({
       });
       const origin = window.location.origin;
       const { error: authError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
-          queryParams: { prompt: "select_account" },
-        },
-      });
+  provider: "google",
+  options: {
+    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+    // This exact scope allows both reading and creating events
+    scopes: "https://www.googleapis.com/auth/calendar",
+    queryParams: { 
+      access_type: "offline",
+      // "consent" forces the permission screen to reappear so you can accept the new scope
+      prompt: "consent", 
+    },
+  },
+});
       if (authError) {
         setError(authError.message);
         setBusy(false);
