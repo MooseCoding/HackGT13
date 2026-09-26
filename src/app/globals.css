@@ -30,7 +30,7 @@
   --color-chat-in: var(--chat-in);
   --color-chat-out: var(--chat-out);
   --color-chat-bg: var(--chat-bg);
-  --font-sans: var(--font-nunito);
+  --font-sans: Verdana, sans-serif;
   --font-serif: var(--font-fraunces);
 }
 
