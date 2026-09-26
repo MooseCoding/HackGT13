@@ -347,15 +347,15 @@ export function ChatApp({
   }
 
   return (
-    <div className="chat-surface grid h-[calc(100dvh-52px)] overflow-hidden md:h-[calc(100dvh-56px)] md:grid-cols-[20rem_minmax(0,1fr)]">
+    <div className="chat-surface grid h-[calc(100dvh-72px)] overflow-hidden md:h-[calc(100dvh-80px)] md:grid-cols-[20rem_minmax(0,1fr)]">
       {/* Thread list — left column on desktop */}
       <aside
-        className={`border-r border-rule bg-surface md:block ${
+        className={`border-r border-white/40 bg-transparent md:block ${
           mobileShowChat ? "hidden" : "block"
         }`}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-rule px-4 py-3">
-          <h1 className="text-lg font-bold">Chats</h1>
+        <div className="flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3">
+          <h1 className="text-lg font-semibold">Chats</h1>
           <button
             type="button"
             onClick={() => setShowAddMember(true)}
@@ -377,8 +377,8 @@ export function ChatApp({
                 <button
                   type="button"
                   onClick={() => openThread(t.key)}
-                  className={`flex w-full items-center gap-3 border-b border-rule px-4 py-3 text-left hover:bg-accent-tint ${
-                    isActive ? "bg-accent-tint" : ""
+                  className={`flex w-full items-center gap-3 border-b border-white/40 px-4 py-3 text-left hover:bg-white/60 ${
+                    isActive ? "bg-white/60" : ""
                   }`}
                 >
                   {t.key === GROUP_THREAD ? (
@@ -404,11 +404,11 @@ export function ChatApp({
 
       {/* Conversation — right column on desktop */}
       <div className={`flex min-w-0 flex-col ${mobileShowChat ? "flex" : "hidden md:flex"}`}>
-        <div className="border-b border-rule bg-surface px-4 py-2.5">
-          <div className="flex items-center gap-3">
+        <div className="px-3 pt-3">
+          <div className="glass flex items-center gap-3 rounded-2xl px-4 py-2.5">
             <button
               type="button"
-              className="text-sm text-accent md:hidden"
+              className="text-sm text-ember md:hidden"
               onClick={() => setMobileShowChat(false)}
             >
               ← Back
@@ -450,10 +450,10 @@ export function ChatApp({
                     <p className="mb-0.5 text-xs text-mute">
                       {author?.name} · {formatChatTime(p.createdAt, timeZone)}
                     </p>
-                    <div className="rounded-md bg-chat-out px-4 py-2.5">
+                    <div className="glass max-w-full rounded-2xl rounded-br-md bg-chat-out/80 px-4 py-2.5">
                       {p.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-sm object-cover" />
+                        <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-xl object-cover" />
                       ) : null}
                       {p.kind === "voice" ? (
                         <button
@@ -499,10 +499,10 @@ export function ChatApp({
                   <p className="mb-0.5 text-xs text-mute">
                     {author?.name} · {formatChatTime(p.createdAt, timeZone)}
                   </p>
-                  <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5">
+                  <div className="glass rounded-2xl rounded-tl-md px-4 py-2.5">
                     {p.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-sm object-cover" />
+                      <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-xl object-cover" />
                     ) : null}
                     {p.kind === "voice" ? (
                       <button
@@ -653,28 +653,58 @@ export function ChatApp({
 
         {photoUrl ? (
           <div className="px-3">
-            <div className="inline-block border border-rule bg-surface p-2">
+            <div className="glass inline-block rounded-2xl p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoUrl} alt="Preview" className="h-20 object-cover" />
+              <img src={photoUrl} alt="Preview" className="h-20 rounded-xl object-cover" />
             </div>
           </div>
         ) : null}
 
-        <div className="border-t border-rule bg-surface px-3 py-2">
+        <div className="px-3 pb-3">
           {voiceError ? (
             <p className="mb-2 text-sm text-red-700" role="alert">{voiceError}</p>
           ) : null}
-          <div className="flex items-end gap-2">
-            <label className="cursor-pointer px-1 py-2 text-xs font-medium text-mute hover:text-ink">
-              Photo
+          <div className="glass flex items-end gap-1 rounded-2xl px-3 py-2">
+            <label
+              className="cursor-pointer rounded-lg px-1.5 py-2 text-ember-dark/70 hover:bg-[#128c7e]/10 hover:text-ember-dark"
+              title="Attach a photo"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             </label>
             <button
               type="button"
               onClick={startVoice}
-              className={`px-1 py-2 text-xs font-medium ${listening ? "text-accent" : "text-mute hover:text-ink"}`}
+              title="Dictate a message"
+              className={`rounded-lg px-1.5 py-2 ${listening ? "bg-[#128c7e]/10 text-ember" : "text-ember-dark/70 hover:bg-[#128c7e]/10 hover:text-ember-dark"}`}
             >
-              Voice
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                <line x1="12" y1="18" x2="12" y2="22" />
+              </svg>
             </button>
             <textarea
               value={body}
@@ -687,14 +717,14 @@ export function ChatApp({
               }}
               placeholder="Type a message"
               rows={1}
-              className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none focus:border-accent ${
+              className={`max-h-28 min-h-[40px] flex-1 resize-none rounded-xl border border-[#128c7e]/25 bg-[#128c7e]/[.07] px-3 py-2 outline-none placeholder:text-mute focus:border-ember ${
                 easy ? "text-base" : "text-sm"
               }`}
             />
             <button
               type="button"
               onClick={send}
-              className={`rounded-sm bg-ember px-4 font-medium text-white hover:bg-ember-dark ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
+              className={`rounded-xl bg-ember px-4 font-medium text-white hover:bg-ember-dark ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
             >
               Send
             </button>

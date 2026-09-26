@@ -92,14 +92,14 @@ export function LandingPage({
   const canContinue = generalConsent && !consentBusy;
 
   return (
-    <div className="flex min-h-full flex-col bg-ground">
-      <header data-home="header" className="border-b border-line bg-surface px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
-          <p className="font-brand text-xl">Hearth</p>
+    <div className="chat-surface flex min-h-full flex-col">
+      <header data-home="header" className="px-4 pt-4 sm:px-6">
+        <div className="glass mx-auto flex max-w-3xl items-center justify-between gap-4 rounded-2xl px-4 py-3 sm:px-6">
+          <p className="font-brand text-xl text-ink">Hearth</p>
           {signedIn ? (
             <Link
               href={needsOnboarding ? "/onboarding" : "/family"}
-              className="big inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm bg-ember px-3.5 text-sm font-semibold text-white hover:bg-ember-dark active:bg-ember-dark"
+              className="big inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-ember px-3.5 text-sm font-semibold text-white hover:bg-ember-dark active:bg-ember-dark"
             >
               {needsOnboarding ? "Finish setup" : "Open Hearth"}
               <svg
@@ -128,8 +128,9 @@ export function LandingPage({
         data-home="hero"
         className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-14"
       >
-        <h1 className="max-w-xl text-4xl font-bold leading-[1.12] tracking-tight text-ink sm:text-[2.75rem]">
-          The group chat was supposed to keep families close.
+        <p className="font-brand text-sm text-ember">Family, in one place</p>
+        <h1 className="font-brand mt-3 max-w-xl text-4xl leading-[1.12] tracking-tight text-ink sm:text-[2.75rem]">
+          Come home to the story, not the group chat.
         </h1>
         <p className="mt-4 max-w-xl text-lg leading-7 text-mute sm:text-xl sm:leading-8">
           Group chats burn people out — especially the family members who need them most. Hearth gives you
@@ -147,9 +148,9 @@ export function LandingPage({
         <section
           data-home="sign-in"
           aria-labelledby="sign-in-heading"
-          className="mt-8 max-w-md border border-line bg-surface p-5"
+          className="glass mt-8 max-w-md rounded-2xl p-5"
         >
-          <h2 id="sign-in-heading" className="text-lg font-bold text-ink">
+          <h2 id="sign-in-heading" className="text-lg font-semibold text-ink">
             {signedIn ? "You’re signed in" : "Start your own circle"}
           </h2>
           <p className="mt-1 text-sm leading-6 text-mute">
@@ -183,14 +184,14 @@ export function LandingPage({
                   type="button"
                   onClick={continueSignedIn}
                   disabled={!canContinue}
-                  className="flex min-h-12 w-full items-center justify-center rounded-sm bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
+                  className="flex min-h-12 w-full items-center justify-center rounded-xl bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark disabled:opacity-60"
                 >
                   {consentBusy ? "Saving…" : "Continue"}
                 </button>
               ) : (
                 <Link
                   href={needsOnboarding ? "/onboarding" : "/family"}
-                  className="flex min-h-12 items-center justify-center rounded-sm bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark"
+                  className="flex min-h-12 items-center justify-center rounded-xl bg-ember px-4 text-base font-semibold text-white hover:bg-ember-dark"
                 >
                   {needsOnboarding ? "Add your family" : "Open your circle"}
                 </Link>
@@ -222,7 +223,7 @@ export function LandingPage({
               type="button"
               onClick={() => openDemo("/family")}
               disabled={demoBusy || Boolean(jumpBusy)}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink disabled:opacity-60"
+              className="glass flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 text-sm font-medium text-ink hover:border-ember disabled:opacity-60"
             >
               {demoBusy ? "Opening sample…" : "Open sample family"}
             </button>
@@ -230,7 +231,7 @@ export function LandingPage({
               type="button"
               onClick={() => openDemo("/hcp/live")}
               disabled={demoBusy || Boolean(jumpBusy)}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink disabled:opacity-60"
+              className="glass flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 text-sm font-medium text-ink hover:border-ember disabled:opacity-60"
             >
               {demoBusy ? "Opening…" : "Run live signal demo"}
             </button>
@@ -249,7 +250,7 @@ export function LandingPage({
                   type="button"
                   onClick={() => jumpToDemo(item.href)}
                   disabled={Boolean(demoBusy || jumpBusy)}
-                  className="min-h-11 rounded-sm border border-line bg-surface px-2.5 py-1.5 text-xs font-medium text-ink hover:border-ink disabled:opacity-60"
+                  className="glass min-h-11 rounded-xl px-2.5 py-1.5 text-xs font-medium text-ink hover:border-ember disabled:opacity-60"
                 >
                   {jumpBusy === item.href ? "Opening…" : item.label}
                 </button>

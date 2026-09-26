@@ -53,7 +53,7 @@ export default async function FamilyLayout({ children }: { children: React.React
     <>
       <FamilySettingsDefaults largerTextDefault={settingsFallback.largerText ?? false} />
       <FamilyProvider members={members} currentMemberId={demo ? undefined : profile?.member_id ?? undefined}>
-        <div className="min-h-full bg-ground">
+        <div className="chat-surface min-h-full">
           <FamilyChrome
             demo={demo}
             canGoLive={isSupabaseConfigured()}
