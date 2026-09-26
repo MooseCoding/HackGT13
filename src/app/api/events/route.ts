@@ -1,5 +1,6 @@
 import { parseEvent } from "@/lib/calendar-parse";
 import { addEventRow, eventsOf, membersOf, resolveFamilyId } from "@/lib/data";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -41,12 +42,15 @@ export async function GET(req: NextRequest) {
         googleEvents = (data.items || []).map((ge: any) => ({
           id: `google_${ge.id}`,
           familyId,
-          authorId: "google",
           title: ge.summary || "Google Calendar Event",
           startsAt: ge.start?.dateTime || ge.start?.date || timeMin,
           endsAt: ge.end?.dateTime || ge.end?.date,
           location: ge.location || "",
           attendees: [],
+          sourceText: ge.summary || "Google Calendar Event",
+          createdBy: "google",
+          isGoogleSynced: true,
+          googleEventId: ge.id ?? null,
         }));
       }
     }

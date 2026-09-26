@@ -48,6 +48,8 @@ export type CalendarEvent = {
   attendees: MemberId[];
   sourceText: string;
   createdBy: MemberId;
+  isGoogleSynced?: boolean;
+  googleEventId?: string | null;
 };
 
 export type Family = {
