@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       const token = await googleAccessToken(body.googleToken);
       if (!token) {
         return NextResponse.json(
-          { ...saved, warning: "Saved locally. Sign in with Google to sync calendar." },
+          { ...saved, warning: "Added here. Sign in with Google to also add it there." },
         );
       }
       try {
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.error("Google push error:", err);
         return NextResponse.json(
-          { ...saved, warning: "Saved locally but Google sync failed. Try signing in again." },
+          { ...saved, warning: "Added here, but couldn't add to Google Calendar. Try signing in again." },
         );
       }
     }
@@ -106,13 +106,25 @@ export async function DELETE(req: NextRequest) {
     const clientToken = req.nextUrl.searchParams.get("googleToken");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
+    const isGoogleOnly = id.startsWith("google_");
+
     if (googleEventId) {
       const token = await googleAccessToken(clientToken);
-      if (!token) return NextResponse.json({ error: "Not signed in to Google" }, { status: 401 });
+      if (!token) {
+        return NextResponse.json(
+          { error: "Sign in with Google to remove this event." },
+          { status: 401 },
+        );
+      }
       await deleteGoogleEvent(token, googleEventId);
-    } else if (!id.startsWith("google_")) {
-      await deleteEventRow(id, familyId);
     }
+
+    if (!isGoogleOnly) {
+      await deleteEventRow(id, familyId);
+    } else if (!googleEventId) {
+      return NextResponse.json({ error: "Cannot delete this event." }, { status: 400 });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(

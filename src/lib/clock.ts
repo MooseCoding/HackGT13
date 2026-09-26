@@ -6,9 +6,8 @@ export function now() {
   return DEMO_NOW.toISOString();
 }
 
-/** Anchor “today” for calendar parsing/windows — demo stays pinned; live uses wall clock. */
 export function calendarAnchor(demo: boolean) {
-  return demo ? new Date(DEMO_NOW) : new Date();
+  return demo ? DEMO_NOW : new Date();
 }
 
 export function atDay(daysAgo: number, hour = 10, minute = 0) {

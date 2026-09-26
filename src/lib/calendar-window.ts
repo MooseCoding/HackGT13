@@ -1,20 +1,22 @@
 import { DEMO_NOW } from "./clock";
 
-/** How many weeks before/after the anchor day the family calendar shows. */
-export const CAL_WEEKS = 6;
+export const CAL_WEEKS = 5;
 
-export function windowBounds(anchor: Date = DEMO_NOW) {
-  const min = new Date(anchor);
+export function windowBounds(from = DEMO_NOW) {
+  const min = new Date(from);
   min.setDate(min.getDate() - CAL_WEEKS * 7);
-  min.setHours(0, 0, 0, 0);
-  const max = new Date(anchor);
+  const max = new Date(from);
   max.setDate(max.getDate() + CAL_WEEKS * 7);
-  max.setHours(23, 59, 59, 999);
   return { min, max };
 }
 
-export function inCalendarWindow(iso: string, anchor: Date = DEMO_NOW) {
+export function inCalendarWindow(iso: string, from = DEMO_NOW) {
   const t = new Date(iso).getTime();
-  const { min, max } = windowBounds(anchor);
+  const { min, max } = windowBounds(from);
   return t >= min.getTime() && t <= max.getTime();
+}
+
+export function localDateKey(v: string | Date) {
+  const d = typeof v === "string" ? new Date(v) : v;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

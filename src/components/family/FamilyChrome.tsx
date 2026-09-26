@@ -138,14 +138,14 @@ export function FamilyChrome({
               Invite <strong className="font-mono text-ink">{inviteCode}</strong>
             </span>
           ) : null}
-          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute" title="Controls server-side clinician access">
+          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
             <input
               type="checkbox"
               checked={sharing}
               disabled={savingConsent || !me}
               onChange={(event) => updateSharing(event.target.checked)}
             />
-            Clinician sharing
+            Share with care team
           </label>
           <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
             <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />

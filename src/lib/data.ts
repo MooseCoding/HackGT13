@@ -9,7 +9,7 @@ import {
   addEvent,
   addPost,
   db,
-  deleteEvent as deleteEventDemo,
+  deleteEvent,
   digestFor as digestForDemo,
   eventsOf as eventsOfDemo,
   familyById as familyByIdDemo,
@@ -193,6 +193,22 @@ export async function addPostRow(post: Post): Promise<Post> {
   return mapPost(requireData(data, error));
 }
 
+export async function deleteEventRow(id: string, familyId: string) {
+  if (await isDemoMode()) {
+    if (!deleteEvent(id, familyId)) throw new Error("Event not found");
+    return;
+  }
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .delete()
+    .eq("id", id)
+    .eq("family_id", familyId)
+    .select("id");
+  throwIfError(error);
+  if (!data?.length) throw new Error("Could not delete event.");
+}
+
 export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> {
   if (await isDemoMode()) return addEvent(event);
   const supabase = await createSupabaseServer();
@@ -212,22 +228,6 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
     .select("*")
     .single();
   return mapEvent(requireData(data, error));
-}
-
-export async function deleteEventRow(id: string, familyId: string) {
-  if (await isDemoMode()) {
-    if (!deleteEventDemo(id, familyId)) throw new Error("Event not found.");
-    return { ok: true };
-  }
-  const supabase = await createSupabaseServer();
-  const { error, count } = await supabase
-    .from("calendar_events")
-    .delete({ count: "exact" })
-    .eq("id", id)
-    .eq("family_id", familyId);
-  throwIfError(error);
-  if (!count) throw new Error("Event not found.");
-  return { ok: true };
 }
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {

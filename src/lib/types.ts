@@ -66,6 +66,7 @@ export type Digest = {
   title: string;
   narrative: string;
   highlights: string[];
+  theme?: string;
   generatedAt: string;
 };
 
@@ -89,6 +90,7 @@ export type InsightEvidence = {
   postId: string;
   createdAt: string;
   text: string;
+  tags?: string[];
 };
 
 export type ExplainableInsight = {
