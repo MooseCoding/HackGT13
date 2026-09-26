@@ -19,10 +19,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Family app: `/family` — switch who you’re posting as; turn on **Easy** for large targets and read-aloud.
 - Calendar: `/family/calendar` — type a sentence like `Sofia has her soccer tournament this Saturday at 10 AM at Piedmont Park`.
-- Weekly story: `/family/digest` — listen with the browser voice.
+- Weekly story: `/family/digest` — local template from this week’s posts; listen with the browser voice.
 - Clinician panel: `/hcp` — compare Elena Alvarez (flags) with Ruth Okonkwo (stable).
-
-Optional: set `GROK_API_KEY` or `OPENAI_API_KEY` to regenerate the weekly digest with a model. Without keys, Hearth uses a local narrative stitcher.
 
 ## Stack
 

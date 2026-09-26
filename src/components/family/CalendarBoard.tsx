@@ -1,15 +1,18 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
-import { formatDay } from "@/lib/clock";
+import { DEMO_NOW, formatDay } from "@/lib/clock";
 import type { CalendarEvent, Member } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+const EXAMPLE =
+  "Sofia has her soccer tournament this Saturday at 10 AM at Piedmont Park";
+
 export function CalendarBoard({ events, members }: { events: CalendarEvent[]; members: Member[] }) {
   const { me, easy } = useFamily();
   const router = useRouter();
-  const [text, setText] = useState("Sofia has her soccer tournament this Saturday at 10 AM at Piedmont Park");
+  const [text, setText] = useState("");
   const names = Object.fromEntries(members.map((m) => [m.id, m]));
 
   const grouped = useMemo(() => {
@@ -32,45 +35,56 @@ export function CalendarBoard({ events, members }: { events: CalendarEvent[]; me
     router.refresh();
   }
 
-  const soon = events.find((e) => new Date(e.startsAt) > new Date());
+  const soon = events.find((e) => new Date(e.startsAt) > DEMO_NOW);
 
   return (
     <div>
-      <h1 className="font-serif text-4xl tracking-tight">Family calendar</h1>
-      <p className="mt-2 text-mute">Say it like a person. Hearth files the rest.</p>
+      <h1 className="text-xl font-semibold">Calendar</h1>
+      <p className="mt-1 text-sm text-mute">Type a sentence and Hearth adds the event.</p>
       {soon ? (
-        <p className="mt-4 rounded-2xl bg-orange-50 px-4 py-3 text-sm leading-6">
-          Soft reminder: <span className="font-semibold">{soon.title}</span> · {formatDay(soon.startsAt)}
-          {soon.location ? ` · ${soon.location}` : ""}. No alarm — just a nudge so James on campus isn&apos;t left out.
+        <p className="mt-4 border border-line bg-cream px-3 py-2 text-sm">
+          Upcoming: <strong>{soon.title}</strong> · {formatDay(soon.startsAt)}
+          {soon.location ? ` · ${soon.location}` : ""}
         </p>
       ) : null}
-      <div className="mt-6 rounded-3xl border border-line bg-paper p-4">
+      <div className="mt-6 border border-line bg-paper p-4">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className={`w-full rounded-2xl border border-line bg-cream px-4 py-3 ${easy ? "min-h-28 text-xl" : "min-h-20"}`}
+          placeholder="What's coming up?"
+          className={`w-full rounded-sm border border-line px-3 py-2 outline-none focus:border-ember ${
+            easy ? "min-h-28 text-base" : "min-h-20 text-sm"
+          }`}
         />
-        <button
-          type="button"
-          onClick={create}
-          className={`mt-3 rounded-full bg-ink px-5 font-semibold text-paper ${easy ? "h-14 text-lg" : "h-11"}`}
-        >
-          Add from sentence
-        </button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setText(EXAMPLE)}
+            className="border border-line px-3 py-1.5 text-sm text-mute hover:border-ember"
+          >
+            Example: Sofia&apos;s soccer tournament
+          </button>
+          <button
+            type="button"
+            onClick={create}
+            className={`bg-ember px-4 font-medium text-white ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
+          >
+            Add event
+          </button>
+        </div>
       </div>
-      <div className="mt-8 space-y-6">
+      <div className="mt-8">
         {grouped.map(([day, list]) => (
-          <section key={day}>
-            <h2 className="font-serif text-2xl">{formatDay(list[0].startsAt)}</h2>
-            <ul className="mt-3 space-y-3">
+          <section key={day} className="mb-6">
+            <h2 className="text-sm font-semibold text-mute">{formatDay(list[0].startsAt)}</h2>
+            <ul className="mt-2 divide-y divide-line border border-line bg-paper">
               {list.map((e) => (
-                <li key={e.id} className="rounded-2xl border border-line bg-paper px-4 py-3">
-                  <p className="font-semibold">{e.title}</p>
+                <li key={e.id} className="px-3 py-2">
+                  <p className="font-medium">{e.title}</p>
                   <p className="text-sm text-mute">
                     {new Date(e.startsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                     {e.location ? ` · ${e.location}` : ""}
-                  </p>
-                  <p className="mt-1 text-xs text-mute">
+                    {" · "}
                     {e.attendees.map((id) => names[id]?.name.split(" ")[0]).join(", ")}
                   </p>
                 </li>

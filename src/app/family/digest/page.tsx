@@ -4,6 +4,10 @@ import { digestFor } from "@/lib/store";
 export const dynamic = "force-dynamic";
 
 export default async function DigestPage() {
-  const digest = await digestFor("alvarez");
-  return <DigestView initial={digest} />;
+  const digest = digestFor("alvarez");
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-6">
+      <DigestView initial={digest} />
+    </div>
+  );
 }

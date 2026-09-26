@@ -1,4 +1,5 @@
 import { atDay } from "./clock";
+import { dmThreadId } from "./chat";
 import type { CalendarEvent, Family, Member, Post } from "./types";
 
 export const families: Family[] = [
@@ -259,6 +260,69 @@ export const posts: Post[] = [
     kind: "status",
     body: "I am tired. The tomatoes. Goodnight.",
     createdAt: atDay(0, 1, 6),
+  },
+  {
+    id: "dm1",
+    familyId: "alvarez",
+    authorId: "elena",
+    threadId: dmThreadId("elena", "miguel"),
+    kind: "text",
+    body: "Mijo, can you pick up tomatoes Sunday? The red ones on the south fence.",
+    createdAt: atDay(3, 10, 15),
+  },
+  {
+    id: "dm2",
+    familyId: "alvarez",
+    authorId: "miguel",
+    threadId: dmThreadId("elena", "miguel"),
+    kind: "text",
+    body: "Yes Ma. I'll bring Priya too.",
+    createdAt: atDay(3, 10, 42),
+  },
+  {
+    id: "dm3",
+    familyId: "alvarez",
+    authorId: "elena",
+    threadId: dmThreadId("elena", "miguel"),
+    kind: "text",
+    body: "Gracias. Don't forget the chair for my knees.",
+    createdAt: atDay(3, 11, 5),
+  },
+  {
+    id: "dm4",
+    familyId: "alvarez",
+    authorId: "priya",
+    threadId: dmThreadId("elena", "priya"),
+    kind: "text",
+    body: "Elena, your purse is on the hook by the blue door.",
+    createdAt: atDay(1, 8, 30),
+  },
+  {
+    id: "dm5",
+    familyId: "alvarez",
+    authorId: "elena",
+    threadId: dmThreadId("elena", "priya"),
+    kind: "text",
+    body: "Thank you mija. I looked everywhere.",
+    createdAt: atDay(1, 8, 55),
+  },
+  {
+    id: "dm6",
+    familyId: "alvarez",
+    authorId: "james",
+    threadId: dmThreadId("james", "sofia"),
+    kind: "text",
+    body: "You better score tomorrow. I'll be watching from GT.",
+    createdAt: atDay(2, 19, 10),
+  },
+  {
+    id: "dm7",
+    familyId: "alvarez",
+    authorId: "sofia",
+    threadId: dmThreadId("james", "sofia"),
+    kind: "text",
+    body: "Obviously. Tell Abuela to wear the yellow scarf.",
+    createdAt: atDay(2, 19, 22),
   },
   {
     id: "r0",

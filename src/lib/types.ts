@@ -23,6 +23,8 @@ export type Post = {
   kind: PostKind;
   body: string;
   createdAt: string;
+  /** "group" for family chat, or dm:{id}:{id} for direct messages */
+  threadId?: string;
   photoUrl?: string;
   photoAlt?: string;
   voiceSeconds?: number;
@@ -55,7 +57,6 @@ export type Digest = {
   narrative: string;
   highlights: string[];
   generatedAt: string;
-  source: "template" | "llm";
 };
 
 export type DailyPoint = {

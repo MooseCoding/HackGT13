@@ -72,7 +72,7 @@ export function Composer() {
   }
 
   return (
-    <section className="rounded-3xl border border-line bg-paper p-4 shadow-sm">
+    <section className="border-b border-line pb-6">
       <p className={`text-mute ${easy ? "text-base" : "text-sm"}`}>
         Posting as <span className="font-semibold text-ink">{me.name}</span>
       </p>
@@ -81,27 +81,23 @@ export function Composer() {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={easy ? "Tap Talk, or type a short note…" : "A note, a memory, a photo caption…"}
-        className={`mt-3 w-full resize-none rounded-2xl border border-line bg-cream px-4 py-3 outline-none focus:border-ember ${
+        className={`mt-3 w-full resize-none rounded-surface border border-line bg-paper px-4 py-3 outline-none focus:border-ember ${
           easy ? "min-h-32 text-xl" : "min-h-24"
         }`}
       />
       {photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photoUrl} alt="Upload preview" className="mt-3 max-h-40 rounded-2xl object-cover" />
+        <img src={photoUrl} alt="Upload preview" className="mt-3 max-h-40 rounded-surface object-cover" />
       ) : null}
-      <div className={`mt-3 flex flex-wrap gap-2 ${easy ? "gap-3" : ""}`}>
+      <div className={`mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 ${easy ? "text-lg" : "text-sm"}`}>
         <button
           type="button"
           onClick={startVoice}
-          className={`rounded-full bg-ember px-5 font-semibold text-paper ${easy ? "h-14 text-lg" : "h-11"}`}
+          className={`font-semibold ${listening ? "text-ember" : "text-mute hover:text-ink"}`}
         >
           {listening ? "Listening…" : "Talk"}
         </button>
-        <label
-          className={`grid cursor-pointer place-items-center rounded-full border border-line px-5 font-semibold ${
-            easy ? "h-14 text-lg" : "h-11"
-          }`}
-        >
+        <label className="cursor-pointer font-semibold text-mute hover:text-ink">
           Photo
           <input
             type="file"
@@ -113,7 +109,7 @@ export function Composer() {
         <button
           type="button"
           onClick={() => setKind("status")}
-          className={`rounded-full border border-line px-5 font-semibold ${easy ? "h-14 text-lg" : "h-11"}`}
+          className={`font-semibold ${kind === "status" ? "text-ember" : "text-mute hover:text-ink"}`}
         >
           Status
         </button>

@@ -13,9 +13,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Hearth — keep the family close",
-  description:
-    "A digital living room for families, plus an Impiricus clinician view for opted-in longitudinal context. HackGT 13.",
+  title: "Hearth",
+  description: "Family messaging, calendar, weekly summary, and clinician view for opted-in members.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,16 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --ember: #c45c26;
-  --ember-dark: #8f3b16;
-  --cream: #f6efe4;
-  --paper: #fffaf3;
-  --ink: #2c2118;
-  --mute: #6b5748;
-  --line: #e6d7c6;
-  --clinic: #0f766e;
-  --clinic-ink: #0b1f24;
-  --clinic-paper: #f4f8f8;
+  --ember: #128c7e;
+  --ember-dark: #075e54;
+  --cream: #f0f2f5;
+  --paper: #ffffff;
+  --ink: #111827;
+  --mute: #667781;
+  --line: #e9edef;
+  --clinic: #2563eb;
+  --clinic-ink: #1e293b;
+  --clinic-paper: #f8fafc;
+  --chat-in: #ffffff;
+  --chat-out: #d9fdd3;
+  --chat-bg: #efeae2;
 }
 
 @theme inline {
@@ -22,6 +25,11 @@
   --color-mute: var(--mute);
   --color-line: var(--line);
   --color-clinic: var(--clinic);
+  --color-clinic-ink: var(--clinic-ink);
+  --color-clinic-paper: var(--clinic-paper);
+  --color-chat-in: var(--chat-in);
+  --color-chat-out: var(--chat-out);
+  --color-chat-bg: var(--chat-bg);
   --font-sans: var(--font-nunito);
   --font-serif: var(--font-fraunces);
 }
@@ -38,10 +46,10 @@ a {
 
 .easy body,
 html.easy {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .easy button,
 .easy a.big {
-  min-height: 56px;
+  min-height: 48px;
 }

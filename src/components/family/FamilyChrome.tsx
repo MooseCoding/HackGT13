@@ -28,19 +28,18 @@ export function FamilyProvider({
   members: Member[];
   children: React.ReactNode;
 }) {
-  const [meId, setMeId] = useState(members[0]?.id ?? "");
-  const [easy, setEasy] = useState(false);
+  const defaultMember = members.find((m) => m.easyModeDefault) ?? members[0];
+  const [meId, setMeId] = useState(defaultMember?.id ?? "");
+  const [easy, setEasy] = useState(defaultMember?.easyModeDefault ?? false);
   const me = members.find((m) => m.id === meId) ?? members[0];
 
   useEffect(() => {
-    const saved = localStorage.getItem("hearth-easy");
+    const savedEasy = localStorage.getItem("hearth-easy");
     const who = localStorage.getItem("hearth-me");
-    if (saved === "1") setEasy(true);
+    if (savedEasy === "1") setEasy(true);
+    else if (savedEasy === null && defaultMember?.easyModeDefault) setEasy(true);
     if (who && members.some((m) => m.id === who)) setMeId(who);
-    else if (members.find((m) => m.easyModeDefault)) {
-      /* keep default first member unless stored */
-    }
-  }, [members]);
+  }, [members, defaultMember?.easyModeDefault]);
 
   useEffect(() => {
     localStorage.setItem("hearth-easy", easy ? "1" : "0");
@@ -59,46 +58,48 @@ export function FamilyChrome() {
   const { members, me, setMeId, easy, setEasy } = useFamily();
   const path = usePathname();
   const links = [
-    { href: "/family", label: "Feed" },
+    { href: "/family", label: "Chats" },
     { href: "/family/calendar", label: "Calendar" },
     { href: "/family/digest", label: "This week" },
   ];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-cream/90 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-4 py-3">
-        <Link href="/" className="font-serif text-xl">
+    <header className="border-b border-line bg-paper">
+      <div className="flex items-center gap-4 px-4 py-2.5">
+        <Link href="/" className="text-base font-semibold text-ink">
           Hearth
         </Link>
-        <nav className="flex flex-1 gap-1">
+        <nav className="flex gap-1">
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className={`rounded-full px-3 py-2 text-sm font-semibold ${
-                path === l.href ? "bg-ink text-paper" : "text-mute hover:bg-paper"
-              } ${easy ? "px-4 py-3 text-base" : ""}`}
+              className={`px-3 py-1.5 text-sm ${
+                path === l.href ? "font-semibold text-ember" : "text-mute hover:text-ink"
+              }`}
             >
               {l.label}
             </Link>
           ))}
         </nav>
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
-          Easy
-        </label>
-        <select
-          className="rounded-full border border-line bg-paper px-3 py-2 text-sm"
-          value={me.id}
-          onChange={(e) => setMeId(e.target.value)}
-          aria-label="Posting as"
-        >
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+        <div className="ml-auto flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-sm text-mute">
+            <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
+            Easy
+          </label>
+          <select
+            value={me.id}
+            onChange={(e) => setMeId(e.target.value)}
+            className="rounded-sm border border-line bg-paper px-2 py-1 text-sm"
+            aria-label="You are"
+          >
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </header>
   );

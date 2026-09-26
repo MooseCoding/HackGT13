@@ -24,36 +24,35 @@ export function DigestView({ initial }: { initial: Digest }) {
   }
 
   return (
-    <article>
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ember-dark">Weekly story</p>
-      <h1 className="mt-2 font-serif text-4xl tracking-tight">{digest.title}</h1>
-      <p className="mt-2 text-sm text-mute">
-        Week of {digest.weekOf} · {digest.source === "llm" ? "written with an LLM" : "stitched on-device for demo"}
-      </p>
-      <div className="mt-6 flex flex-wrap gap-2">
+    <article className="max-w-2xl">
+      <h1 className="text-xl font-semibold">{digest.title}</h1>
+      <p className="mt-1 text-sm text-mute">Week of {digest.weekOf}</p>
+      <div className="mt-4 flex gap-2">
         <button
           type="button"
           onClick={narrate}
-          className={`rounded-full bg-ember px-5 font-semibold text-paper ${easy ? "h-14 text-lg" : "h-11"}`}
+          className={`bg-ember px-4 font-medium text-white ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
         >
-          Listen to the week
+          Listen
         </button>
         <button
           type="button"
           onClick={refresh}
-          className={`rounded-full border border-line px-5 font-semibold ${easy ? "h-14 text-lg" : "h-11"}`}
+          className={`border border-line px-4 font-medium ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
         >
-          {busy ? "Writing…" : "Regenerate"}
+          {busy ? "Updating…" : "Refresh"}
         </button>
       </div>
-      <p className={`mt-8 max-w-prose leading-8 ${easy ? "text-xl leading-9" : "text-lg"}`}>{digest.narrative}</p>
-      <ul className="mt-8 space-y-2">
-        {digest.highlights.map((h) => (
-          <li key={h} className="rounded-2xl bg-paper px-4 py-3 text-sm leading-6">
-            {h}
-          </li>
-        ))}
-      </ul>
+      <p className={`mt-6 leading-7 ${easy ? "text-base" : "text-sm"}`}>{digest.narrative}</p>
+      {digest.highlights.length ? (
+        <ul className="mt-6 space-y-2 border-t border-line pt-4">
+          {digest.highlights.map((h) => (
+            <li key={h} className="text-sm leading-6 text-mute">
+              {h}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </article>
   );
 }

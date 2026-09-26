@@ -1,20 +1,17 @@
-import { Composer } from "@/components/family/Composer";
-import { FeedList } from "@/components/family/FeedList";
-import { membersOf, postsOf } from "@/lib/store";
+import { ChatApp } from "@/components/family/ChatApp";
+import { familyById, membersOf, postsOf } from "@/lib/store";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default function FamilyFeedPage() {
+export default function FamilyChatPage() {
   const posts = postsOf("alvarez");
   const members = membersOf("alvarez");
+  const family = familyById("alvarez");
+
   return (
-    <div>
-      <h1 className="font-serif text-4xl tracking-tight">The porch</h1>
-      <p className="mt-2 text-mute">Drop a note whenever. Nobody has to catch it live.</p>
-      <div className="mt-6">
-        <Composer />
-      </div>
-      <FeedList posts={posts} members={members} />
-    </div>
+    <Suspense fallback={<div className="p-4 text-sm text-mute">Loading chats…</div>}>
+      <ChatApp posts={posts} members={members} familyName={family.name} />
+    </Suspense>
   );
 }

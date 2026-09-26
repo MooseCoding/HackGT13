@@ -15,77 +15,69 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <Link href="/hcp" className="text-sm font-semibold text-teal-800">
-        ← Panel
+      <Link href="/hcp" className="text-sm text-clinic hover:underline">
+        ← Patients
       </Link>
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-4xl">{member.name}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {member.age} · {member.role} · {family.name} · consented {member.clinicalOptIn ? "yes" : "no"}
-          </p>
-        </div>
-        <p className="max-w-sm text-xs leading-5 text-slate-500">
-          14-day window vs prior 30-day personal baseline. Passive signals from family posts and voice
-          transcripts only.
-        </p>
-      </div>
+      <h1 className="mt-3 text-xl font-semibold">{member.name}</h1>
+      <p className="text-sm text-mute">
+        {member.age} · {member.role} · {family.name}
+      </p>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-6 border border-line bg-paper p-4">
+        <h2 className="font-medium">Pre-visit brief</h2>
+        <p className="mt-2 text-sm leading-6">{s.note}</p>
+        {s.flags.length ? (
+          <ul className="mt-4 space-y-2">
+            {s.flags.map((f) => (
+              <li key={f.code} className="border-l-2 border-clinic/40 pl-3 text-sm">
+                <p className="font-medium">
+                  {f.title} ({f.severity})
+                </p>
+                <p className="mt-0.5 text-mute">{f.detail}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metric label="Lexical diversity" value={s.lexicalDiversity.toFixed(2)} delta={s.lexicalDiversityDelta} />
-        <Metric
-          label="Sentence length"
-          value={`${s.meanSentenceLength.toFixed(1)} w`}
-          delta={s.sentenceLengthDelta}
-        />
+        <Metric label="Sentence length" value={`${s.meanSentenceLength.toFixed(1)} w`} delta={s.sentenceLengthDelta} />
         <Metric label="Posts / week" value={s.engagementPerWeek.toFixed(1)} delta={s.engagementDelta} />
         <Metric label="Night activity" value={`${Math.round(s.nightShare * 100)}%`} delta={s.nightShare} invert />
       </section>
 
-      <section className="mt-8 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lexical diversity</p>
+      <section className="mt-6 space-y-4 border border-line bg-paper p-4">
+        <div>
+          <p className="text-sm font-medium text-mute">Lexical diversity</p>
           <LineChart points={s.series} accessor={(p) => p.lexicalDiversity} />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sentiment</p>
-          <LineChart points={s.series} accessor={(p) => p.sentiment} color="#b45309" />
+        <div>
+          <p className="text-sm font-medium text-mute">Sentiment</p>
+          <LineChart points={s.series} accessor={(p) => p.sentiment} />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Daily posts</p>
-          <LineChart points={s.series} accessor={(p) => p.posts} color="#334155" />
+        <div>
+          <p className="text-sm font-medium text-mute">Daily posts</p>
+          <LineChart points={s.series} accessor={(p) => p.posts} />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Night posts</p>
-          <LineChart points={s.series} accessor={(p) => p.nightPosts} color="#be123c" />
+        <div>
+          <p className="text-sm font-medium text-mute">Night posts</p>
+          <LineChart points={s.series} accessor={(p) => p.nightPosts} />
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-800">Agent pre-diagnosis note</p>
-        <p className="mt-3 leading-7 text-slate-800">{s.note}</p>
-        <ul className="mt-4 space-y-2">
-          {s.flags.map((f) => (
-            <li key={f.code} className="rounded-xl bg-slate-50 px-4 py-3">
-              <p className="text-sm font-bold">
-                {f.title} · {f.severity}
+      <section className="mt-6">
+        <h2 className="font-medium">Source timeline</h2>
+        <ul className="mt-3 divide-y divide-line border border-line bg-paper">
+          {posts.map((p) => (
+            <li key={p.id} className="px-3 py-2 text-sm">
+              <p className="text-xs text-mute">
+                {formatWhen(p.createdAt)} · {p.kind}
               </p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{f.detail}</p>
+              <p className="mt-0.5">{p.transcript || p.body}</p>
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="font-serif text-2xl">Source timeline</h2>
-        <ol className="mt-4 space-y-3">
-          {posts.map((p) => (
-            <li key={p.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-              <p className="text-xs text-slate-500">{formatWhen(p.createdAt)} · {p.kind}</p>
-              <p className="mt-1 text-sm leading-6">{p.transcript || p.body}</p>
-            </li>
-          ))}
-        </ol>
       </section>
     </div>
   );

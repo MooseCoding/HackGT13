@@ -3,14 +3,14 @@ import type { DailyPoint } from "@/lib/types";
 export function LineChart({
   points,
   accessor,
-  color = "#0f766e",
+  color = "#2563eb",
 }: {
   points: DailyPoint[];
   accessor: (p: DailyPoint) => number;
   color?: string;
 }) {
   const w = 560;
-  const h = 140;
+  const h = 120;
   const pad = 8;
   const vals = points.map(accessor);
   const max = Math.max(...vals, 0.01);
@@ -22,8 +22,9 @@ export function LineChart({
     return `${x},${y}`;
   });
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-36 w-full">
-      <polyline fill="none" stroke={color} strokeWidth="2.5" points={coords.join(" ")} />
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-28 w-full">
+      <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="#e5e7eb" strokeWidth="1" />
+      <polyline fill="none" stroke={color} strokeWidth="2" points={coords.join(" ")} />
     </svg>
   );
 }
@@ -42,10 +43,10 @@ export function Metric({
   const down = delta < -0.02;
   const warn = invert ? !down && delta > 0.02 : down;
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 font-serif text-2xl">{value}</p>
-      <p className={`mt-1 text-sm ${warn ? "text-rose-700" : "text-teal-700"}`}>
+    <div className="border border-line bg-paper p-3">
+      <p className="text-xs text-mute">{label}</p>
+      <p className="mt-1 text-lg font-semibold">{value}</p>
+      <p className={`text-xs ${warn ? "text-red-600" : "text-clinic"}`}>
         {delta >= 0 ? "+" : ""}
         {Math.round(delta * 100)}% vs baseline
       </p>

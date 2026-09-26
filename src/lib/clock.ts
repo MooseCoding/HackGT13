@@ -1,6 +1,11 @@
 /** Demo clock is pinned to HackGT week so seed stories stay consistent. */
 export const DEMO_NOW = new Date("2026-09-25T20:16:00-04:00");
 
+/** Single source of truth for demo-relative time. */
+export function now() {
+  return DEMO_NOW.toISOString();
+}
+
 export function atDay(daysAgo: number, hour = 10, minute = 0) {
   const d = new Date(DEMO_NOW);
   d.setDate(d.getDate() - daysAgo);

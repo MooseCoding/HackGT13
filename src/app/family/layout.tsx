@@ -9,7 +9,7 @@ export default function FamilyLayout({ children }: { children: React.ReactNode }
     <FamilyProvider members={members}>
       <div className="min-h-full bg-cream">
         <FamilyChrome />
-        <div className="mx-auto max-w-3xl px-4 py-6">{children}</div>
+        {children}
       </div>
     </FamilyProvider>
   );

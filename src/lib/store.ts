@@ -1,5 +1,6 @@
 import { analyzeMember } from "./analysis";
-import { maybeLlmDigest, templateDigest } from "./digest";
+import { GROUP_THREAD, postThreadId, threadForDm } from "./chat";
+import { templateDigest } from "./digest";
 import { events as seedEvents, families, members, posts as seedPosts } from "./seed";
 import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post } from "./types";
 
@@ -46,6 +47,17 @@ export function postsOf(familyId: string) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export function postsForThread(familyId: string, threadId: string) {
+  return db()
+    .posts.filter((p) => p.familyId === familyId && postThreadId(p) === threadId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export function resolveThreadId(withParam: string, meId: string) {
+  if (!withParam || withParam === GROUP_THREAD) return GROUP_THREAD;
+  return threadForDm(meId, withParam);
+}
+
 export function eventsOf(familyId: string) {
   return db()
     .events.filter((e) => e.familyId === familyId)
@@ -62,13 +74,11 @@ export function addEvent(event: CalendarEvent) {
   return event;
 }
 
-export async function digestFor(familyId: string, useLlm = false) {
+export function digestFor(familyId: string, refresh = false) {
   const store = db();
   const existing = store.digests.find((d) => d.familyId === familyId);
-  if (existing && !useLlm) return existing;
-  const digest = useLlm
-    ? await maybeLlmDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId))
-    : templateDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
+  if (existing && !refresh) return existing;
+  const digest = templateDigest(familyId, membersOf(familyId), postsOf(familyId), eventsOf(familyId));
   store.digests = store.digests.filter((d) => d.familyId !== familyId);
   store.digests.push(digest);
   return digest;
