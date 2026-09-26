@@ -1,4 +1,5 @@
 import { FamilyChrome, FamilyProvider } from "@/components/family/FamilyChrome";
+import { HearthAssistant } from "@/components/family/HearthAssistant";
 import { getAuthUser, getProfile, needsOnboarding } from "@/lib/auth";
 import { familyById, membersOf, resolveFamilyId } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/mode";
@@ -28,6 +29,7 @@ export default async function FamilyLayout({ children }: { children: React.React
           identityLocked={!demo && Boolean(profile?.member_id)}
         />
         <div id="main-content">{children}</div>
+        <HearthAssistant familyId={familyId} />
       </div>
     </FamilyProvider>
   );

@@ -1,4 +1,6 @@
+import { HearthAssistant } from "@/components/family/HearthAssistant";
 import { getAuthUser, needsOnboarding } from "@/lib/auth";
+import { resolveFamilyId } from "@/lib/data";
 import { isDemoMode } from "@/lib/mode-server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -8,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function HcpLayout({ children }: { children: React.ReactNode }) {
   const demo = await isDemoMode();
   if (!demo && (await needsOnboarding())) redirect("/onboarding");
-  const user = await getAuthUser();
+  const [user, familyId] = await Promise.all([getAuthUser(), resolveFamilyId()]);
 
   return (
     <div className="min-h-full bg-clinic-paper text-clinic-ink">
@@ -36,6 +38,7 @@ export default async function HcpLayout({ children }: { children: React.ReactNod
       <main id="main-content" className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
         {children}
       </main>
+      <HearthAssistant familyId={familyId} />
     </div>
   );
 }
