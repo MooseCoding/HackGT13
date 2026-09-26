@@ -1,180 +1,288 @@
 "use client";
 
 import { useFamily } from "@/components/family/FamilyChrome";
-import { DEMO_NOW, formatDay } from "@/lib/clock";
-import type { CalendarEvent, Member } from "@/lib/types";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { exampleEventText } from "@/lib/calendar-parse";
+import { CAL_WEEKS, localDateKey } from "@/lib/calendar-window";
+import { calendarAnchor } from "@/lib/clock";
+import { createSupabaseBrowser } from "@/lib/supabase/browser";
+import type { PublicSupabaseConfig } from "@/lib/supabase/public";
+import type { CalendarEvent } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const EXAMPLE =
-  "Sofia has her soccer tournament this Saturday at 10 AM at Piedmont Park";
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function CalendarBoard({ events, members }: { events: CalendarEvent[]; members: Member[] }) {
-  const { me, easy } = useFamily();
-  const router = useRouter();
-  const [text, setText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [syncToGoogle, setSyncToGoogle] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  
-  const names = Object.fromEntries(members.map((m) => [m.id, m]));
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
-    for (const e of events) {
-      const key = e.startsAt.slice(0, 10);
-      map.set(key, [...(map.get(key) ?? []), e]);
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [events]);
-
-  async function create() {
-    if (!text.trim() || isSubmitting) return;
-    setIsSubmitting(true);
-    
-    try {
-      await fetch("/api/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          familyId: me.familyId, 
-          authorId: me.id, 
-          text, 
-          syncToGoogle 
-        }),
-      });
-      setText("");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to create event:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function deleteEvent(id: string, googleEventId?: string | null) {
-  if (deletingId) return;
-  setDeletingId(id);
-
-  try {
-    const params = new URLSearchParams();
-    params.append("id", id);
-    params.append("familyId", me.familyId);
-    if (googleEventId) {
-      params.append("googleEventId", googleEventId);
-    }
-
-    const res = await fetch(`/api/events?${params.toString()}`, {
-      method: "DELETE",
-    });
-
-    if (!res.ok) {
-      const message = await res.text().catch(() => "");
-      throw new Error(message || `Delete failed with status ${res.status}`);
-    }
-
-    router.refresh();
-  } catch (error) {
-    console.error("Failed to delete event:", error);
-    // surface it instead of failing silently
-    alert("Couldn't delete that event. Please try again.");
-  } finally {
-    setDeletingId(null);
-  }
+function monthGrid(focus: Date) {
+  const start = new Date(focus.getFullYear(), focus.getMonth(), 1);
+  start.setDate(start.getDate() - start.getDay());
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
 }
 
-  const soon = events.find((e) => new Date(e.startsAt) > DEMO_NOW);
+function isFamilyEvent(e: CalendarEvent) {
+  return !e.isGoogleSynced && e.attendees.length > 1;
+}
+
+function isMineEvent(e: CalendarEvent, meId: string) {
+  return e.isGoogleSynced || (e.attendees.length === 1 && e.createdBy === meId);
+}
+
+export function CalendarBoard({
+  familyId,
+  supabaseConfig,
+}: {
+  familyId: string;
+  supabaseConfig: PublicSupabaseConfig | null;
+}) {
+  const { me, easy } = useFamily();
+  const [demo, setDemo] = useState(true);
+  const [anchor, setAnchor] = useState(() => calendarAnchor(true));
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [view, setView] = useState<"family" | "mine">("family");
+  const [weekOff, setWeekOff] = useState(0);
+  const [pick, setPick] = useState<string | null>(null);
+  const [syncToGoogle, setSyncToGoogle] = useState(true);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/demo")
+      .then((r) => r.json())
+      .then((d) => {
+        setDemo(Boolean(d.demo));
+        setAnchor(calendarAnchor(Boolean(d.demo)));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (demo || !supabaseConfig) return;
+    const supabase = createSupabaseBrowser(supabaseConfig);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setGoogleToken(session?.provider_token ?? null);
+    });
+  }, [demo, supabaseConfig]);
+
+  const load = useCallback(async () => {
+    const q = new URLSearchParams({ familyId });
+    if (googleToken) q.set("googleToken", googleToken);
+    const res = await fetch(`/api/events?${q}`);
+    if (res.ok) {
+      const data = await res.json();
+      setEvents(data.events);
+      setGoogleConnected(Boolean(data.googleConnected));
+    }
+  }, [familyId, googleToken]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const focus = useMemo(() => {
+    const d = new Date(anchor);
+    d.setDate(d.getDate() + weekOff * 7);
+    return d;
+  }, [anchor, weekOff]);
+
+  const month = new Date(focus.getFullYear(), focus.getMonth(), 1);
+  const cells = monthGrid(focus);
+
+  const shown = useMemo(
+    () => events.filter((e) => (view === "family" ? isFamilyEvent(e) : isMineEvent(e, me.id))),
+    [events, view, me.id],
+  );
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of shown) {
+      const k = localDateKey(e.startsAt);
+      map.set(k, [...(map.get(k) ?? []), e]);
+    }
+    return map;
+  }, [shown]);
+
+  const picked = pick ? byDay.get(pick) ?? [] : [];
+
+  const QUICK = [
+    "Doctor checkup tomorrow at 9 AM",
+    "Family dinner Friday at 6 PM",
+    "Soccer practice Saturday at 10 AM at Piedmont Park",
+  ];
+
+  async function create() {
+    if (!text.trim() || busy) return;
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId,
+          authorId: me.id,
+          text,
+          calendar: view,
+          syncToGoogle,
+          googleToken,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg(data.error || "Could not add event.");
+        return;
+      }
+      if (data.warning) setMsg(data.warning);
+      else setMsg(`Added to ${view === "family" ? "family" : "your"} calendar.`);
+      setText("");
+      setPick(localDateKey(data.startsAt));
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(e: CalendarEvent) {
+    if (deletingId) return;
+    setDeletingId(e.id);
+    setMsg("");
+    try {
+      const q = new URLSearchParams({ id: e.id, familyId: e.familyId });
+      if (e.googleEventId) q.set("googleEventId", e.googleEventId);
+      if (googleToken) q.set("googleToken", googleToken);
+      const res = await fetch(`/api/events?${q}`, { method: "DELETE", credentials: "include" });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error || "Could not delete event.");
+      setEvents((prev) => prev.filter((x) => x.id !== e.id));
+      if (pick && picked.length <= 1) setPick(null);
+      setMsg("Event removed.");
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Could not delete event.");
+      await load();
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div>
-      <h1 className="text-xl font-semibold">Calendar</h1>
-      <p className="mt-1 text-sm text-mute">Type a sentence and Hearth adds the event.</p>
-      
-      {soon ? (
-        <p className="mt-4 border border-line bg-cream px-3 py-2 text-sm">
-          Upcoming: <strong>{soon.title}</strong> · {formatDay(soon.startsAt)}
-          {soon.location ? ` · ${soon.location}` : ""}
-        </p>
-      ) : null}
-      
-      <div className="mt-6 border border-line bg-paper p-4">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="What's coming up?"
-          className={`w-full rounded-sm border border-line px-3 py-2 outline-none focus:border-ember ${
-            easy ? "min-h-28 text-base" : "min-h-20 text-sm"
-          }`}
-        />
-        
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setText(EXAMPLE)}
-            className="border border-line px-3 py-1.5 text-sm text-mute hover:border-ember"
-          >
-            Example: Sofia&apos;s soccer tournament
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Calendar</h1>
+        <div className="flex border border-line text-sm">
+          <button type="button" onClick={() => setView("family")} className={`px-3 py-1 ${view === "family" ? "bg-ember text-white" : "bg-paper"}`}>
+            Family
           </button>
-          
-          <div className="flex items-center gap-4">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-mute hover:text-ink">
-              <input
-                type="checkbox"
-                checked={syncToGoogle}
-                onChange={(e) => setSyncToGoogle(e.target.checked)}
-                className="accent-ember"
-              />
-              Sync to Google Calendar
-            </label>
-            
-            <button
-              type="button"
-              onClick={create}
-              disabled={isSubmitting || !text.trim()}
-              className={`bg-ember px-4 font-medium text-white disabled:opacity-50 ${
-                easy ? "py-3 text-base" : "py-2 text-sm"
-              }`}
-            >
-              {isSubmitting ? "Adding..." : "Add event"}
-            </button>
-          </div>
+          <button type="button" onClick={() => setView("mine")} className={`px-3 py-1 ${view === "mine" ? "bg-ember text-white" : "bg-paper"}`}>
+            My calendar
+          </button>
         </div>
       </div>
-      
-      <div className="mt-8">
-        {grouped.map(([day, list]) => (
-          <section key={day} className="mb-6">
-            <h2 className="text-sm font-semibold text-mute">{formatDay(list[0].startsAt)}</h2>
-            <ul className="mt-2 divide-y divide-line border border-line bg-paper">
-              {list.map((e) => (
-                <li key={e.id} className="flex items-center justify-between px-3 py-2">
+      <p className="mt-1 text-xs text-mute">
+        {view === "family" ? "Shared events for everyone" : "Your events and Google Calendar"}
+        {!demo && !googleConnected ? " · Sign in with Google to see your other calendar" : ""}
+      </p>
+      {msg ? <p className="mt-2 text-sm text-ember-dark">{msg}</p> : null}
+
+      <div className="mt-3 flex items-center justify-between border border-line bg-paper px-3 py-2">
+        <button type="button" disabled={weekOff <= -CAL_WEEKS} onClick={() => setWeekOff((w) => w - 1)} className="px-2 disabled:opacity-30">←</button>
+        <span className="text-sm font-medium">{month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+        <button type="button" disabled={weekOff >= CAL_WEEKS} onClick={() => setWeekOff((w) => w + 1)} className="px-2 disabled:opacity-30">→</button>
+      </div>
+
+      <div className="grid grid-cols-7 border-x border-b border-line bg-paper text-center text-xs text-mute">
+        {DOW.map((d) => (
+          <div key={d} className="border-t border-line py-1.5 font-medium">{d}</div>
+        ))}
+        {cells.map((d) => {
+          const k = localDateKey(d);
+          const inMonth = d.getMonth() === month.getMonth();
+          const dayEvents = byDay.get(k) ?? [];
+          const today = localDateKey(anchor);
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setPick(k)}
+              className={`min-h-[68px] border-t border-r border-line p-1 text-left ${!inMonth ? "bg-cream/50 text-mute" : ""} ${k === today ? "ring-1 ring-inset ring-ember" : ""} ${
+                /* CHANGE HERE: Replace "bg-cream" with your preferred blue utility class (e.g., "bg-blue-100") */
+                pick === k ? "bg-blue-100" : ""
+              }`}
+            >
+              <span className={`text-sm ${k === today ? "font-bold text-ember" : ""}`}>{d.getDate()}</span>
+              <div className="mt-0.5 space-y-0.5">
+                {dayEvents.slice(0, 2).map((e) => (
+                  <div key={e.id} className="truncate bg-ember/15 px-0.5 text-[10px]">{e.title}</div>
+                ))}
+                {dayEvents.length > 2 ? <div className="text-[10px]">+{dayEvents.length - 2}</div> : null}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {pick ? (
+        <div className="mt-3 border border-line bg-paper p-3">
+          <p className="text-sm font-medium">{new Date(pick + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+          {picked.length === 0 ? (
+            <p className="mt-1 text-sm text-mute">No events</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {picked.map((e) => (
+                <li key={e.id} className="flex justify-between gap-2 text-sm">
                   <div>
-                    <div className="flex items-center gap-2">
-                      {e.isGoogleSynced && (
-                        <span title="From Google Calendar" className="text-xs">🗓️</span>
-                      )}
-                      <p className="font-medium">{e.title}</p>
-                    </div>
-                    <p className="text-sm text-mute">
+                    <p className="font-medium">{e.title}</p>
+                    <p className="text-mute">
                       {new Date(e.startsAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                       {e.location ? ` · ${e.location}` : ""}
-                      {e.attendees && e.attendees.length > 0 ? " · " + e.attendees.map((id) => names[id]?.name.split(" ")[0] || id).join(", ") : ""}
                     </p>
                   </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => deleteEvent(e.id, e.googleEventId)}
-                    disabled={deletingId === e.id}
-                    className="text-xs text-red-500 hover:underline disabled:opacity-50"
-                  >
-                    {deletingId === e.id ? "Deleting..." : "Delete"}
+                  <button type="button" onClick={() => remove(e)} disabled={deletingId === e.id} className="text-xs text-red-600">
+                    {deletingId === e.id ? "…" : "Delete"}
                   </button>
                 </li>
               ))}
             </ul>
-          </section>
-        ))}
+          )}
+        </div>
+      ) : null}
+
+      <div className="mt-4 border border-line bg-paper p-3">
+        <p className="mb-2 text-xs text-mute">Say when it is, who&apos;s involved, and where.</p>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {QUICK.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => setText(q)}
+              className="border border-line bg-cream px-2 py-0.5 text-[11px] hover:bg-ember/10"
+            >
+              {q.split(" at ")[0]}
+            </button>
+          ))}
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={view === "family" ? "e.g. Abuela's checkup Thursday at 2 PM at Emory" : "e.g. Dentist Tuesday at 3 PM"}
+          className={`w-full border border-line px-3 py-2 ${easy ? "min-h-24 text-base" : "min-h-16 text-sm"}`}
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setText(exampleEventText(anchor))} className="border border-line px-2 py-1 text-xs">Example</button>
+          {!demo ? (
+            <label className="flex items-center gap-1 text-xs text-mute">
+              <input type="checkbox" checked={syncToGoogle} onChange={(e) => setSyncToGoogle(e.target.checked)} />
+              Also add to my Google Calendar
+            </label>
+          ) : null}
+          <button type="button" onClick={create} disabled={busy || !text.trim()} className="ml-auto bg-ember px-4 py-1.5 text-sm text-white disabled:opacity-50">
+            {busy ? "Adding…" : "Add"}
+          </button>
+        </div>
       </div>
     </div>
   );

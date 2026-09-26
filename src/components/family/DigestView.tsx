@@ -25,33 +25,49 @@ export function DigestView({ initial }: { initial: Digest }) {
 
   return (
     <article className="max-w-2xl">
-      <h1 className="text-xl font-semibold">{digest.title}</h1>
-      <p className="mt-1 text-sm text-mute">Week of {digest.weekOf}</p>
-      <div className="mt-4 flex gap-2">
+      <header className="border-b border-line pb-4">
+        <h1 className={`font-semibold ${easy ? "text-2xl" : "text-xl"}`}>{digest.title}</h1>
+        <p className="mt-1 text-sm text-mute">
+          Week of {new Date(digest.weekOf + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+        </p>
+      </header>
+
+      <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={narrate}
           className={`bg-ember px-4 font-medium text-white ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
         >
-          Listen to this week
+          Listen
         </button>
         <button
           type="button"
           onClick={refresh}
-          className={`border border-line px-4 font-medium ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
+          disabled={busy}
+          className={`border border-line px-4 font-medium disabled:opacity-50 ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
         >
           {busy ? "Updating…" : "Refresh"}
         </button>
       </div>
-      <p className={`mt-6 leading-7 ${easy ? "text-base" : "text-sm"}`}>{digest.narrative}</p>
+
+      <p className={`mt-6 leading-relaxed ${easy ? "text-lg leading-8" : "text-base leading-7"}`}>{digest.narrative}</p>
+
       {digest.highlights.length ? (
-        <ul className="mt-6 space-y-2 border-t border-line pt-4">
-          {digest.highlights.map((h) => (
-            <li key={h} className="text-sm leading-6 text-mute">
-              {h}
-            </li>
-          ))}
-        </ul>
+        <section className="mt-8">
+          <h2 className="text-sm font-medium text-mute">Moments from the week</h2>
+          <ul className="mt-3 space-y-3">
+            {digest.highlights.map((h) => {
+              const [name, ...rest] = h.split(": ");
+              const body = rest.join(": ");
+              return (
+                <li key={h} className="border-l-2 border-ember/30 pl-3">
+                  <p className="text-xs font-medium text-ember">{name}</p>
+                  <p className={`mt-0.5 text-mute ${easy ? "text-base" : "text-sm"}`}>{body}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
     </article>
   );

@@ -34,7 +34,7 @@ export function DemoModeSwitch({
           disabled={busy || (!demo && !canGoLive)}
           onChange={(e) => setDemo(e.target.checked)}
         />
-        Demo
+        Sample family
       </label>
     );
   }

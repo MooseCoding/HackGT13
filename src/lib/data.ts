@@ -9,6 +9,7 @@ import {
   addEvent,
   addPost,
   db,
+  deleteEvent,
   digestFor as digestForDemo,
   eventsOf as eventsOfDemo,
   familyById as familyByIdDemo,
@@ -190,6 +191,22 @@ export async function addPostRow(post: Post): Promise<Post> {
     .select("*")
     .single();
   return mapPost(requireData(data, error));
+}
+
+export async function deleteEventRow(id: string, familyId: string) {
+  if (await isDemoMode()) {
+    if (!deleteEvent(id, familyId)) throw new Error("Event not found");
+    return;
+  }
+  const supabase = await createSupabaseServer();
+  const { data, error } = await supabase
+    .from("calendar_events")
+    .delete()
+    .eq("id", id)
+    .eq("family_id", familyId)
+    .select("id");
+  throwIfError(error);
+  if (!data?.length) throw new Error("Could not delete event.");
 }
 
 export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> {

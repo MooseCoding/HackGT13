@@ -24,8 +24,8 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const signedIn = Boolean(data?.claims);
+  const { data: { session } } = await supabase.auth.getSession();
+  const signedIn = Boolean(session);
 
   const demo = request.cookies.get("hearth-demo")?.value === "1";
   const path = request.nextUrl.pathname;

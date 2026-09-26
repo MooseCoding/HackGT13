@@ -1,4 +1,5 @@
 import { DEMO_NOW } from "./clock";
+import { rankContextClues } from "./local-ml";
 import { hourOf, lexicalDiversity, meanSentenceLength, repetitionScore, sentimentScore } from "./nlp";
 import type { ClinicalFlag, DailyPoint, ExplainableInsight, PatientSnapshot, Post } from "./types";
 
@@ -88,10 +89,13 @@ function explainActivity(
   const currentWeekly = current.length / 2;
   const baselineWeekly = baseline.length / (30 / 7);
   const useNight = Math.abs(currentNightPct - baselineNightPct) >= 20;
-  const evidencePosts = (useNight ? currentNight : current)
-    .slice()
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 5);
+  const pool = useNight ? currentNight : current;
+  const clues = rankContextClues(pool, 5);
+  const clueMap = new Map(clues.map((c) => [c.postId, c]));
+  const evidencePosts =
+    clues.length > 0
+      ? pool.filter((p) => clueMap.has(p.id)).sort((a, b) => clueMap.get(b.id)!.score - clueMap.get(a.id)!.score)
+      : pool.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
 
   return {
     status: "ready",
@@ -112,6 +116,7 @@ function explainActivity(
       postId: post.id,
       createdAt: post.createdAt,
       text: textOf(post),
+      tags: clueMap.get(post.id)?.tags,
     })),
   };
 }

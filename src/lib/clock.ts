@@ -6,6 +6,10 @@ export function now() {
   return DEMO_NOW.toISOString();
 }
 
+export function calendarAnchor(demo: boolean) {
+  return demo ? DEMO_NOW : new Date();
+}
+
 export function atDay(daysAgo: number, hour = 10, minute = 0) {
   const d = new Date(DEMO_NOW);
   d.setDate(d.getDate() - daysAgo);
