@@ -139,13 +139,10 @@ export function ChatApp({
   const [calendarAdded, setCalendarAdded] = useState<{ title: string; when: string; count?: number } | null>(
     null,
   );
-<<<<<<< HEAD
   const [reminderHint, setReminderHint] = useState<ReminderSuggestion | null>(null);
   const [reminderAdded, setReminderAdded] = useState<{ text: string; who: string; when: string } | null>(null);
   const [addingReminder, setAddingReminder] = useState(false);
-=======
   const [checkInSuggestion, setCheckInSuggestion] = useState<CheckInSuggestion | null>(null);
->>>>>>> 0b181cb (added UI/UX by topher)
   const hasWeeklyCalls = events.some(isWeeklyFamilyCall);
   const bottomRef = useRef<HTMLDivElement>(null);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
@@ -325,17 +322,12 @@ export function ChatApp({
       reminderSuggestion?: ReminderSuggestion;
       calendarEvent?: CalendarEvent;
       calendarEvents?: CalendarEvent[];
-<<<<<<< HEAD
+      checkInSuggestion?: CheckInSuggestion | null;
       id?: string;
     };
     setScheduleHint(data.scheduleSuggestion ?? null);
     setReminderHint(data.reminderSuggestion ?? null);
-=======
-      checkInSuggestion?: CheckInSuggestion | null;
-    };
-    setScheduleHint(data.scheduleSuggestion ?? null);
     setCheckInSuggestion(data.checkInSuggestion ?? null);
->>>>>>> 0b181cb (added UI/UX by topher)
     if (data.calendarEvent) {
       setCalendarAdded({
         title: data.calendarEvent.title,

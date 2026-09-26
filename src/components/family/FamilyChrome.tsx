@@ -1,14 +1,11 @@
 "use client";
 
-import { FamilyCircleSwitcher } from "@/components/family/FamilyCircleSwitcher";
 import { ClinicalConsentToggle } from "@/components/family/ClinicalConsentToggle";
+import { FamilyCircleSwitcher } from "@/components/family/FamilyCircleSwitcher";
 import { HearthAssistant } from "@/components/family/HearthAssistant";
-<<<<<<< HEAD
 import { SettingsMenu } from "@/components/settings/SettingsPanel";
-import { DIGEST_NAME } from "@/lib/digest";
-=======
->>>>>>> 0b181cb (added UI/UX by topher)
 import type { AssistantContext } from "@/lib/ai/assistant";
+import { DIGEST_NAME } from "@/lib/digest";
 import type { Family, Member } from "@/lib/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -135,8 +132,8 @@ export function FamilyChrome({
               </span>
             ) : null}
             <SettingsMenu signedIn={signedIn} userDisplayName={userDisplayName} />
-            {!demo && identityLocked && signedIn ? (
-              <ClinicalSharingToggle memberId={me?.id} initialEnabled={me?.clinicalOptIn ?? false} />
+            {!demo && identityLocked && signedIn && me ? (
+              <ClinicalConsentToggle key={me.id} member={me} />
             ) : null}
             <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
             <label className="sr-only" htmlFor="posting-as">
@@ -161,123 +158,12 @@ export function FamilyChrome({
                 className="text-xs font-medium text-mute"
                 title="Started from Preview sample family on the homepage"
               >
-<<<<<<< HEAD
                 Sample family
               </span>
             ) : null}
           </div>
-=======
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
-          {inviteCode ? (
-            <span className="hidden text-xs text-mute lg:inline" title="Use this code to join this family">
-              Invite <strong className="font-mono text-ink">{inviteCode}</strong>
-            </span>
-          ) : null}
-          <label className="flex min-h-11 items-center gap-1.5 text-sm text-mute">
-            <input type="checkbox" checked={easy} onChange={(e) => setEasy(e.target.checked)} />
-            Easy
-          </label>
-          {me ? <ClinicalConsentToggle key={me.id} member={me} /> : null}
-          <HearthAssistant context={{ ...assistantContext, postingAs: me?.name }} />
-          <label className="sr-only" htmlFor="posting-as">
-            Posting as
-          </label>
-          <select
-            id="posting-as"
-            value={me?.id ?? ""}
-            onChange={(e) => setMeId(e.target.value)}
-            disabled={identityLocked}
-            title={identityLocked ? "Your signed-in account is linked to this member" : "Posting as"}
-            className="min-h-11 min-w-32 flex-1 rounded-md border border-line bg-paper px-2 py-1 text-sm sm:flex-none"
-          >
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-          {demo ? (
-            <span
-              className="rounded-md bg-cream px-2 py-1 text-xs font-medium text-mute"
-              title="Started from Preview the demo family on the homepage"
-            >
-              Sample family
-            </span>
-          ) : null}
-          {signedIn ? (
-            <button
-              type="button"
-              onClick={signOut}
-              className="min-h-11 text-sm text-mute hover:text-ink"
-            >
-              Sign out
-            </button>
-          ) : null}
->>>>>>> 0b181cb (added UI/UX by topher)
         </div>
       </div>
     </header>
-  );
-}
-
-function ClinicalSharingToggle({
-  memberId,
-  initialEnabled,
-}: {
-  memberId?: string;
-  initialEnabled: boolean;
-}) {
-  const [enabled, setEnabled] = useState(initialEnabled);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setEnabled(initialEnabled);
-  }, [initialEnabled, memberId]);
-
-  async function onChange(checked: boolean) {
-    if (!memberId || busy) return;
-    setBusy(true);
-    setError(null);
-    const res = await fetch("/api/consent", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId, enabled: checked }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError(json.error || "Could not update sharing.");
-      return;
-    }
-    setEnabled(checked);
-  }
-
-  return (
-    <div className="flex flex-col">
-      <label
-        className="flex min-h-11 items-center gap-1.5 text-sm text-mute"
-        title="Share posting patterns with the clinician view"
-      >
-        <input
-          type="checkbox"
-          checked={enabled}
-          disabled={busy || !memberId}
-          onChange={(e) => onChange(e.target.checked)}
-          aria-label="Share posting patterns with clinician view"
-        />
-        Clinician sharing
-      </label>
-      {error ? (
-        <span className="text-xs text-red-700" role="alert">
-          {error}
-        </span>
-      ) : null}
-    </div>
   );
 }
