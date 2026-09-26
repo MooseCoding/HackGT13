@@ -50,13 +50,20 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         </dl>
         {s.insight.status === "ready" ? (
           <div className="mt-4">
-            <p className="text-sm font-medium">Posts behind this insight</p>
+            <p className="text-sm font-medium">Supporting posts</p>
             {s.insight.evidence.length ? (
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-2 space-y-3">
                 {s.insight.evidence.map((evidence) => (
-                  <li key={evidence.postId} className="border-l-2 border-clinic/30 pl-3 text-sm">
-                    <p className="text-xs text-mute">{formatWhen(evidence.createdAt)}</p>
-                    <p className="mt-0.5">{evidence.text}</p>
+                  <li key={evidence.postId} className="rounded-md border border-clinic/20 bg-clinic-paper/50 p-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-mute">{formatWhen(evidence.createdAt)}</p>
+                      {evidence.tags?.map((tag) => (
+                        <span key={tag} className="rounded bg-clinic/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-clinic">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-1 leading-6">{evidence.text}</p>
                   </li>
                 ))}
               </ul>
