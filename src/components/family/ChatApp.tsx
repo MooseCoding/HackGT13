@@ -17,7 +17,7 @@ import {
 import { useFamily } from "@/components/family/FamilyChrome";
 import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { assistantPreviewText, HearthAssistantChat } from "@/components/family/HearthAssistant";
-import type { AssistantContext } from "@/lib/ai/assistant";
+import type { AssistantContext } from "@/lib/ai/assistant-local";
 import { ImagePlus, Loader2, Mic, SendHorizontal } from "lucide-react";
 import {
   ASSISTANT_LABEL,

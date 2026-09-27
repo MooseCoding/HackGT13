@@ -1,8 +1,11 @@
 "use client";
 
 import { HearthMark } from "@/components/HearthMark";
-import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant";
-import type { PendingAssistantAction } from "@/lib/ai/family-tools";
+import {
+  answerFamilyAssistant,
+  type AssistantContext,
+  type PendingAssistantAction,
+} from "@/lib/ai/assistant-local";
 import { META_MUSE_ATTRIBUTION } from "@/lib/ai/attribution";
 import { DIGEST_NAME } from "@/lib/digest-constants";
 import { usePathname, useRouter } from "next/navigation";
