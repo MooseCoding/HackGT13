@@ -1,7 +1,7 @@
 {
   "package": "hearth-hcp-excellent-reports",
   "format": "Hearth Weekly HCP Brief",
-  "note": "Synthetic excellent examples authored to the Hearth schema; not Impiricus templates.",
+  "note": "Synthetic excellent examples authored to the Hearth schema; not Impiricus templates. Tone guided by NIA older-patient communication guidance; timelines are synthetic and independent of DementiaBank (see sources.json).",
   "reports": [
     {
       "patient_id": "P01",
