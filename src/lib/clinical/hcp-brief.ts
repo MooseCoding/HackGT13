@@ -149,7 +149,8 @@ export function evalCaseToPosts(evalCase: EvalCase): Post[] {
     createdAt: message.created_at,
     audioMetrics: message.voice_metrics
       ? {
-          durationSec: 12,
+          durationSeconds: 12,
+          averagePauseSeconds: 0.4,
           wordsPerMinute: message.voice_metrics.wordsPerMinute ?? 120,
           pauseRatio: message.voice_metrics.pauseRatio ?? 0.1,
           hesitationRate: message.voice_metrics.hesitationRate ?? 0.05,

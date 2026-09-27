@@ -2,25 +2,31 @@
 
 import { HearthMark } from "@/components/HearthMark";
 import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant";
+import type { PendingAssistantAction } from "@/lib/ai/family-tools";
 import { META_MUSE_ATTRIBUTION } from "@/lib/ai/attribution";
 import { DIGEST_NAME } from "@/lib/digest-constants";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-type Turn = { role: "user" | "assistant"; content: string; source?: "muse" | "groq" | "local" };
+type Turn = {
+  role: "user" | "assistant";
+  content: string;
+  source?: "muse" | "groq" | "local";
+  pending?: PendingAssistantAction | null;
+};
 
 const STARTERS = [
-  "How do I invite someone?",
-  "What's on the calendar?",
+  "Who is free today?",
+  "Add school dropoff on October 1 at 8am",
+  "Remind me to call Mom tomorrow",
   `How does ${DIGEST_NAME} work?`,
-  "How do weekly family calls work?",
 ];
 
 const TURNS_KEY = "hearth-assistant-turns";
 const PREVIEW_KEY = "hearth-assistant-preview";
 
 function defaultGreeting() {
-  return `Hi! I'm Hearth Assistant. Ask about chats, calendar, ${DIGEST_NAME}, invites, or Larger text.`;
+  return `Hi! I'm Hearth Assistant. I can check the calendar, draft events and reminders, and help with ${DIGEST_NAME}.`;
 }
 
 function loadTurns(): Turn[] {
@@ -47,20 +53,23 @@ export function assistantPreviewText() {
 export function HearthAssistantChat({
   context,
   easy = false,
-  demo = false,
+  authorId,
 }: {
   context: AssistantContext;
   easy?: boolean;
   demo?: boolean;
+  authorId?: string;
 }) {
   const path = usePathname();
+  const router = useRouter();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [turns, setTurns] = useState<Turn[]>(() => loadTurns());
+  const [pending, setPending] = useState<PendingAssistantAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns));
+    sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns.map(({ pending: _p, ...rest }) => rest)));
     const last = [...turns].reverse().find((t) => t.content.trim());
     if (last) sessionStorage.setItem(PREVIEW_KEY, last.content);
     window.dispatchEvent(new Event("hearth-assistant-preview"));
@@ -68,42 +77,61 @@ export function HearthAssistantChat({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [turns, sending]);
+  }, [turns, sending, pending]);
+
+  async function callAssistant(payload: {
+    message?: string;
+    confirm?: PendingAssistantAction;
+    history?: Turn[];
+  }) {
+    const history = (payload.history ?? turns)
+      .filter((turn) => turn.content.trim())
+      .slice(-8)
+      .map(({ role, content }) => ({ role, content }));
+    const response = await fetch("/api/assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: payload.message,
+        confirm: payload.confirm,
+        history,
+        path,
+        postingAs: context.postingAs,
+        authorId,
+      }),
+    });
+    const result = (await response.json()) as {
+      reply?: string;
+      source?: "muse" | "groq" | "local";
+      pending?: PendingAssistantAction | null;
+      error?: string;
+    };
+    if (!response.ok || !result.reply) throw new Error(result.error || "Assistant unavailable.");
+    return result;
+  }
 
   async function send(text?: string) {
     const message = (text ?? input).trim();
     if (!message || sending) return;
     setInput("");
     setSending(true);
-    const history = turns.filter((turn) => turn.content.trim()).slice(-8);
     setTurns((prev) => [...prev, { role: "user", content: message }]);
 
     try {
-      const ctx: AssistantContext = { ...context, path };
-      if (demo) {
-        setTurns((prev) => [
-          ...prev,
-          { role: "assistant", content: answerFamilyAssistant(message, ctx), source: "local" },
-        ]);
-        return;
-      }
-      const response = await fetch("/api/assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, history, path, postingAs: context.postingAs }),
-      });
-      const result = (await response.json()) as {
-        reply?: string;
-        source?: "muse" | "groq" | "local";
-        error?: string;
-      };
-      if (!response.ok || !result.reply) throw new Error(result.error || "Assistant unavailable.");
+      const result = await callAssistant({ message, history: turns });
+      setPending(result.pending ?? null);
       setTurns((prev) => [
         ...prev,
-        { role: "assistant", content: result.reply as string, source: result.source ?? "local" },
+        {
+          role: "assistant",
+          content: result.reply as string,
+          source: result.source ?? "local",
+          pending: result.pending ?? null,
+        },
       ]);
     } catch {
       const ctx: AssistantContext = { ...context, path };
+      setPending(null);
       setTurns((prev) => [
         ...prev,
         { role: "assistant", content: answerFamilyAssistant(message, ctx), source: "local" },
@@ -113,7 +141,43 @@ export function HearthAssistantChat({
     }
   }
 
+  async function confirmPending() {
+    if (!pending || sending) return;
+    if (pending.kind === "navigate") {
+      router.push(pending.href);
+      setPending(null);
+      return;
+    }
+    setSending(true);
+    setTurns((prev) => [...prev, { role: "user", content: "Confirm" }]);
+    try {
+      const result = await callAssistant({ confirm: pending, message: "Confirm" });
+      setPending(null);
+      setTurns((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: result.reply as string,
+          source: result.source ?? "local",
+        },
+      ]);
+      router.refresh();
+    } catch (error) {
+      setTurns((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: error instanceof Error ? error.message : "Could not confirm that action.",
+          source: "local",
+        },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }
+
   const hasUserMessages = turns.some((t) => t.role === "user");
+  const activePending = pending;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -144,20 +208,64 @@ export function HearthAssistantChat({
                       ? META_MUSE_ATTRIBUTION
                       : t.source === "groq"
                         ? "Groq AI"
-                        : "Local fallback"}
+                        : "Local tools"}
                   </span>
                 ) : null}
               </div>
             </div>
           );
         })}
+        {activePending ? (
+          <div className="rounded-md border border-accent/40 bg-accent-tint px-3 py-3 text-sm">
+            {activePending.kind === "event" ? (
+              <>
+                <p className="font-semibold text-ink">Draft event</p>
+                <p className="mt-1 text-ink">
+                  {activePending.title} · {activePending.when}
+                  {activePending.location ? ` · ${activePending.location}` : ""}
+                </p>
+              </>
+            ) : null}
+            {activePending.kind === "reminder" ? (
+              <>
+                <p className="font-semibold text-ink">Draft reminder</p>
+                <p className="mt-1 text-ink">
+                  {activePending.assigneeName}: {activePending.text} · {activePending.dueHint}
+                </p>
+              </>
+            ) : null}
+            {activePending.kind === "navigate" ? (
+              <>
+                <p className="font-semibold text-ink">Open {activePending.label}?</p>
+              </>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={sending}
+                onClick={() => void confirmPending()}
+                className="rounded-sm bg-ember px-3 py-1.5 text-sm font-medium text-white hover:bg-ember-dark disabled:opacity-50"
+              >
+                {activePending.kind === "navigate" ? "Open" : "Confirm and create"}
+              </button>
+              <button
+                type="button"
+                disabled={sending}
+                onClick={() => setPending(null)}
+                className="rounded-sm border border-rule px-3 py-1.5 text-sm text-mute hover:text-ink"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
         {sending ? (
           <div className="flex gap-2">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-tint">
               <HearthMark className="h-5 w-5" />
             </span>
             <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5 text-sm text-mute" role="status">
-              Hearth is thinking…
+              Hearth is working…
             </div>
           </div>
         ) : null}
@@ -205,7 +313,7 @@ export function HearthAssistantChat({
                 send();
               }
             }}
-            placeholder="Ask about Hearth…"
+            placeholder="Ask Hearth to check the calendar or add an event…"
             rows={1}
             className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none focus:border-accent ${
               easy ? "text-base" : "text-sm"

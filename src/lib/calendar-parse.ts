@@ -58,6 +58,50 @@ export function parseEvent(
     day.setDate(day.getDate() + 7);
   }
 
+  // Explicit calendar dates: "October 1", "Oct 1st", "10/1", "2026-10-01"
+  const monthNames = [
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+  ];
+  const monthShort = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const named = lower.match(
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(\d{4}))?\b/i,
+  );
+  if (named) {
+    const token = named[1].toLowerCase().replace("sept", "sep");
+    const monthIndex =
+      monthNames.indexOf(token) >= 0 ? monthNames.indexOf(token) : monthShort.indexOf(token.slice(0, 3));
+    if (monthIndex >= 0) {
+      const year = named[3] ? Number(named[3]) : anchor.getFullYear();
+      day = new Date(year, monthIndex, Number(named[2]), 10, 0, 0, 0);
+      if (!named[3] && day.getTime() < anchor.getTime() - 12 * 60 * 60 * 1000) {
+        day.setFullYear(day.getFullYear() + 1);
+      }
+    }
+  } else {
+    const isoDate = lower.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+    const slash = lower.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(20\d{2}))?\b/);
+    if (isoDate) {
+      day = new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]), 10, 0, 0, 0);
+    } else if (slash) {
+      const year = slash[3] ? Number(slash[3]) : anchor.getFullYear();
+      day = new Date(year, Number(slash[1]) - 1, Number(slash[2]), 10, 0, 0, 0);
+      if (!slash[3] && day.getTime() < anchor.getTime() - 12 * 60 * 60 * 1000) {
+        day.setFullYear(day.getFullYear() + 1);
+      }
+    }
+  }
+
   const time = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
   let hour = hint.eventType === "appointment" ? 9 : hint.eventType === "social" ? 18 : 10;
   let minute = 0;
