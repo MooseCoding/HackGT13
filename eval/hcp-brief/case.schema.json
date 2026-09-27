@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hearth.app/schemas/hcp-eval-case.schema.json",
+  "title": "HearthHcpEvalCase",
+  "description": "Synthetic consented family-chat timeline for Hearth HCP brief evaluation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "patient_id",
+    "display_name",
+    "baseline_window",
+    "current_window",
+    "messages",
+    "expected_label",
+    "label_reason",
+    "expected_evidence_ids",
+    "benign_explanation"
+  ],
+  "properties": {
+    "patient_id": { "type": "string", "pattern": "^P[0-9]{2}$" },
+    "display_name": { "type": "string" },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "role"],
+        "properties": {
+          "id": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      }
+    },
+    "baseline_window": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      }
+    },
+    "current_window": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      }
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "speaker_id", "created_at", "body"],
+        "properties": {
+          "id": { "type": "string" },
+          "speaker_id": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "body": { "type": "string" },
+          "kind": { "type": "string", "enum": ["text", "voice"] },
+          "voice_metrics": {
+            "type": "object",
+            "properties": {
+              "wordsPerMinute": { "type": "number" },
+              "pauseRatio": { "type": "number" },
+              "hesitationRate": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "expected_label": {
+      "type": "string",
+      "enum": ["stable", "review_suggested"],
+      "description": "Team-authored expected review label (not a live clinician annotation unless separately confirmed)."
+    },
+    "label_reason": { "type": "string" },
+    "expected_evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "benign_explanation": {
+      "type": "string",
+      "description": "Plausible non-pathology context a clinician should keep in mind."
+    }
+  }
+}
