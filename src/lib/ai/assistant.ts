@@ -200,6 +200,13 @@ export async function runFamilyAssistant(input: {
           recentPosts: context.recentPosts?.slice(0, 8),
           currentPage: context.path,
           now: input.runtime.anchor.toISOString(),
+          ...(context.rememberedNotes?.length
+            ? {
+                rememberedNotes: context.rememberedNotes.slice(0, 6),
+                rememberedNotesPolicy:
+                  "Long-term notes from earlier conversations. Use them for preferences and routines; if they conflict with upcomingEvents or members, trust the app data.",
+              }
+            : {}),
         }),
       ].join("\n");
 
@@ -296,6 +303,7 @@ export async function runFamilyAssistant(input: {
               familyName: context.familyName,
               upcomingEvents: context.upcomingEvents?.slice(0, 8),
               memberNames: context.memberNames?.slice(0, 20),
+              rememberedNotes: context.rememberedNotes?.slice(0, 6),
             })}`,
           },
           ...(input.history ?? []).slice(-8).map((turn) => ({ role: turn.role, content: turn.content })),

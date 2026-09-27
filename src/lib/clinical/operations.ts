@@ -14,6 +14,7 @@ import { allMembers, optedInPatients } from "@/lib/data";
 import { isDemoMode } from "@/lib/mode-server";
 import { patientById as demoPatientById } from "@/lib/store";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { compareToBaseline, syncClinicalMetrics, tigerdataConfigured } from "@/lib/integrations/tigerdata";
 import type { Json } from "@/lib/supabase/types";
 import type { AudioMetrics, CalendarEvent, Family, Member, PatientSnapshot, Post } from "@/lib/types";
 
@@ -154,6 +155,19 @@ export async function runPersistedClinicalAnalysis() {
     const snapshots = members.map((member) =>
       analyzeMember(member.id, posts.filter((post) => post.familyId === member.familyId), referenceDate),
     );
+
+    // TigerData: store per-message metric history and attach its recent-vs-baseline
+    // aggregates to each snapshot. Optional and non-blocking for the Supabase path.
+    if (tigerdataConfigured()) {
+      try {
+        await syncClinicalMetrics(members.map((member) => member.id), posts);
+        for (const snapshot of snapshots) {
+          snapshot.timeseries = await compareToBaseline(snapshot.memberId, referenceDate);
+        }
+      } catch (error) {
+        console.error("[tigerdata] metric sync skipped:", error instanceof Error ? error.message : error);
+      }
+    }
 
     let queuedCount = 0;
     const memberById = new Map(members.map((member) => [member.id, member]));

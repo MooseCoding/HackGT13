@@ -14,8 +14,9 @@ import {
   requireFamilyAccess,
   resolveFamilyId,
 } from "@/lib/data";
+import { recallCircleMemory, rememberAssistantTurn } from "@/lib/integrations/backboard";
 import { isDemoMode } from "@/lib/mode-server";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,6 +78,10 @@ export async function POST(req: NextRequest) {
       return `${nameById[p.authorId] ?? "Someone"}: ${text}`;
     });
 
+    const message = body.message?.trim() || "";
+    // Durable memory (Backboard). Empty when not configured or unavailable.
+    const rememberedNotes = body.confirm ? [] : await recallCircleMemory(familyId, message);
+
     const context: AssistantContext = {
       familyName: family.name,
       inviteCode: family.inviteCode,
@@ -85,11 +90,12 @@ export async function POST(req: NextRequest) {
       recentPosts,
       path: body.path,
       postingAs: member.name,
+      rememberedNotes,
     };
 
     const demo = await isDemoMode();
     const result = await runFamilyAssistant({
-      message: body.message?.trim() || (body.confirm ? "confirm" : ""),
+      message: message || (body.confirm ? "confirm" : ""),
       history: Array.isArray(body.history) ? body.history : [],
       context,
       confirm: body.confirm,
@@ -101,6 +107,13 @@ export async function POST(req: NextRequest) {
         anchor: calendarAnchor(demo),
       },
     });
+
+    // Save the member's own words after responding; never blocks the reply.
+    // The public demo circle only writes memory when explicitly enabled for a live demo.
+    const memoryWritesAllowed = !demo || process.env.BACKBOARD_DEMO_MEMORY === "true";
+    if (message && !body.confirm && memoryWritesAllowed) {
+      after(() => rememberAssistantTurn({ familyId, memberId: member.id, memberName: member.name, message }));
+    }
 
     return NextResponse.json(result);
   } catch (err) {

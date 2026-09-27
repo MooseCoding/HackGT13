@@ -359,4 +359,23 @@ export type PatientSnapshot = {
   insight: ExplainableInsight;
   note: string;
   series: DailyPoint[];
+  /** Recent-vs-baseline aggregates computed in TigerData, when configured. */
+  timeseries?: TimeseriesSummary;
+};
+
+export type MetricComparison = {
+  metric: string;
+  current: number | null;
+  baseline: number | null;
+  change: number | null;
+  currentSamples: number;
+  baselineSamples: number;
+};
+
+export type TimeseriesSummary = {
+  source: "tigerdata";
+  windowDays: number;
+  baselineDays: number;
+  computedAt: string;
+  metrics: MetricComparison[];
 };

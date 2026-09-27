@@ -8,6 +8,7 @@ import { PatientExpandedSection } from "@/components/hcp/PatientExpandedSection"
 import { assignmentForMember, currentClinicianId } from "@/lib/clinical/assignments";
 import { formatWhen } from "@/lib/clock";
 import { clinicalPatientById } from "@/lib/clinical/operations";
+import { dailyTrend, tigerdataConfigured } from "@/lib/integrations/tigerdata";
 import { isDemoMode } from "@/lib/mode-server";
 import type { ClinicalFlag, PatientSnapshot } from "@/lib/types";
 import Link from "next/link";
@@ -50,6 +51,11 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
   const onMyRoster = assignment?.clinicianId === clinicianId;
   const unassigned = !assignment;
   const firstName = member.name.split(" ")[0];
+  // Prefer the TigerData time-series for the trend chart when it has data.
+  const tigerSeries =
+    !demo && tigerdataConfigured() ? await dailyTrend(member.id, 42).catch(() => null) : null;
+  const trendFromTiger = Boolean(tigerSeries?.some((point) => point.posts > 0));
+  const trendPoints = trendFromTiger && tigerSeries ? tigerSeries : snapshot.series;
 
   return (
     <div>
@@ -186,6 +192,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
                 <h3 className="font-bold text-ink">42-day trend</h3>
                 <p className="mt-1 text-xs text-mute">
                   Lexical diversity from shared text and voice-note transcripts
+                  {trendFromTiger ? " · from TigerData time-series" : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-mute">
@@ -195,7 +202,7 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="mt-5">
               <TrendChart
-                points={snapshot.series}
+                points={trendPoints}
                 accessor={(point) => point.lexicalDiversity}
                 label={`${member.name} lexical diversity over 42 days`}
               />

@@ -8,6 +8,8 @@ export type AssistantContext = {
   upcomingEvents?: string[];
   recentPosts?: string[];
   path?: string;
+  /** Long-term notes recalled from Backboard memory. May be stale; app data wins. */
+  rememberedNotes?: string[];
 };
 
 /** Client-safe pending action shape (no server imports). */

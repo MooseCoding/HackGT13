@@ -102,6 +102,8 @@ Copy `.env.example` to `.env.local`. Only the first group is needed for live mod
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | The **Connect Google Calendar** button |
 | `RESEND_API_KEY`, `CLINICAL_EMAIL_FROM` | Sending clinician report emails. Without these, the app opens a labeled `mailto:` preview instead. |
 | `WHATSAPP_*` | WhatsApp Business intake. See [Ambient WhatsApp intake](#ambient-whatsapp-and-voice-intake). |
+| `BACKBOARD_API_KEY` | Long-term memory for Familyr Assistant. See [Backboard and TigerData](#backboard-and-tigerdata). |
+| `TIGERDATA_DATABASE_URL` | Time-series history of clinical metrics. See [Backboard and TigerData](#backboard-and-tigerdata). |
 
 ---
 
@@ -166,6 +168,24 @@ Every table has row-level security, and **signed-out visitors can read and write
 - **Clinical records.** Clinicians can mark alerts as reviewed and sign reports as themselves, but they can't edit what was generated. Analysis runs are written only by the server.
 
 The hardening rules are in [`20260927010000_production_hardening.sql`](./supabase/migrations/20260927010000_production_hardening.sql).
+
+---
+
+## Backboard and TigerData
+
+Both are optional, focused add-ons. Supabase stays the source of truth for users, Circles, posts, calendar, reminders, permissions and all clinical records. With their keys unset, the app behaves exactly as before.
+
+| Service | Owns | Does not own |
+| --- | --- | --- |
+| Supabase | Auth, Circles, members, posts, calendar, reminders, RLS, clinical snapshots, alerts, assignments, reports | — |
+| Backboard | Familyr Assistant's long-term memory | Anything the app reads as fact |
+| TigerData | Per-message clinical metric history, recent-vs-baseline aggregation | Flags, risk levels, alerts |
+| Muse / Grok | Reasoning and writing | — |
+| Groq | Voice transcription | — |
+
+**Backboard: assistant memory.** Each Circle gets one Backboard assistant, named `familyr-circle-<id>`. When someone asks Familyr Assistant something, the app loads the usual context from Supabase, then searches Backboard for relevant long-term notes, such as "Grandma prefers afternoon appointments". It passes both to Muse or Grok. After replying, it saves the member's own message to Backboard so durable facts can be extracted. Tool calls and the draft-then-confirm flow are unchanged. The extraction prompt tells Backboard to skip health, clinical and contact details. Code: `src/lib/integrations/backboard.ts`, wired in `src/app/api/assistant/route.ts`.
+
+**TigerData: clinical time-series.** During the daily analysis run, each opted-in member's messages are turned into one row per metric (word count, vocabulary variety, sentence length, sentiment, posting hour, voice pace and pauses) and written to a TigerData hypertable. TigerData then computes each metric's 14-day average against the previous 30 days, and that summary is saved with the Supabase snapshot as `snapshot.timeseries`. The existing engine still decides flags and risk. The patient page's trend chart reads daily points from TigerData when data is available. People who opt out have their metric history deleted on the next run. Code: `src/lib/integrations/tigerdata.ts`; schema: [`tigerdata/schema.sql`](./tigerdata/schema.sql).
 
 ---
 
