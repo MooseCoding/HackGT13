@@ -2,6 +2,20 @@
 
 This folder is a **team-authored data and evaluation package**, not Impiricus vendor content.
 
+## Sources
+
+Background references (full detail in [`sources.json`](./sources.json)):
+
+1. **NIA — Talking With Your Older Patients**  
+   https://www.nia.nih.gov/health/health-care-professionals-information/talking-your-older-patients  
+   Informs plain-language, respectful, one-screen clinician copy and caregiver contact actions.
+
+2. **TalkBank DementiaBank access index**  
+   https://talkbank.org/dementia/access/  
+   Methodological inspiration for longitudinal language baselines. **We do not download or redistribute DementiaBank data**; `cases.json` is fully synthetic.
+
+Neither organization endorses Hearth. Briefs are decision support only.
+
 ## What Impiricus asked for → what we store
 
 | Request | Artifact |

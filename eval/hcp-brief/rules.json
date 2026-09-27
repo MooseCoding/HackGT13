@@ -2,6 +2,19 @@
   "product": "Hearth",
   "format_name": "Hearth Weekly HCP Brief",
   "format_note": "This is Hearth's proposed one-screen clinician brief. It is not an Impiricus-preferred vendor format; Impiricus format was not available to the team.",
+  "sources_file": "sources.json",
+  "sources": [
+    {
+      "id": "nia-talking-older-patients",
+      "title": "Talking With Your Older Patients — National Institute on Aging",
+      "url": "https://www.nia.nih.gov/health/health-care-professionals-information/talking-your-older-patients"
+    },
+    {
+      "id": "talkbank-dementiabank",
+      "title": "DementiaBank access index — TalkBank",
+      "url": "https://talkbank.org/dementia/access/"
+    }
+  ],
   "one_screen_layout": {
     "row_1": "patient_id · status chip (stable | review_suggested) · windows",
     "row_2": "headline (≤2 sentences)",

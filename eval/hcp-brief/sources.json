@@ -1,0 +1,51 @@
+{
+  "note": "Background references that informed Hearth's HCP brief tone and eval design. Our timelines and reports are synthetic team-authored data — we do not redistribute protected clinical corpora.",
+  "sources": [
+    {
+      "id": "nia-talking-older-patients",
+      "title": "Talking With Your Older Patients",
+      "organization": "National Institute on Aging (NIA), National Institutes of Health",
+      "url": "https://www.nia.nih.gov/health/health-care-professionals-information/talking-your-older-patients",
+      "accessed": "2026-09-27",
+      "type": "clinical_communication_guidance",
+      "how_we_use_it": [
+        "Plain-language, respectful HCP-facing brief copy (no jargon dumps).",
+        "One-idea-at-a-time headlines and short change bullets for scanability in a short visit.",
+        "Encourage confirming understanding / contacting patient or caregiver rather than rushing to a label.",
+        "Face the person as a fellow adult — brief language stays non-patronizing."
+      ],
+      "key_takeaways_applied": [
+        "Speak plainly; do not assume medical terminology is known.",
+        "Avoid hurrying; give time to process — our brief is one screen, not a chart dump.",
+        "Address the patient respectfully; involve caregivers when appropriate via contact_patient_or_caregiver.",
+        "Support teach-back style next steps (review evidence, then decide) instead of automated diagnosis."
+      ],
+      "related_nia_pages": [
+        {
+          "title": "Caring for Older Patients With Cognitive Impairment",
+          "url": "https://www.nia.nih.gov/health/health-care-professionals-information/caring-older-patients-cognitive-impairment"
+        }
+      ]
+    },
+    {
+      "id": "talkbank-dementiabank",
+      "title": "DementiaBank data access index",
+      "organization": "TalkBank / DementiaBank",
+      "url": "https://talkbank.org/dementia/access/",
+      "accessed": "2026-09-27",
+      "type": "research_corpus_index",
+      "how_we_use_it": [
+        "Methodological inspiration for longitudinal language / interaction signals (baseline vs later window).",
+        "Awareness that real dementia-language corpora exist (e.g. Pitt, Cookie Theft, fluency tasks) for future IRB-approved research.",
+        "Explicit non-use: this eval package does not download, mirror, or ship DementiaBank media or transcripts."
+      ],
+      "key_takeaways_applied": [
+        "Separate control-like stable periods from changed periods when designing synthetic timelines.",
+        "Keep protocol vs naturalistic distinction in mind — Hearth uses consented family chat, not Cookie Theft tasks.",
+        "Access to DementiaBank requires contribution/agreement processes; cite the index, do not claim we trained on it."
+      ],
+      "access_note": "DementiaBank corpora are listed for researchers with signed contribution forms. Hearth eval cases (P01–P10) are fully synthetic and independent of those files."
+    }
+  ],
+  "disclaimer": "Citing NIA and TalkBank does not imply endorsement by NIH, NIA, or TalkBank. Hearth briefs remain decision support only and are not a medical device or diagnostic tool."
+}
