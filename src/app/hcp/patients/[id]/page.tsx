@@ -156,6 +156,73 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         ))}
       </section>
 
+      {snapshot.voice.currentSamples > 0 || snapshot.voice.baselineSamples > 0 ? (
+        <section className="mt-5 border border-line bg-surface p-5" aria-label="Voice communication metrics">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-ink">Voice signals</h2>
+              <p className="mt-1 text-xs text-mute">
+                Pace, pauses, and hesitation vs their personal baseline
+                {" · "}
+                {snapshot.voice.currentSamples} recent / {snapshot.voice.baselineSamples} baseline voice notes
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {snapshot.voice.wordsPerMinute !== null ? (
+              <Metric
+                label="Speech pace"
+                value={`${snapshot.voice.wordsPerMinute.toFixed(0)} wpm`}
+                baseline={
+                  snapshot.voice.wordsPerMinuteBaseline === null
+                    ? "No baseline"
+                    : `${snapshot.voice.wordsPerMinuteBaseline.toFixed(0)} wpm`
+                }
+                delta={
+                  snapshot.voice.wordsPerMinuteBaseline
+                    ? snapshot.voice.wordsPerMinute / snapshot.voice.wordsPerMinuteBaseline - 1
+                    : null
+                }
+              />
+            ) : null}
+            {snapshot.voice.pauseRatio !== null ? (
+              <Metric
+                label="Pause share"
+                value={percent(snapshot.voice.pauseRatio)}
+                baseline={
+                  snapshot.voice.pauseRatioBaseline === null
+                    ? "No baseline"
+                    : percent(snapshot.voice.pauseRatioBaseline)
+                }
+                delta={
+                  snapshot.voice.pauseRatioBaseline === null
+                    ? null
+                    : snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline
+                }
+                invert
+              />
+            ) : null}
+            {snapshot.voice.hesitationRate !== null ? (
+              <Metric
+                label="Hesitation rate"
+                value={percent(snapshot.voice.hesitationRate)}
+                baseline={
+                  snapshot.voice.hesitationRateBaseline === null
+                    ? "No baseline"
+                    : percent(snapshot.voice.hesitationRateBaseline)
+                }
+                delta={
+                  snapshot.voice.hesitationRateBaseline === null
+                    ? null
+                    : snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline
+                }
+                invert
+              />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       <section className="mt-5 border border-line bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-bold text-ink">What changed</h2>
@@ -166,11 +233,20 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         {snapshot.flags.length ? (
           <ol className="mt-4 space-y-3">
             {snapshot.flags.map((flag) => (
-              <li key={flag.code} className="flex items-start justify-between gap-3 border border-line p-3.5">
-                <p className="text-sm font-semibold text-ink">{flag.title}</p>
-                <span className={`shrink-0 rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${severityStyle(flag.severity)}`}>
-                  {flag.severity}
-                </span>
+              <li key={flag.code} className="border border-line p-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-ink">{flag.title}</p>
+                  <span className={`shrink-0 rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${severityStyle(flag.severity)}`}>
+                    {flag.severity}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-mute">{flag.detail}</p>
+                <p className="mt-2 text-xs font-medium text-ink">
+                  <span className="text-mute">Now </span>
+                  {flag.current}
+                  <span className="text-mute"> · usual </span>
+                  {flag.baseline}
+                </p>
               </li>
             ))}
           </ol>
@@ -212,8 +288,22 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
               <Metric label="Sentence length" value={`${snapshot.meanSentenceLength.toFixed(1)} words`} baseline={`${snapshot.meanSentenceLengthBaseline.toFixed(1)} words`} delta={snapshot.sentenceLengthDelta} />
               <Metric label="Interactions / week" value={snapshot.engagementPerWeek.toFixed(1)} baseline={snapshot.engagementBaseline.toFixed(1)} delta={snapshot.engagementDelta} />
               <Metric label="Late-night activity" value={percent(snapshot.nightShare)} baseline={percent(snapshot.nightShareBaseline)} delta={snapshot.nightShare - snapshot.nightShareBaseline} invert />
+              {snapshot.responseHours !== null ? (
+                <Metric
+                  label="Reply time"
+                  value={`${snapshot.responseHours.toFixed(1)} h`}
+                  baseline={
+                    snapshot.responseHoursBaseline === null
+                      ? "No baseline"
+                      : `${snapshot.responseHoursBaseline.toFixed(1)} h`
+                  }
+                  delta={snapshot.responseLatencyDelta}
+                  invert
+                />
+              ) : null}
               {snapshot.voice.wordsPerMinute !== null ? <Metric label="Voice pace" value={`${snapshot.voice.wordsPerMinute.toFixed(0)} wpm`} baseline={snapshot.voice.wordsPerMinuteBaseline === null ? "No baseline" : `${snapshot.voice.wordsPerMinuteBaseline.toFixed(0)} wpm`} delta={snapshot.voice.wordsPerMinuteBaseline ? snapshot.voice.wordsPerMinute / snapshot.voice.wordsPerMinuteBaseline - 1 : null} /> : null}
               {snapshot.voice.pauseRatio !== null ? <Metric label="Voice pause share" value={percent(snapshot.voice.pauseRatio)} baseline={snapshot.voice.pauseRatioBaseline === null ? "No baseline" : percent(snapshot.voice.pauseRatioBaseline)} delta={snapshot.voice.pauseRatioBaseline === null ? null : snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline} invert /> : null}
+              {snapshot.voice.hesitationRate !== null ? <Metric label="Hesitation rate" value={percent(snapshot.voice.hesitationRate)} baseline={snapshot.voice.hesitationRateBaseline === null ? "No baseline" : percent(snapshot.voice.hesitationRateBaseline)} delta={snapshot.voice.hesitationRateBaseline === null ? null : snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline} invert /> : null}
             </div>
           </section>
 

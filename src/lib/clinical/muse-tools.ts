@@ -36,18 +36,47 @@ export function runDeterministicClinicalTool(tool: Exclude<ClinicalMuseTool, "dr
     };
   }
   if (tool === "compare_baseline") {
+    const voiceWpmDelta =
+      snapshot.voice.wordsPerMinute !== null && snapshot.voice.wordsPerMinuteBaseline
+        ? percent(snapshot.voice.wordsPerMinute / snapshot.voice.wordsPerMinuteBaseline - 1)
+        : null;
+    const voicePauseDelta =
+      snapshot.voice.pauseRatio !== null && snapshot.voice.pauseRatioBaseline !== null
+        ? `${snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline >= 0 ? "+" : ""}${Math.round((snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline) * 100)} pts`
+        : null;
+    const voiceHesitationDelta =
+      snapshot.voice.hesitationRate !== null && snapshot.voice.hesitationRateBaseline !== null
+        ? `${snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline >= 0 ? "+" : ""}${Math.round((snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline) * 100)} pts`
+        : null;
+    const changes = [
+      { metric: "Lexical diversity", delta: percent(snapshot.lexicalDiversityDelta) },
+      { metric: "Sentence length", delta: percent(snapshot.sentenceLengthDelta) },
+      { metric: "Repetition", delta: percent(snapshot.repetitionDelta) },
+      { metric: "Engagement", delta: percent(snapshot.engagementDelta) },
+      { metric: "Morning activity", delta: percent(snapshot.morningShareDelta) },
+      {
+        metric: "Late-night activity",
+        delta: `${snapshot.nightShare - snapshot.nightShareBaseline >= 0 ? "+" : ""}${Math.round((snapshot.nightShare - snapshot.nightShareBaseline) * 100)} pts`,
+      },
+      { metric: "Sentiment", delta: percent(snapshot.sentimentDelta) },
+      ...(snapshot.responseLatencyDelta !== null
+        ? [{ metric: "Reply time", delta: percent(snapshot.responseLatencyDelta) }]
+        : []),
+      ...(voiceWpmDelta ? [{ metric: "Speech pace (WPM)", delta: voiceWpmDelta }] : []),
+      ...(voicePauseDelta ? [{ metric: "Voice pause share", delta: voicePauseDelta }] : []),
+      ...(voiceHesitationDelta ? [{ metric: "Hesitation rate", delta: voiceHesitationDelta }] : []),
+    ];
     return {
       tool,
       windowDays: snapshot.windowDays,
       baselineDays: snapshot.baselineDays,
-      changes: [
-        { metric: "Lexical diversity", delta: percent(snapshot.lexicalDiversityDelta) },
-        { metric: "Sentence length", delta: percent(snapshot.sentenceLengthDelta) },
-        { metric: "Repetition", delta: percent(snapshot.repetitionDelta) },
-        { metric: "Engagement", delta: percent(snapshot.engagementDelta) },
-        { metric: "Morning activity", delta: percent(snapshot.morningShareDelta) },
-        { metric: "Sentiment", delta: percent(snapshot.sentimentDelta) },
-      ],
+      changes,
+      flags: snapshot.flags.map((flag) => ({
+        code: flag.code,
+        summary: flag.detail,
+        current: flag.current,
+        baseline: flag.baseline,
+      })),
     };
   }
   return {
@@ -63,7 +92,18 @@ export function runDeterministicClinicalTool(tool: Exclude<ClinicalMuseTool, "dr
 
 function deterministicBrief(input: ClinicalPatientContext) {
   const snapshot = input.snapshot;
-  const findings = snapshot.flags.slice(0, 3).map((flag) => `${flag.title}: ${flag.current} vs ${flag.baseline}.`);
+  const findings = snapshot.flags.slice(0, 4).map((flag) => {
+    const evidence = snapshot.insight.evidence
+      .filter((item) =>
+        flag.code === "voice_change"
+          ? item.tags?.includes("voice")
+          : true,
+      )
+      .slice(0, 2)
+      .map((item) => item.postId);
+    const cite = evidence.length ? ` · evidence ${evidence.join(", ")}` : "";
+    return `${flag.detail} (${flag.current} vs ${flag.baseline})${cite}`;
+  });
   return {
     brief: snapshot.note,
     findings: findings.length ? findings : ["No material shift from the personal baseline was detected."],

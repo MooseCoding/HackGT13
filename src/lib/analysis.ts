@@ -267,7 +267,7 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
   const repetitionDelta = repetition - repetitionBaseline;
   const responseLatencyDelta =
     responseHours === null || responseHoursBaseline === null ? null : pctDelta(responseHours, responseHoursBaseline);
-  const insight = explainActivity(current, baseline, windowStart, baselineStart, baselineEnd, referenceDate);
+  let insight = explainActivity(current, baseline, windowStart, baselineStart, baselineEnd, referenceDate);
   const ready = insight.status === "ready";
   const flags: ClinicalFlag[] = [];
 
@@ -348,16 +348,55 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
     currentVoice.pauseRatio === null || baselineVoice.pauseRatio === null
       ? null
       : currentVoice.pauseRatio - baselineVoice.pauseRatio;
-  if (ready && (speechRateDelta !== null && speechRateDelta <= -0.2 || pauseDelta !== null && pauseDelta >= 0.15)) {
+  const hesitationDelta =
+    currentVoice.hesitationRate === null || baselineVoice.hesitationRate === null
+      ? null
+      : currentVoice.hesitationRate - baselineVoice.hesitationRate;
+  if (
+    ready &&
+    ((speechRateDelta !== null && speechRateDelta <= -0.2) ||
+      (pauseDelta !== null && pauseDelta >= 0.15) ||
+      (hesitationDelta !== null && hesitationDelta >= 0.08))
+  ) {
     flags.push({
       code: "voice_change",
       domain: "cognitive",
-      severity: (speechRateDelta ?? 0) <= -0.35 || (pauseDelta ?? 0) >= 0.3 ? "high" : "elevated",
+      severity:
+        (speechRateDelta ?? 0) <= -0.35 || (pauseDelta ?? 0) >= 0.3 || (hesitationDelta ?? 0) >= 0.15
+          ? "high"
+          : "elevated",
       title: "Voice fluency pattern changed",
-      detail: `Speech pace changed ${speechRateDelta === null ? "n/a" : `${Math.round(speechRateDelta * 100)}%`} and pause share changed ${pauseDelta === null ? "n/a" : `${Math.round(pauseDelta * 100)} points`} versus baseline.`,
-      current: `${currentVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(currentVoice.pauseRatio ?? 0)} pauses`,
-      baseline: `${baselineVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(baselineVoice.pauseRatio ?? 0)} pauses`,
+      detail: `Speech pace ${speechRateDelta === null ? "n/a" : `${Math.round(speechRateDelta * 100)}%`}, pause share ${pauseDelta === null ? "n/a" : `${pauseDelta >= 0 ? "+" : ""}${Math.round(pauseDelta * 100)} pts`}, hesitation ${hesitationDelta === null ? "n/a" : `${hesitationDelta >= 0 ? "↑" : "↓"} ${Math.round(Math.abs(hesitationDelta) * 100)} pts`} versus personal baseline.`,
+      current: `${currentVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(currentVoice.pauseRatio ?? 0)} pauses · ${percent(currentVoice.hesitationRate ?? 0)} hesitation`,
+      baseline: `${baselineVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(baselineVoice.pauseRatio ?? 0)} pauses · ${percent(baselineVoice.hesitationRate ?? 0)} hesitation`,
     });
+  }
+
+  // Prefer voice-note evidence when a voice fluency flag fired so briefs can cite supporting posts.
+  if (flags.some((flag) => flag.code === "voice_change")) {
+    const voicePosts = current
+      .filter((post) => post.audioMetrics)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 4);
+    if (voicePosts.length) {
+      const voiceEvidence = voicePosts.map((post) => ({
+        postId: post.id,
+        createdAt: post.createdAt,
+        text: textOf(post),
+        tags: [
+          "voice",
+          ...(post.channel === "whatsapp" ? ["whatsapp"] : []),
+          "pace",
+          "pause",
+          "hesitation",
+        ],
+      }));
+      const voiceIds = new Set(voiceEvidence.map((item) => item.postId));
+      insight = {
+        ...insight,
+        evidence: [...voiceEvidence, ...insight.evidence.filter((item) => !voiceIds.has(item.postId))].slice(0, 6),
+      };
+    }
   }
 
   const cognitiveScore = domainScore([

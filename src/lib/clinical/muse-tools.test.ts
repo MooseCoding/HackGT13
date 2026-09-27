@@ -41,7 +41,8 @@ describe("clinician Muse tools", () => {
   it("compares metrics against the personal baseline", () => {
     const result = runDeterministicClinicalTool("compare_baseline", context);
     expect(result.tool).toBe("compare_baseline");
-    expect(result.changes).toHaveLength(6);
+    expect(result.changes.length).toBeGreaterThanOrEqual(7);
+    expect(result.changes.some((change) => change.metric === "Late-night activity")).toBe(true);
   });
 
   it("returns evidence identifiers while withholding message text", () => {

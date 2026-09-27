@@ -70,14 +70,31 @@ function metricRows(s: PatientSnapshot) {
     ["Sentiment (−1 to +1)", num(s.sentiment), num(s.sentimentBaseline), diff(s.sentiment, s.sentimentBaseline)],
     ["Messages per week", num(s.engagementPerWeek, 1), num(s.engagementBaseline, 1), pct(s.engagementDelta)],
     ["Morning share of activity", share(s.morningShare), share(s.morningShareBaseline), pct(s.morningShareDelta)],
-    ["Late-night share of activity", share(s.nightShare), share(s.nightShareBaseline), "—"],
+    [
+      "Late-night share of activity",
+      share(s.nightShare),
+      share(s.nightShareBaseline),
+      diff(s.nightShare * 100, s.nightShareBaseline * 100),
+    ],
     ["Reply time (hours)", num(s.responseHours, 1), num(s.responseHoursBaseline, 1), pct(s.responseLatencyDelta)],
   ];
   if (s.voice.currentSamples > 0 || s.voice.baselineSamples > 0) {
+    const wpmDelta =
+      s.voice.wordsPerMinute !== null && s.voice.wordsPerMinuteBaseline
+        ? pct(s.voice.wordsPerMinute / s.voice.wordsPerMinuteBaseline - 1)
+        : "—";
+    const pauseDelta =
+      s.voice.pauseRatio !== null && s.voice.pauseRatioBaseline !== null
+        ? diff(s.voice.pauseRatio * 100, s.voice.pauseRatioBaseline * 100)
+        : "—";
+    const hesitationDelta =
+      s.voice.hesitationRate !== null && s.voice.hesitationRateBaseline !== null
+        ? diff(s.voice.hesitationRate * 100, s.voice.hesitationRateBaseline * 100)
+        : "—";
     rows.push(
-      ["Speech rate (words/min)", num(s.voice.wordsPerMinute, 0), num(s.voice.wordsPerMinuteBaseline, 0), "—"],
-      ["Pause ratio", num(s.voice.pauseRatio), num(s.voice.pauseRatioBaseline), "—"],
-      ["Hesitation rate", num(s.voice.hesitationRate), num(s.voice.hesitationRateBaseline), "—"],
+      ["Speech rate (words/min)", num(s.voice.wordsPerMinute, 0), num(s.voice.wordsPerMinuteBaseline, 0), wpmDelta],
+      ["Pause ratio", num(s.voice.pauseRatio), num(s.voice.pauseRatioBaseline), pauseDelta],
+      ["Hesitation rate", num(s.voice.hesitationRate), num(s.voice.hesitationRateBaseline), hesitationDelta],
     );
   }
   return rows

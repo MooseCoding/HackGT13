@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-27T01:39:43.026Z",
+  "generated_at": "2026-09-27T05:27:41.315Z",
   "reference_datetime": "2026-09-26T00:16:00.000Z",
   "summary": {
     "total": 10,
@@ -313,38 +313,68 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Weekly engagement changed from 3.7 to 5.0. Review suggested — decision support for clinician judgment only.",
+        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
             "code": "lexical_change",
             "summary": "Lexical diversity is 81% below this member's personal baseline.",
             "current": "0.10",
-            "baseline": "0.54"
+            "baseline": "0.54",
+            "evidence_ids": [
+              "P06-m23",
+              "P06-m24",
+              "P06-m25",
+              "P06-m26"
+            ]
           },
           {
             "code": "syntax_change",
             "summary": "Average sentence length declined 37% versus baseline.",
             "current": "8.0 words",
-            "baseline": "12.8 words"
+            "baseline": "12.8 words",
+            "evidence_ids": [
+              "P06-m23",
+              "P06-m24",
+              "P06-m25",
+              "P06-m26"
+            ]
           },
           {
             "code": "repetition_change",
             "summary": "Repeated or near-duplicate phrases increased 56 points versus baseline.",
             "current": "100%",
-            "baseline": "44%"
+            "baseline": "44%",
+            "evidence_ids": [
+              "P06-m23",
+              "P06-m24",
+              "P06-m25",
+              "P06-m26"
+            ]
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -75 points; late-night share changed 0 points.",
-            "current": "0% morning · 0% night",
-            "baseline": "75% morning · 0% night"
+            "summary": "Morning share changed -75 points; late-night share changed 100 points.",
+            "current": "0% morning · 100% night",
+            "baseline": "75% morning · 0% night",
+            "evidence_ids": [
+              "P06-m23",
+              "P06-m24",
+              "P06-m25",
+              "P06-m26"
+            ]
           },
           {
             "code": "affect_change",
             "summary": "Sentiment changed -0.26 and affect variability changed -100% versus baseline.",
             "current": "0.00 tone · 0.00 range",
-            "baseline": "0.26 tone · 0.11 range"
+            "baseline": "0.26 tone · 0.11 range",
+            "evidence_ids": [
+              "P06-m23",
+              "P06-m24",
+              "P06-m25",
+              "P06-m26"
+            ]
           }
         ],
         "evidence_ids": [
@@ -391,6 +421,7 @@
       },
       "flag_codes": [
         "syntax_change",
+        "sleep_shift",
         "affect_change"
       ],
       "brief": {
@@ -412,13 +443,32 @@
             "code": "syntax_change",
             "summary": "Average sentence length declined 56% versus baseline.",
             "current": "5.6 words",
-            "baseline": "12.8 words"
+            "baseline": "12.8 words",
+            "evidence_ids": [
+              "P07-m21",
+              "P07-m25",
+              "P07-m29",
+              "P07-m24"
+            ]
+          },
+          {
+            "code": "sleep_shift",
+            "summary": "Morning share changed -30 points; late-night share changed 0 points.",
+            "current": "50% morning · 0% night",
+            "baseline": "80% morning · 0% night",
+            "evidence_ids": []
           },
           {
             "code": "affect_change",
             "summary": "Sentiment changed -0.51 and affect variability changed 16% versus baseline.",
             "current": "-0.23 tone · 0.14 range",
-            "baseline": "0.27 tone · 0.12 range"
+            "baseline": "0.27 tone · 0.12 range",
+            "evidence_ids": [
+              "P07-m21",
+              "P07-m25",
+              "P07-m29",
+              "P07-m24"
+            ]
           }
         ],
         "evidence_ids": [
@@ -435,7 +485,8 @@
         ],
         "suggested_clinician_actions": [
           "review_evidence",
-          "contact_patient_or_caregiver"
+          "contact_patient_or_caregiver",
+          "consider_clinical_screening"
         ]
       },
       "checks": {
@@ -478,26 +529,44 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Weekly engagement changed from 3.7 to 4.5. Review suggested — decision support for clinician judgment only.",
+        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
             "code": "syntax_change",
             "summary": "Average sentence length declined 77% versus baseline.",
             "current": "2.9 words",
-            "baseline": "12.8 words"
+            "baseline": "12.8 words",
+            "evidence_ids": [
+              "P08-m29",
+              "P08-m23",
+              "P08-m25",
+              "P08-m26"
+            ]
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -75 points; late-night share changed 0 points.",
-            "current": "0% morning · 0% night",
-            "baseline": "75% morning · 0% night"
+            "summary": "Morning share changed -75 points; late-night share changed 100 points.",
+            "current": "0% morning · 100% night",
+            "baseline": "75% morning · 0% night",
+            "evidence_ids": [
+              "P08-m29",
+              "P08-m23",
+              "P08-m25",
+              "P08-m26"
+            ]
           },
           {
             "code": "affect_change",
             "summary": "Sentiment changed -0.82 and affect variability changed 79% versus baseline.",
             "current": "-0.55 tone · 0.20 range",
-            "baseline": "0.26 tone · 0.11 range"
+            "baseline": "0.26 tone · 0.11 range",
+            "evidence_ids": [
+              "P08-m29",
+              "P08-m23",
+              "P08-m25",
+              "P08-m26"
+            ]
           }
         ],
         "evidence_ids": [
@@ -564,25 +633,37 @@
             "code": "syntax_change",
             "summary": "Average sentence length declined 92% versus baseline.",
             "current": "1.0 words",
-            "baseline": "13.0 words"
+            "baseline": "13.0 words",
+            "evidence_ids": [
+              "P09-m33"
+            ]
           },
           {
             "code": "engagement_change",
             "summary": "Weekly interaction frequency is 57% below this member's baseline.",
             "current": "2.0/week",
-            "baseline": "4.7/week"
+            "baseline": "4.7/week",
+            "evidence_ids": [
+              "P09-m33"
+            ]
           },
           {
             "code": "sleep_shift",
             "summary": "Morning share changed -75 points; late-night share changed 0 points.",
             "current": "0% morning · 0% night",
-            "baseline": "75% morning · 0% night"
+            "baseline": "75% morning · 0% night",
+            "evidence_ids": [
+              "P09-m33"
+            ]
           },
           {
             "code": "affect_change",
             "summary": "Sentiment changed -0.24 and affect variability changed -100% versus baseline.",
             "current": "0.00 tone · 0.00 range",
-            "baseline": "0.24 tone · 0.11 range"
+            "baseline": "0.24 tone · 0.11 range",
+            "evidence_ids": [
+              "P09-m33"
+            ]
           }
         ],
         "evidence_ids": [
@@ -613,7 +694,10 @@
       "pipeline_risk_level": "priority",
       "label_match": true,
       "evidence_overlap": [
-        "P10-m31"
+        "P10-m31",
+        "P10-m25",
+        "P10-m26",
+        "P10-m27"
       ],
       "expected_evidence_cited": true,
       "forbidden_hits": [],
@@ -640,42 +724,75 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Weekly engagement changed from 4.2 to 5.0. Review suggested — decision support for clinician judgment only.",
+        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
             "code": "lexical_change",
             "summary": "Lexical diversity is 76% below this member's personal baseline.",
             "current": "0.11",
-            "baseline": "0.48"
+            "baseline": "0.48",
+            "evidence_ids": [
+              "P10-m31",
+              "P10-m25",
+              "P10-m26",
+              "P10-m27"
+            ]
           },
           {
             "code": "syntax_change",
             "summary": "Average sentence length declined 65% versus baseline.",
             "current": "4.6 words",
-            "baseline": "12.9 words"
+            "baseline": "12.9 words",
+            "evidence_ids": [
+              "P10-m31",
+              "P10-m25",
+              "P10-m26",
+              "P10-m27"
+            ]
           },
           {
             "code": "repetition_change",
             "summary": "Repeated or near-duplicate phrases increased 40 points versus baseline.",
             "current": "100%",
-            "baseline": "60%"
+            "baseline": "60%",
+            "evidence_ids": [
+              "P10-m31",
+              "P10-m25",
+              "P10-m26",
+              "P10-m27"
+            ]
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -72 points; late-night share changed 0 points.",
-            "current": "0% morning · 0% night",
-            "baseline": "72% morning · 0% night"
+            "summary": "Morning share changed -78 points; late-night share changed 100 points.",
+            "current": "0% morning · 100% night",
+            "baseline": "78% morning · 0% night",
+            "evidence_ids": [
+              "P10-m31",
+              "P10-m25",
+              "P10-m26",
+              "P10-m27"
+            ]
           },
           {
             "code": "affect_change",
             "summary": "Sentiment changed -0.25 and affect variability changed -100% versus baseline.",
             "current": "0.00 tone · 0.00 range",
-            "baseline": "0.25 tone · 0.11 range"
+            "baseline": "0.25 tone · 0.11 range",
+            "evidence_ids": [
+              "P10-m31",
+              "P10-m25",
+              "P10-m26",
+              "P10-m27"
+            ]
           }
         ],
         "evidence_ids": [
-          "P10-m31"
+          "P10-m31",
+          "P10-m25",
+          "P10-m26",
+          "P10-m27"
         ],
         "limitations": [
           "Signals reflect consented family communication patterns, not a clinical examination.",

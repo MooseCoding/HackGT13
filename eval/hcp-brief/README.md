@@ -39,8 +39,11 @@ Each brief includes: `headline`, `status`, `changes`, `evidence_ids`, `limitatio
 ## Regenerate + run pipeline
 
 ```bash
-node eval/hcp-brief/generate-cases.mjs
-npx vitest run eval/hcp-brief/hcp-brief.eval.test.ts
+npm run eval:hcp
 ```
 
 `pipeline-results.json` is written by the test from the live `analyzeMember` pipeline.
+
+## Golden story (demo / judges)
+
+Clinician UI surfaces three representative cases at `/hcp/eval` (P03 stable, P06 + P09 review-suggested). The deterministic sustained-shift path lives at `/hcp/live` (“Simulate sustained shift”).

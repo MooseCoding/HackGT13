@@ -73,6 +73,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
                 <p className="text-sm text-mute">
                   Heard from {m?.name.split(" ")[0]}
                   {p.voiceSeconds ? ` · ${p.voiceSeconds}s` : ""}
+                  {p.channel === "whatsapp" ? " · WhatsApp" : ""}
                 </p>
                 <button
                   type="button"

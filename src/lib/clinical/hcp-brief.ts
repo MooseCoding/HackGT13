@@ -1,3 +1,4 @@
+import { featureDeltasFromSnapshot } from "@/lib/clinical/feature-deltas";
 import type { PatientSnapshot, Post } from "@/lib/types";
 
 export type HcpBriefStatus = "stable" | "review_suggested";
@@ -31,6 +32,8 @@ export type HcpBriefChange = {
   summary: string;
   current?: string;
   baseline?: string;
+  /** Supporting post ids for this change (message text withheld from clinician UI). */
+  evidence_ids?: string[];
 };
 
 export type FamilyrWeeklyHcpBrief = {
@@ -93,8 +96,9 @@ export function buildBriefFromSnapshot(
 ): FamilyrWeeklyHcpBrief {
   const status = snapshotStatus(snapshot);
   const evidence_ids = snapshot.insight.evidence.map((item) => item.postId);
+  const deltas = featureDeltasFromSnapshot(snapshot);
   const changes: HcpBriefChange[] =
-    snapshot.flags.length === 0
+    deltas.length === 0
       ? [
           {
             code: "none_material",
@@ -104,11 +108,12 @@ export function buildBriefFromSnapshot(
                 : "No material personal-baseline shifts were detected in this window.",
           },
         ]
-      : snapshot.flags.map((flag) => ({
-          code: flag.code,
-          summary: flag.detail,
-          current: flag.current,
-          baseline: flag.baseline,
+      : deltas.map((delta) => ({
+          code: delta.code,
+          summary: delta.summary,
+          current: delta.current,
+          baseline: delta.baseline,
+          evidence_ids: delta.evidenceIds,
         }));
 
   const headline =

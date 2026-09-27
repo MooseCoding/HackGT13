@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** Temporarily hidden - live signal demo is still a test idea. */
-const SHOW_LIVE_SIGNAL = false;
+const SHOW_LIVE_SIGNAL = true;
 
 function navClass(active: boolean) {
   return active
@@ -16,6 +15,7 @@ export function HcpNav({ userName }: { userName: string | null }) {
   const pathname = usePathname();
   const onPatients = pathname === "/hcp" || pathname.startsWith("/hcp/patients");
   const onLive = pathname.startsWith("/hcp/live");
+  const onEval = pathname.startsWith("/hcp/eval");
 
   return (
     <nav className="flex flex-wrap items-center gap-1 sm:gap-2" aria-label="Clinician">
@@ -27,6 +27,9 @@ export function HcpNav({ userName }: { userName: string | null }) {
           Live signal
         </Link>
       ) : null}
+      <Link href="/hcp/eval" className={navClass(onEval)} aria-current={onEval ? "page" : undefined}>
+        Eval cases
+      </Link>
       <span className="mx-1 hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
       <span className="hidden text-xs text-mute sm:block">{userName ?? "Demo clinician"}</span>
     </nav>

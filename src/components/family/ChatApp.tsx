@@ -1294,6 +1294,11 @@ export function ChatApp({
                   <div className="flex max-w-[75%] flex-col items-end">
                     <p className="mb-0.5 text-xs text-mute">
                       {author?.name} · {formatChatTime(p.createdAt, chatTimeZone, hour12)}
+                      {p.channel === "whatsapp" ? (
+                        <span className="ml-1.5 rounded-sm border border-line bg-ground px-1.5 py-0.5 text-[10px] font-semibold text-clinic">
+                          WhatsApp
+                        </span>
+                      ) : null}
                     </p>
                     <div className="rounded-md bg-chat-out px-4 py-2.5 transition-shadow duration-200">
                       {p.photoUrl ? (
@@ -1373,6 +1378,11 @@ export function ChatApp({
                 <div className="max-w-[85%]">
                   <p className="mb-0.5 text-xs text-mute">
                     {author?.name} · {formatChatTime(p.createdAt, chatTimeZone, hour12)}
+                    {p.channel === "whatsapp" ? (
+                      <span className="ml-1.5 rounded-sm border border-line bg-ground px-1.5 py-0.5 text-[10px] font-semibold text-clinic">
+                        WhatsApp
+                      </span>
+                    ) : null}
                   </p>
                   <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5 transition-shadow duration-200">
                     {p.photoUrl ? (

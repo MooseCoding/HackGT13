@@ -21,19 +21,33 @@ export function LiveSignalDemo() {
   const [snapshot, setSnapshot] = useState<PatientSnapshot | null>(null);
   const [error, setError] = useState("");
 
-  async function runDemo() {
+  async function runDemo(mode: "preview" | "inject" = "preview") {
     setRunning(true);
     setSnapshot(null);
     setError("");
     setActiveStep(0);
-    await wait(650);
-    const snapshot = demoLiveSignalSnapshot();
-    for (let index = 1; index < steps.length; index += 1) {
-      setActiveStep(index);
-      await wait(650);
+    await wait(450);
+    try {
+      let next: PatientSnapshot = demoLiveSignalSnapshot();
+      if (mode === "inject") {
+        const res = await fetch("/api/clinical/demo-signal", { method: "POST" });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error || "Could not inject the sustained-shift demo posts.");
+        }
+        const body = (await res.json()) as { patient?: { snapshot?: PatientSnapshot } };
+        if (body.patient?.snapshot) next = body.patient.snapshot;
+      }
+      for (let index = 1; index < steps.length; index += 1) {
+        setActiveStep(index);
+        await wait(450);
+      }
+      setSnapshot(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Demo failed.");
+    } finally {
+      setRunning(false);
     }
-    setSnapshot(snapshot);
-    setRunning(false);
   }
 
   return (
@@ -82,14 +96,24 @@ export function LiveSignalDemo() {
             Got it privately. I&apos;ve updated your communication trend - no diagnosis, and your family chat stays
             private.
           </div>
-          <button
-            type="button"
-            onClick={runDemo}
-            disabled={running}
-            className="mt-5 rounded-sm bg-[#128c7e] px-4 py-3 text-sm font-semibold text-white hover:bg-[#075e54] disabled:cursor-wait disabled:opacity-70"
-          >
-            {running ? "Working through the signal…" : snapshot ? "Play it again" : "Receive voice note"}
-          </button>
+          <div className="mt-5 grid gap-2">
+            <button
+              type="button"
+              onClick={() => void runDemo("preview")}
+              disabled={running}
+              className="rounded-sm bg-[#128c7e] px-4 py-3 text-sm font-semibold text-white hover:bg-[#075e54] disabled:cursor-wait disabled:opacity-70"
+            >
+              {running ? "Working through the signal…" : snapshot ? "Replay preview" : "Receive voice note"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runDemo("inject")}
+              disabled={running}
+              className="rounded-sm border border-[#128c7e] bg-surface px-4 py-3 text-sm font-semibold text-[#075e54] hover:bg-[#efeae2] disabled:cursor-wait disabled:opacity-70"
+            >
+              Simulate sustained shift
+            </button>
+          </div>
         </div>
       </section>
 
@@ -147,9 +171,39 @@ export function LiveSignalDemo() {
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {[
-              { label: "Speech pace", value: snapshot?.voice.wordsPerMinute ? `${snapshot.voice.wordsPerMinute.toFixed(0)} wpm` : "103 wpm", change: snapshot ? "↓ from baseline" : "Their usual pace" },
-              { label: "Pause share", value: snapshot?.voice.pauseRatio != null ? `${Math.round(snapshot.voice.pauseRatio * 100)}%` : "10%", change: snapshot ? "↑ from baseline" : "Their usual rate" },
-              { label: "Signals combined", value: snapshot ? snapshot.flags.length.toString() : "0", change: snapshot ? `${snapshot.confidence} confidence` : "No alert yet" },
+              {
+                label: "Speech pace",
+                value: snapshot?.voice.wordsPerMinute ? `${snapshot.voice.wordsPerMinute.toFixed(0)} wpm` : "103 wpm",
+                change:
+                  snapshot?.voice.wordsPerMinuteBaseline != null && snapshot.voice.wordsPerMinute != null
+                    ? `${Math.round((snapshot.voice.wordsPerMinute / snapshot.voice.wordsPerMinuteBaseline - 1) * 100)}% vs baseline`
+                    : snapshot
+                      ? "↓ from baseline"
+                      : "Their usual pace",
+              },
+              {
+                label: "Pause share",
+                value: snapshot?.voice.pauseRatio != null ? `${Math.round(snapshot.voice.pauseRatio * 100)}%` : "10%",
+                change:
+                  snapshot?.voice.pauseRatioBaseline != null && snapshot.voice.pauseRatio != null
+                    ? `${snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline >= 0 ? "+" : ""}${Math.round((snapshot.voice.pauseRatio - snapshot.voice.pauseRatioBaseline) * 100)} pts`
+                    : snapshot
+                      ? "↑ from baseline"
+                      : "Their usual rate",
+              },
+              {
+                label: "Hesitation",
+                value:
+                  snapshot?.voice.hesitationRate != null
+                    ? `${Math.round(snapshot.voice.hesitationRate * 100)}%`
+                    : "4%",
+                change:
+                  snapshot?.voice.hesitationRateBaseline != null && snapshot.voice.hesitationRate != null
+                    ? `${snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline >= 0 ? "+" : ""}${Math.round((snapshot.voice.hesitationRate - snapshot.voice.hesitationRateBaseline) * 100)} pts`
+                    : snapshot
+                      ? `${snapshot.flags.length} flags · ${snapshot.confidence}`
+                      : "No alert yet",
+              },
             ].map((metric) => (
               <div key={metric.label} className="border border-line bg-ground p-4">
                 <p className="text-[10px] font-semibold text-mute">{metric.label}</p>
