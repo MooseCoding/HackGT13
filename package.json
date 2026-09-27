@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "eval:hcp": "node eval/hcp-brief/generate-cases.mjs && vitest run eval/hcp-brief/hcp-brief.eval.test.ts"
+    "eval:hcp": "node eval/hcp-brief/generate-cases.mjs && vitest run eval/hcp-brief/hcp-brief.eval.test.ts",
+    "check:integrations": "node --env-file=.env.local scripts/check-integrations.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
