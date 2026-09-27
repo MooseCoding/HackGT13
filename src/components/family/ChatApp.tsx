@@ -1121,6 +1121,7 @@ export function ChatApp({
             context={{ ...assistantContext, postingAs: me.name }}
             easy={easy}
             demo={demo}
+            authorId={me.id}
           />
         ) : (
         <div
