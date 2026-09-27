@@ -28,8 +28,12 @@ const STARTERS = [
 const TURNS_KEY = "hearth-assistant-turns";
 const PREVIEW_KEY = "hearth-assistant-preview";
 
-function defaultGreeting() {
+export function defaultAssistantGreeting() {
   return `Hi! I'm Hearth Assistant. I can check the calendar, draft events and reminders, and help with ${DIGEST_NAME}.`;
+}
+
+function defaultGreeting() {
+  return defaultAssistantGreeting();
 }
 
 function clearAssistantSession() {

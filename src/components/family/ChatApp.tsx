@@ -16,7 +16,11 @@ import {
 } from "@/lib/event-supplies";
 import { useFamily } from "@/components/family/FamilyChrome";
 import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
-import { assistantPreviewText, HearthAssistantChat } from "@/components/family/HearthAssistant";
+import {
+  assistantPreviewText,
+  defaultAssistantGreeting,
+  HearthAssistantChat,
+} from "@/components/family/HearthAssistant";
 import type { AssistantContext } from "@/lib/ai/assistant-local";
 import { ImagePlus, Loader2, Mic, SendHorizontal } from "lucide-react";
 import {
@@ -494,7 +498,8 @@ export function ChatApp({
   const [sending, setSending] = useState(false);
   /** Optimistic + polled posts for both demo and live. */
   const chatPosts = localPosts;
-  const [assistantPreview, setAssistantPreview] = useState(() => assistantPreviewText());
+  // Stable SSR/client first paint — sessionStorage preview is applied after hydrate.
+  const [assistantPreview, setAssistantPreview] = useState(defaultAssistantGreeting);
   const hasWeeklyCalls = localEvents.some(isWeeklyFamilyCall);
   const messagesRef = useRef<HTMLDivElement>(null);
   const composingRef = useRef(false);
