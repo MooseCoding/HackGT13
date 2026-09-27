@@ -2,7 +2,7 @@
 
 import type { ClinicalMuseTool } from "@/lib/clinical/muse-tools";
 import type { ClinicalReport } from "@/lib/clinical/reports";
-import { CheckCircle2, LoaderCircle, Mail } from "lucide-react";
+import { CheckCircle2, Download, LoaderCircle, Mail, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const TOOLS: Array<{ id: ClinicalMuseTool; label: string; detail: string }> = [
@@ -171,6 +171,28 @@ export function ClinicalMusePanel({ memberId, patientName }: { memberId: string;
           <p className="mt-3 text-xs text-mute">
             {report.modelProvider} · {report.modelName} · {report.promptVersion} · {report.evidenceIds.length} evidence IDs
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href={`/api/clinical/reports/${encodeURIComponent(report.id)}/download?memberId=${encodeURIComponent(memberId)}`}
+              download
+              className="inline-flex items-center gap-2 rounded-sm border border-line bg-surface px-3 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-clinic"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Download report
+            </a>
+            <a
+              href={`/api/clinical/reports/${encodeURIComponent(report.id)}/download?memberId=${encodeURIComponent(memberId)}&print=1`}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-2 rounded-sm border border-line bg-surface px-3 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-clinic"
+            >
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print or save as PDF
+            </a>
+          </div>
+          {report.status === "draft" ? (
+            <p className="mt-2 text-xs text-mute">Downloads of a draft are marked “not yet reviewed”.</p>
+          ) : null}
           {report.status === "draft" ? (
             <button
               type="button"

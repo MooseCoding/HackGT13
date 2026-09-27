@@ -3,6 +3,7 @@ import { ClinicalInterventionPanel } from "@/components/hcp/ClinicalIntervention
 import { ClinicalMusePanel } from "@/components/hcp/ClinicalMusePanel";
 import { DisorderCheckDemo } from "@/components/hcp/DisorderCheckDemo";
 import { PatientAssignmentActions } from "@/components/hcp/PatientAssignmentActions";
+import { WeeklyReportDownload } from "@/components/hcp/WeeklyReportDownload";
 import { assignmentForMember, currentClinicianId } from "@/lib/clinical/assignments";
 import { formatWhen } from "@/lib/clock";
 import { clinicalPatientById } from "@/lib/clinical/operations";
@@ -125,7 +126,10 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
       <>
       <section className="mt-5 overflow-hidden border border-line bg-surface">
         <div className="border-b border-line bg-surface px-5 py-4">
-          <p className="text-sm font-semibold text-ink">Pre-visit brief</p>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <p className="text-sm font-semibold text-ink">Pre-visit brief</p>
+            <WeeklyReportDownload memberId={member.id} />
+          </div>
           <p className="mt-3 max-w-4xl font-letter text-base leading-7 text-ink">{snapshot.note}</p>
         </div>
         <div className="grid gap-4 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">

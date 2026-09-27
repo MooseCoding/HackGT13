@@ -1,5 +1,5 @@
 import { aiConfigured } from "./config";
-import { aiChat } from "./chat";
+import { aiChat, type AiSource } from "./chat";
 import {
   answerFamilyAssistant,
   type AssistantContext,
@@ -17,9 +17,11 @@ export type AssistantTurn = {
   content: string;
 };
 
+export type AssistantSource = AiSource | "local";
+
 export type AssistantRunResult = {
   reply: string;
-  source: "muse" | "groq" | "local";
+  source: AssistantSource;
   pending?: PendingAssistantAction | null;
   toolsUsed?: string[];
 };
@@ -215,7 +217,7 @@ export async function runFamilyAssistant(input: {
 
       let pending: PendingAssistantAction | null = null;
       const toolsUsed: string[] = [];
-      let source: "muse" | "groq" = "muse";
+      let source: AiSource = "muse";
 
       for (let step = 0; step < 4; step += 1) {
         const turn = await aiChatWithTools({
