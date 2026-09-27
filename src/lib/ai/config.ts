@@ -1,4 +1,4 @@
-/** Groq is reserved for voice transcription. */
+/** Groq Whisper — STT fallback when ElevenLabs is unset or fails. */
 
 export function groqConfigured() {
   return Boolean(process.env.GROQ_API_KEY?.trim());

@@ -1094,10 +1094,7 @@ export function ChatApp({
   }
 
   function speak(text: string) {
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.92;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    void import("@/lib/tts-client").then(({ speakText }) => speakText(text, { rate: 0.92 }));
   }
 
   return (

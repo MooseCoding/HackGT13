@@ -1,8 +1,9 @@
 "use client";
 
 import { useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
+import { speakText, stopSpeaking } from "@/lib/tts-client";
 import type { Digest, OnThisDayMemory, StorybookPage } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const MOOD_BG: Record<string, string> = {
   warm: "bg-accent-tint",
@@ -105,9 +106,47 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
   const easy = useLargerText();
   const timeZone = useTimezone();
   const [expandedMemory, setExpandedMemory] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [voiceProvider, setVoiceProvider] = useState<"elevenlabs" | "browser" | null>(null);
+  const cancelRef = useRef(false);
 
   const storybook = digest.storybook ?? [];
   const onThisDay = digest.onThisDay ?? [];
+  const podcast = digest.podcast ?? [];
+  const btn = easy ? "py-3 px-4 text-base" : "py-2 px-3 text-sm";
+
+  useEffect(() => {
+    cancelRef.current = false;
+    return () => {
+      cancelRef.current = true;
+      stopSpeaking();
+    };
+  }, []);
+
+  async function playFamilyRadio() {
+    if (playing) {
+      cancelRef.current = true;
+      stopSpeaking();
+      setPlaying(false);
+      setVoiceProvider(null);
+      cancelRef.current = false;
+      return;
+    }
+
+    const script =
+      podcast.length > 0
+        ? podcast.map((c) => `${c.title}. ${c.narration}`).join(" ")
+        : digest.audioScript || `${digest.title}. ${digest.narrative}`;
+
+    cancelRef.current = false;
+    setPlaying(true);
+    setVoiceProvider(null);
+    const provider = await speakText(script, { rate: 0.88 });
+    if (!cancelRef.current) {
+      setVoiceProvider(provider);
+      setPlaying(false);
+    }
+  }
 
   return (
     <article className="max-w-2xl">
@@ -124,6 +163,27 @@ export function DigestView({ initial: digest }: { initial: Digest }) {
           })}
         </p>
       </header>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void playFamilyRadio()}
+          className={`rounded-sm font-medium ${
+            playing
+              ? "border border-ember bg-accent-tint text-ink"
+              : "bg-ember text-white hover:bg-ember-dark"
+          } ${btn}`}
+        >
+          {playing ? "Stop listening" : "Listen"}
+        </button>
+        {playing ? (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-mute">Playing…</span>
+        ) : voiceProvider === "elevenlabs" ? (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-mute">
+            Voice by ElevenLabs
+          </span>
+        ) : null}
+      </div>
 
       {onThisDay.length ? (
         <section className="mt-6">
