@@ -2,9 +2,9 @@ import type { LifeStoryPrompt, Member, Post } from "../types";
 import { isDemoMode } from "../mode-server";
 import { demoLifeStoryPrompts } from "../social-demo";
 import { localLifeStoryPrompts } from "../social-prompts";
-import { aiConfigured, groqConfigured } from "./config";
+import { aiConfigured } from "./config";
 import { aiChat } from "./chat";
-import { groqChat, parseModelJson } from "./groq";
+import { parseModelJson } from "./json";
 import { LIFE_STORY_SYSTEM_PROMPT, MUTUAL_AID_SYSTEM_PROMPT } from "./prompts";
 
 function memberName(members: Member[], id: string) {
@@ -74,9 +74,9 @@ export async function aiLifeStoryPrompts(posts: Post[], members: Member[]): Prom
 export const groqLifeStoryPrompts = aiLifeStoryPrompts;
 
 export async function groqMutualAidTask(text: string): Promise<{ task: string; reason: string } | null> {
-  if (!groqConfigured()) return null;
+  if (!aiConfigured()) return null;
   try {
-    const raw = await groqChat({
+    const { content } = await aiChat({
       json: true,
       temperature: 0.2,
       maxTokens: 200,
@@ -85,7 +85,7 @@ export async function groqMutualAidTask(text: string): Promise<{ task: string; r
         { role: "user", content: text.slice(0, 400) },
       ],
     });
-    const parsed = parseModelJson<{ isLocalAssistance?: boolean; task?: string; reason?: string }>(raw);
+    const parsed = parseModelJson<{ isLocalAssistance?: boolean; task?: string; reason?: string }>(content);
     if (!parsed.isLocalAssistance || !parsed.task?.trim()) return null;
     return { task: parsed.task.trim(), reason: parsed.reason?.trim() || "Local assistance request" };
   } catch {

@@ -78,6 +78,7 @@ export type Database = {
       family_invitations: {
         Row: {
           accepted_at: string | null;
+          expires_at: string;
           created_at: string;
           email: string;
           family_id: string;
@@ -91,6 +92,7 @@ export type Database = {
         };
         Insert: {
           accepted_at?: string | null;
+          expires_at?: string;
           created_at?: string;
           email: string;
           family_id: string;
@@ -227,6 +229,84 @@ export type Database = {
           confidence?: string;
           assessed_at?: string;
           snapshot?: Json;
+        };
+        Relationships: [];
+      };
+      clinical_reports: {
+        Row: {
+          id: string;
+          snapshot_id: string;
+          member_id: string;
+          family_id: string;
+          brief: string;
+          findings: Json;
+          recommended_next_step: string;
+          evidence_ids: string[];
+          model_provider: string;
+          model_name: string;
+          prompt_version: string;
+          status: string;
+          generated_at: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          snapshot_id: string;
+          member_id: string;
+          family_id: string;
+          brief: string;
+          findings?: Json;
+          recommended_next_step: string;
+          evidence_ids?: string[];
+          model_provider: string;
+          model_name: string;
+          prompt_version: string;
+          status?: string;
+          generated_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+        };
+        Update: {
+          brief?: string;
+          findings?: Json;
+          recommended_next_step?: string;
+          evidence_ids?: string[];
+          model_provider?: string;
+          model_name?: string;
+          prompt_version?: string;
+          status?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+        };
+        Relationships: [];
+      };
+      clinical_report_notifications: {
+        Row: {
+          id: string;
+          report_id: string;
+          member_id: string;
+          clinician_id: string;
+          recipient_email: string;
+          delivery_mode: string;
+          delivery_status: string;
+          provider_message_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          report_id: string;
+          member_id: string;
+          clinician_id: string;
+          recipient_email: string;
+          delivery_mode: string;
+          delivery_status: string;
+          provider_message_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          delivery_status?: string;
+          provider_message_id?: string | null;
         };
         Relationships: [];
       };

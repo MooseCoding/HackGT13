@@ -1,8 +1,11 @@
 "use client";
 
 import { HearthMark } from "@/components/HearthMark";
-import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant";
-import type { PendingAssistantAction } from "@/lib/ai/family-tools";
+import {
+  answerFamilyAssistant,
+  type AssistantContext,
+  type PendingAssistantAction,
+} from "@/lib/ai/assistant-local";
 import { META_MUSE_ATTRIBUTION } from "@/lib/ai/attribution";
 import { DIGEST_NAME } from "@/lib/digest-constants";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,8 +28,12 @@ const STARTERS = [
 const TURNS_KEY = "hearth-assistant-turns";
 const PREVIEW_KEY = "hearth-assistant-preview";
 
-function defaultGreeting() {
+export function defaultAssistantGreeting() {
   return `Hi! I'm Hearth Assistant. I can check the calendar, draft events and reminders, and help with ${DIGEST_NAME}.`;
+}
+
+function defaultGreeting() {
+  return defaultAssistantGreeting();
 }
 
 function clearAssistantSession() {
@@ -73,30 +80,34 @@ export function HearthAssistantChat({
   const router = useRouter();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [turns, setTurns] = useState<Turn[]>(() => {
-    // Drop stale cached chats from before tool-calling so users see the new agent.
-    if (typeof window !== "undefined") {
-      try {
-        const raw = sessionStorage.getItem(TURNS_KEY);
-        if (raw?.includes("I can't add it for you") || raw?.includes("Open Calendar then tap Add event")) {
-          clearAssistantSession();
-          return [{ role: "assistant", content: defaultGreeting() }];
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return loadTurns();
-  });
+  // Default greeting on SSR + first client paint; restore session after mount.
+  const [turns, setTurns] = useState<Turn[]>(() => [{ role: "assistant", content: defaultGreeting() }]);
+  const [sessionReady, setSessionReady] = useState(false);
   const [pending, setPending] = useState<PendingAssistantAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(TURNS_KEY);
+      if (raw?.includes("I can't add it for you") || raw?.includes("Open Calendar then tap Add event")) {
+        clearAssistantSession();
+        setTurns([{ role: "assistant", content: defaultGreeting() }]);
+      } else {
+        setTurns(loadTurns());
+      }
+    } catch {
+      setTurns(loadTurns());
+    }
+    setSessionReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
     sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns.map(({ pending: _p, ...rest }) => rest)));
     const last = [...turns].reverse().find((t) => t.content.trim());
     if (last) sessionStorage.setItem(PREVIEW_KEY, last.content);
     window.dispatchEvent(new Event("hearth-assistant-preview"));
-  }, [turns]);
+  }, [turns, sessionReady]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });

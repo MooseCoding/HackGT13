@@ -507,14 +507,16 @@ export async function postingIdentity(requestedFamilyId: string, requestedMember
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("members")
-    .select("*")
+    .select("id, family_id")
     .eq("family_id", requestedFamilyId)
-    .eq("id", requestedMemberId)
     .eq("user_id", user.id)
+    .limit(1)
     .maybeSingle();
   throwIfError(error);
   if (!data) throw new Error("You can only post as your own member profile in this family.");
-  return { familyId: requestedFamilyId, memberId: requestedMemberId };
+  // The authenticated membership is authoritative. A stale client-side member
+  // selection must not make a valid signed-in user's message disappear.
+  return { familyId: data.family_id, memberId: data.id };
 }
 
 export async function setClinicalConsent(requestedMemberId: string, enabled: boolean) {

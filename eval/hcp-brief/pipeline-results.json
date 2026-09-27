@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-27T00:24:06.162Z",
+  "generated_at": "2026-09-27T01:39:43.026Z",
   "reference_datetime": "2026-09-26T00:16:00.000Z",
   "summary": {
     "total": 10,
@@ -313,7 +313,7 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
+        "headline": "Weekly engagement changed from 3.7 to 5.0. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
@@ -336,8 +336,8 @@
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -75 points; late-night share changed 100 points.",
-            "current": "0% morning · 100% night",
+            "summary": "Morning share changed -75 points; late-night share changed 0 points.",
+            "current": "0% morning · 0% night",
             "baseline": "75% morning · 0% night"
           },
           {
@@ -391,7 +391,6 @@
       },
       "flag_codes": [
         "syntax_change",
-        "sleep_shift",
         "affect_change"
       ],
       "brief": {
@@ -416,12 +415,6 @@
             "baseline": "12.8 words"
           },
           {
-            "code": "sleep_shift",
-            "summary": "Morning share changed -30 points; late-night share changed 0 points.",
-            "current": "50% morning · 0% night",
-            "baseline": "80% morning · 0% night"
-          },
-          {
             "code": "affect_change",
             "summary": "Sentiment changed -0.51 and affect variability changed 16% versus baseline.",
             "current": "-0.23 tone · 0.14 range",
@@ -442,8 +435,7 @@
         ],
         "suggested_clinician_actions": [
           "review_evidence",
-          "contact_patient_or_caregiver",
-          "consider_clinical_screening"
+          "contact_patient_or_caregiver"
         ]
       },
       "checks": {
@@ -486,7 +478,7 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
+        "headline": "Weekly engagement changed from 3.7 to 4.5. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
@@ -497,8 +489,8 @@
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -75 points; late-night share changed 100 points.",
-            "current": "0% morning · 100% night",
+            "summary": "Morning share changed -75 points; late-night share changed 0 points.",
+            "current": "0% morning · 0% night",
             "baseline": "75% morning · 0% night"
           },
           {
@@ -621,10 +613,7 @@
       "pipeline_risk_level": "priority",
       "label_match": true,
       "evidence_overlap": [
-        "P10-m31",
-        "P10-m25",
-        "P10-m26",
-        "P10-m27"
+        "P10-m31"
       ],
       "expected_evidence_cited": true,
       "forbidden_hits": [],
@@ -651,7 +640,7 @@
             "end": "2026-09-26"
           }
         },
-        "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
+        "headline": "Weekly engagement changed from 4.2 to 5.0. Review suggested — decision support for clinician judgment only.",
         "status": "review_suggested",
         "changes": [
           {
@@ -674,9 +663,9 @@
           },
           {
             "code": "sleep_shift",
-            "summary": "Morning share changed -78 points; late-night share changed 100 points.",
-            "current": "0% morning · 100% night",
-            "baseline": "78% morning · 0% night"
+            "summary": "Morning share changed -72 points; late-night share changed 0 points.",
+            "current": "0% morning · 0% night",
+            "baseline": "72% morning · 0% night"
           },
           {
             "code": "affect_change",
@@ -686,10 +675,7 @@
           }
         ],
         "evidence_ids": [
-          "P10-m31",
-          "P10-m25",
-          "P10-m26",
-          "P10-m27"
+          "P10-m31"
         ],
         "limitations": [
           "Signals reflect consented family communication patterns, not a clinical examination.",

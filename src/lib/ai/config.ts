@@ -1,4 +1,4 @@
-/** Groq OpenAI-compatible API — https://console.groq.com */
+/** Groq is reserved for voice transcription. */
 
 export function groqConfigured() {
   return Boolean(process.env.GROQ_API_KEY?.trim());
@@ -10,6 +10,27 @@ export function groqModel() {
 
 export function groqApiBase() {
   return (process.env.GROQ_API_BASE?.trim() || "https://api.groq.com/openai/v1").replace(/\/$/, "");
+}
+
+/** Grok generation fallback (OpenAI-compatible API). */
+export function grokConfigured() {
+  return Boolean(process.env.GROK_API_KEY?.trim() || process.env.XAI_API_KEY?.trim());
+}
+
+export function grokModel() {
+  return process.env.GROK_MODEL?.trim() || process.env.XAI_MODEL?.trim() || "grok-4-fast-reasoning";
+}
+
+export function grokApiBase() {
+  return (process.env.GROK_API_BASE?.trim() || process.env.XAI_API_BASE?.trim() || "https://api.x.ai/v1").replace(/\/$/, "");
+}
+
+export function grokApiKey() {
+  return process.env.GROK_API_KEY?.trim() || process.env.XAI_API_KEY?.trim() || "";
+}
+
+export function aiProviderMode() {
+  return process.env.AI_PROVIDER_MODE?.trim().toLowerCase() === "grok" ? "grok" : "auto";
 }
 
 /** Meta Model API (Muse Spark) — https://dev.meta.ai */
@@ -34,5 +55,5 @@ export function museApiKey() {
 
 /** True when any cloud LLM is available for Hestia / assistant features. */
 export function aiConfigured() {
-  return museConfigured() || groqConfigured();
+  return museConfigured() || grokConfigured();
 }

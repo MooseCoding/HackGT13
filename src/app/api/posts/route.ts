@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   try {
     const identity = await postingIdentity(body.familyId, body.authorId);
     const post: Post = {
-      id: `p-${Date.now()}`,
+      id: `p-${crypto.randomUUID()}`,
       familyId: identity.familyId,
       authorId: identity.memberId,
       kind: (body.kind as PostKind) || "text",
@@ -42,133 +42,141 @@ export async function POST(req: NextRequest) {
       voiceSeconds: body.voiceSeconds,
       transcript: body.transcript,
       threadId: body.threadId,
-      channel: body.channel ?? "hearth",
-      audioMetrics: body.audioMetrics,
-      rawRetained: body.rawRetained ?? true,
+      channel: "hearth",
+      rawRetained: true,
     };
     const saved = await addPostRow(post);
-    recordActivity(
-      identity.familyId,
-      identity.memberId,
-      post.kind === "voice" ? "voice" : "post",
-      saved.createdAt,
-    );
-    const demo = await isDemoMode();
-    const anchor = calendarAnchor(demo);
-    const [members, events] = await Promise.all([
-      membersOf(identity.familyId),
-      mergedEventsOf(identity.familyId, { anchor }),
-    ]);
-    const postText = post.transcript || post.body;
-    const scheduleSuggestion = suggestScheduleFromText(postText, members, events, {
-      familyId: identity.familyId,
-      createdBy: identity.memberId,
-      anchor,
-    });
-    const reminderSuggestion = suggestReminderFromText(postText, members, identity.memberId, anchor);
-    let mutualAidSuggestion: MutualAidSuggestion | null = suggestMutualAidFromText(
-      postText,
-      members,
-      identity.memberId,
-    );
-    if (mutualAidSuggestion) {
-      const refined = await groqMutualAidTask(postText);
-      if (refined) {
-        mutualAidSuggestion = { ...mutualAidSuggestion, task: refined.task };
+    try {
+      recordActivity(
+        identity.familyId,
+        identity.memberId,
+        post.kind === "voice" ? "voice" : "post",
+        saved.createdAt,
+      );
+      const demo = await isDemoMode();
+      const anchor = calendarAnchor(demo);
+      const [members, events] = await Promise.all([
+        membersOf(identity.familyId),
+        mergedEventsOf(identity.familyId, { anchor }),
+      ]);
+      const postText = post.transcript || post.body;
+      const scheduleSuggestion = suggestScheduleFromText(postText, members, events, {
+        familyId: identity.familyId,
+        createdBy: identity.memberId,
+        anchor,
+      });
+      const reminderSuggestion = suggestReminderFromText(postText, members, identity.memberId, anchor);
+      let mutualAidSuggestion: MutualAidSuggestion | null = suggestMutualAidFromText(
+        postText,
+        members,
+        identity.memberId,
+      );
+      if (mutualAidSuggestion) {
+        const refined = await groqMutualAidTask(postText);
+        if (refined) {
+          mutualAidSuggestion = { ...mutualAidSuggestion, task: refined.task };
+        }
       }
-    }
-    const threadPosts = await postsForThread(identity.familyId, postThreadId(saved));
-    const priorPost = threadPosts.length > 1 ? threadPosts[threadPosts.length - 2] : undefined;
-    const priorMessage = priorPost ? priorPost.transcript || priorPost.body : undefined;
-    const commerceSuggestion: CommerceSuggestion | null = suggestCommerceFromText(
-      postText,
-      members,
-      identity.memberId,
-      { events, priorMessage },
-    );
+      const threadPosts = await postsForThread(identity.familyId, postThreadId(saved));
+      const priorPost = threadPosts.length > 1 ? threadPosts[threadPosts.length - 2] : undefined;
+      const priorMessage = priorPost ? priorPost.transcript || priorPost.body : undefined;
+      const commerceSuggestion: CommerceSuggestion | null = suggestCommerceFromText(
+        postText,
+        members,
+        identity.memberId,
+        { events, priorMessage },
+      );
 
-    let calendarEvent: CalendarEvent | null = null;
-    let calendarEvents: CalendarEvent[] | undefined;
-    const confirmedProposal = findScheduleProposalForConfirmation(
-      post.transcript || post.body,
-      threadPosts,
-      saved.id,
-      members,
-      events,
-      { familyId: identity.familyId, anchor },
-    );
+      let calendarEvent: CalendarEvent | null = null;
+      let calendarEvents: CalendarEvent[] | undefined;
+      const confirmedProposal = findScheduleProposalForConfirmation(
+        post.transcript || post.body,
+        threadPosts,
+        saved.id,
+        members,
+        events,
+        { familyId: identity.familyId, anchor },
+      );
 
-    if (confirmedProposal) {
-      const googleToken = await googleAccessToken();
-      if (confirmedProposal.weeklyFamilyCall) {
-        const proposed = proposeWeeklyFamilyCalls(events, {
-          familyId: identity.familyId,
-          createdBy: identity.memberId,
-          members,
-          anchor,
-        });
-        const savedEvents: CalendarEvent[] = [];
-        for (const event of proposed) {
-          if (events.some((existing) => eventsMatch(existing, event))) continue;
-          savedEvents.push(
-            await addEventRow({
-              ...event,
-              calendarScope: "family",
-            }),
-          );
-        }
-        if (savedEvents.length) {
-          if (googleToken) {
-            const synced = await syncEventsToGoogle(googleToken, savedEvents);
-            calendarEvents = synced.events;
-            calendarEvent = synced.events[0];
-          } else {
-            calendarEvents = savedEvents;
-            calendarEvent = savedEvents[0];
-          }
-        }
-      } else {
-        const parsed = parseEvent(
-          confirmedProposal.sourceText,
-          members,
-          identity.memberId,
-          identity.familyId,
-          anchor,
-        );
-        const titled = { ...parsed, title: confirmedProposal.title };
-        if (inCalendarWindow(titled.startsAt, anchor) && !events.some((existing) => eventsMatch(existing, titled))) {
-          let row = await addEventRow({
-            ...titled,
-            id: `evt-f-${Date.now()}`,
-            calendarScope: "family",
-            attendees: members.map((m) => m.id),
+      if (confirmedProposal) {
+        const googleToken = await googleAccessToken();
+        if (confirmedProposal.weeklyFamilyCall) {
+          const proposed = proposeWeeklyFamilyCalls(events, {
+            familyId: identity.familyId,
+            createdBy: identity.memberId,
+            members,
+            anchor,
           });
-          if (googleToken) {
-            try {
-              row = await syncEventToGoogle(googleToken, row);
-            } catch (err) {
-              console.error("Google sync from chat:", err);
+          const savedEvents: CalendarEvent[] = [];
+          for (const event of proposed) {
+            if (events.some((existing) => eventsMatch(existing, event))) continue;
+            savedEvents.push(
+              await addEventRow({
+                ...event,
+                calendarScope: "family",
+              }),
+            );
+          }
+          if (savedEvents.length) {
+            if (googleToken) {
+              const synced = await syncEventsToGoogle(googleToken, savedEvents);
+              calendarEvents = synced.events;
+              calendarEvent = synced.events[0];
+            } else {
+              calendarEvents = savedEvents;
+              calendarEvent = savedEvents[0];
             }
           }
-          calendarEvent = row;
-          await broadcastEventPin(row, identity.memberId).catch((err) => {
-            console.error("Event pin broadcast failed:", err);
-          });
+        } else {
+          const parsed = parseEvent(
+            confirmedProposal.sourceText,
+            members,
+            identity.memberId,
+            identity.familyId,
+            anchor,
+          );
+          const titled = { ...parsed, title: confirmedProposal.title };
+          if (inCalendarWindow(titled.startsAt, anchor) && !events.some((existing) => eventsMatch(existing, titled))) {
+            let row = await addEventRow({
+              ...titled,
+              id: `evt-f-${Date.now()}`,
+              calendarScope: "family",
+              attendees: members.map((m) => m.id),
+            });
+            if (googleToken) {
+              try {
+                row = await syncEventToGoogle(googleToken, row);
+              } catch (err) {
+                console.error("Google sync from chat:", err);
+              }
+            }
+            calendarEvent = row;
+            await broadcastEventPin(row, identity.memberId).catch((err) => {
+              console.error("Event pin broadcast failed:", err);
+            });
+          }
         }
       }
-    }
 
-    const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
-    return NextResponse.json({
-      ...saved,
-      scheduleSuggestion,
-      reminderSuggestion,
-      mutualAidSuggestion,
-      commerceSuggestion,
-      calendarEvent,
-      calendarEvents,
-      checkInSuggestion,
-    });
+      const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
+      return NextResponse.json({
+        ...saved,
+        scheduleSuggestion,
+        reminderSuggestion,
+        mutualAidSuggestion,
+        commerceSuggestion,
+        calendarEvent,
+        calendarEvents,
+        checkInSuggestion,
+      });
+    } catch (enrichmentError) {
+      // Message is already saved — enrichment must not fail the chat send.
+      console.error("Post-send enrichment failed; returning the saved message.", enrichmentError);
+      return NextResponse.json({
+        ...saved,
+        enrichmentWarning: "Message sent; suggestions are temporarily unavailable.",
+      });
+    }
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

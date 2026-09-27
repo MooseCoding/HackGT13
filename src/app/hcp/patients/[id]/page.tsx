@@ -1,5 +1,6 @@
 import { Metric, TrendChart } from "@/components/hcp/Charts";
 import { ClinicalInterventionPanel } from "@/components/hcp/ClinicalInterventionPanel";
+import { ClinicalMusePanel } from "@/components/hcp/ClinicalMusePanel";
 import { DisorderCheckDemo } from "@/components/hcp/DisorderCheckDemo";
 import { PatientAssignmentActions } from "@/components/hcp/PatientAssignmentActions";
 import { assignmentForMember, currentClinicianId } from "@/lib/clinical/assignments";
@@ -305,6 +306,8 @@ export default async function PatientPage({ params }: { params: Promise<{ id: st
         )}
       </section>
       ) : null}
+
+      <ClinicalMusePanel memberId={member.id} patientName={member.name} />
 
       <section className="mt-5 flex flex-col justify-between gap-3 border border-line bg-surface px-5 py-4 sm:flex-row sm:items-center">
         <p className="text-sm text-mute">

@@ -1,8 +1,11 @@
+import type { PendingAssistantAction } from "@/lib/ai/assistant-local";
 import { parseEvent } from "@/lib/calendar-parse";
 import { inCalendarWindow } from "@/lib/calendar-window";
 import { addEventRow, addReminderRow, membersOf } from "@/lib/data";
 import { suggestReminderFromText } from "@/lib/remind-detect";
 import type { CalendarEvent, Member, Reminder } from "@/lib/types";
+
+export type { PendingAssistantAction } from "@/lib/ai/assistant-local";
 
 export const FAMILY_ASSISTANT_TOOLS = [
   {
@@ -148,28 +151,6 @@ export type FamilyToolRuntime = {
   anchor: Date;
   timeZone?: string;
 };
-
-export type PendingAssistantAction =
-  | {
-      kind: "event";
-      draftText: string;
-      title: string;
-      when: string;
-      location?: string;
-    }
-  | {
-      kind: "reminder";
-      text: string;
-      assigneeId: string;
-      assigneeName: string;
-      dueHint: string;
-      dueAt?: string;
-    }
-  | {
-      kind: "navigate";
-      href: string;
-      label: string;
-    };
 
 const NAV_MAP: Record<string, { href: string; label: string }> = {
   messages: { href: "/family", label: "Messages" },

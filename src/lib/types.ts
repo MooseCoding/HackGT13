@@ -242,8 +242,8 @@ export type Digest = {
   highlights: string[];
   theme?: string;
   generatedAt: string;
-  /** How the story was written — Muse/Groq when configured, else local templates. */
-  source?: "muse" | "groq" | "local";
+  /** How the story was written — Muse/Grok when configured, else local templates. */
+  source?: "muse" | "grok" | "local";
   /** Full narration script for podcast / listen mode. */
   audioScript?: string;
   /** Chaptered audio for family news broadcast. */

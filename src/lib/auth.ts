@@ -60,5 +60,25 @@ export async function isClinicianUser() {
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
-  return Boolean(user.email && allowed.includes(user.email.toLowerCase()));
+  if (!user.email || !allowed.includes(user.email.toLowerCase())) return false;
+  // RLS only trusts profiles.account_role, so mirror the env allow-list into the
+  // database. Otherwise clinician writes (alert review, reports) are rejected.
+  await syncClinicianRole(user.id);
+  return true;
+}
+
+async function syncClinicianRole(userId: string) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  try {
+    const { createSupabaseAdmin } = await import("./supabase/admin");
+    const admin = createSupabaseAdmin();
+    const { error } = await admin
+      .from("profiles")
+      .update({ account_role: "clinician" })
+      .eq("id", userId)
+      .eq("account_role", "family");
+    if (error) console.error("[auth] could not sync clinician role:", error.message);
+  } catch (error) {
+    console.error("[auth] could not sync clinician role:", error);
+  }
 }

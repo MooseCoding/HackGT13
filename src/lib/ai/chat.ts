@@ -1,14 +1,14 @@
-import { groqConfigured, museConfigured } from "./config";
-import { groqChat, type GroqChatOptions } from "./groq";
+import { aiProviderMode, grokConfigured, museConfigured } from "./config";
+import type { AiChatOptions } from "./chat-types";
+import { grokChat } from "./grok";
 import { museChat } from "./muse";
 
-export type AiSource = "muse" | "groq";
-
-export type AiChatOptions = GroqChatOptions;
+export type AiSource = "muse" | "grok";
+export type { AiChatOptions } from "./chat-types";
 
 /** Prefer Meta Muse when configured; fall back to Groq. Throws if neither is set. */
 export async function aiChat(options: AiChatOptions): Promise<{ content: string; source: AiSource }> {
-  if (museConfigured()) {
+  if (aiProviderMode() !== "grok" && museConfigured()) {
     try {
       const content = await museChat({
         messages: options.messages,
@@ -20,14 +20,14 @@ export async function aiChat(options: AiChatOptions): Promise<{ content: string;
       });
       return { content, source: "muse" };
     } catch (error) {
-      console.error("Meta Muse request failed; trying Groq fallback.", error);
-      if (!groqConfigured()) throw error;
+      console.error("Meta Muse request failed; trying Grok fallback.", error);
+      if (!grokConfigured()) throw error;
     }
   }
 
-  if (groqConfigured()) {
-    const content = await groqChat(options);
-    return { content, source: "groq" };
+  if (grokConfigured()) {
+    const content = await grokChat(options);
+    return { content, source: "grok" };
   }
 
   throw new Error("No AI provider configured.");
