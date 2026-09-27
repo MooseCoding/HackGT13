@@ -1,6 +1,7 @@
 "use client";
 
 import { clearPendingConsent, readPendingConsent } from "@/lib/consent";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -49,9 +50,9 @@ function AuthCompleteInner() {
         <p className="text-sm text-red-700" role="alert">
           {error}
         </p>
-        <a href="/" className="mt-4 text-sm font-medium text-ember hover:underline">
+        <Link href="/" className="mt-4 text-sm font-medium text-ember hover:underline">
           Back to home
-        </a>
+        </Link>
       </main>
     );
   }

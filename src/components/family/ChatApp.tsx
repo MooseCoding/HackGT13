@@ -389,13 +389,11 @@ const QUICK_REACTIONS = ["❤️", "👍", "😂"];
 
 function MessageReactions({
   postId,
-  familyId,
   meId,
   reactions,
   onReact,
 }: {
   postId: string;
-  familyId: string;
   meId: string;
   reactions: PostReaction[];
   onReact: (postId: string, emoji: string) => void;
@@ -456,7 +454,7 @@ export function ChatApp({
   initialInvite?: boolean;
   assistantContext: Omit<AssistantContext, "postingAs" | "path">;
 }) {
-  const { me, setMeId } = useFamily();
+  const { me } = useFamily();
   const easy = useLargerText();
   const timeZone = useTimezone();
   const hour12 = useHour12();
@@ -517,7 +515,9 @@ export function ChatApp({
   const composingRef = useRef(false);
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
   const deferredBody = useDeferredValue(body);
-  composingRef.current = body.trim().length > 0;
+  useEffect(() => {
+    composingRef.current = body.trim().length > 0;
+  }, [body]);
 
   useEffect(() => {
     setLocalEvents(events.map(ensureEventSupplies));
@@ -770,7 +770,7 @@ export function ChatApp({
     container.scrollTop = container.scrollHeight;
   }, [messages.length, threadId]);
 
-  const headerTitle = assistantActive ? ASSISTANT_LABEL : threadLabel(threadId, me.id, members, familyName);
+  const headerTitle = assistantActive ? ASSISTANT_LABEL : threadLabel(threadId, me.id, members);
   const headerMember =
     assistantActive || isGroupThread(threadId) ? undefined : members.find((m) => m.id === withParam);
 
@@ -1319,7 +1319,6 @@ export function ChatApp({
                     </div>
                     <MessageReactions
                       postId={p.id}
-                      familyId={me.familyId}
                       meId={me.id}
                       reactions={reactions}
                       onReact={reactToPost}
@@ -1403,7 +1402,6 @@ export function ChatApp({
                   </div>
                   <MessageReactions
                     postId={p.id}
-                    familyId={me.familyId}
                     meId={me.id}
                     reactions={reactions}
                     onReact={reactToPost}
@@ -1470,9 +1468,7 @@ export function ChatApp({
           meName={me.name}
           members={members}
           posts={chatPosts}
-          messages={messages}
           body={body}
-          setMeId={setMeId}
           mutualAidHint={mutualAidHint}
           setMutualAidHint={setMutualAidHint}
           commerceHint={commerceHint}

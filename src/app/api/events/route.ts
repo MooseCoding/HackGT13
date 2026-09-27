@@ -10,7 +10,7 @@ import { addEventRow, deleteEventRow, eventsOf, membersOf, patchEventRow, postin
 import { broadcastEventPin } from "@/lib/event-pin";
 import { createGoogleEvent, deleteGoogleEvent, googleAccessToken, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
-import type { CalendarEvent, RsvpStatus } from "@/lib/types";
+import type { RsvpStatus } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {

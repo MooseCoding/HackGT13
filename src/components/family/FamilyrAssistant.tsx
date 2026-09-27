@@ -103,7 +103,10 @@ export function FamilyrAssistantChat({
 
   useEffect(() => {
     if (!sessionReady) return;
-    sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns.map(({ pending: _p, ...rest }) => rest)));
+    sessionStorage.setItem(
+      TURNS_KEY,
+      JSON.stringify(turns.map((turn) => ({ role: turn.role, content: turn.content }))),
+    );
     const last = [...turns].reverse().find((t) => t.content.trim());
     if (last) sessionStorage.setItem(PREVIEW_KEY, last.content);
     window.dispatchEvent(new Event("hearth-assistant-preview"));

@@ -44,7 +44,13 @@ export function PatientAssignmentActions({
   useEffect(() => {
     if (!confirmOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) closeConfirm();
+      if (event.key === "Escape" && !busy) {
+        setConfirmOpen(false);
+        setReason("");
+        setAcknowledged(false);
+        setConfirmText("");
+        setError("");
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

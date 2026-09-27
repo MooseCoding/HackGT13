@@ -130,7 +130,7 @@ function buildStorybook(
     });
   }
 
-  for (const [i, p] of weekPostsList.filter((row) => row.photoUrl).slice(0, 4).entries()) {
+  for (const p of weekPostsList.filter((row) => row.photoUrl).slice(0, 4)) {
     pages.push({
       id: `photo-${p.id}`,
       title: `${memberName(members, p.authorId)} shared a photo`,

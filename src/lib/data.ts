@@ -379,7 +379,8 @@ export async function patchEventRow(
       .maybeSingle();
     throwIfError(error);
     if (!data) return null;
-    const { attending: _attending, ...rest } = patch;
+    const rest = { ...patch };
+    delete rest.attending;
     return { ...mapEvent(data), ...rest };
   }
 
@@ -394,7 +395,8 @@ export async function patchEventRow(
       .maybeSingle();
     throwIfError(error);
     if (!data) return null;
-    const { supplies: _supplies, ...rest } = patch;
+    const rest = { ...patch };
+    delete rest.supplies;
     return { ...mapEvent(data), ...rest };
   }
 

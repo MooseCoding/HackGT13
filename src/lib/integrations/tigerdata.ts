@@ -55,11 +55,21 @@ export function tigerdataConfigured() {
   return Boolean(process.env.TIGERDATA_DATABASE_URL?.trim());
 }
 
+function tigerConnectionString() {
+  const raw = process.env.TIGERDATA_DATABASE_URL?.trim();
+  if (!raw) return undefined;
+  const url = new URL(raw);
+  url.searchParams.set(
+    "sslmode",
+    process.env.TIGERDATA_SSL === "disable" ? "disable" : "verify-full",
+  );
+  return url.toString();
+}
+
 function pool() {
   if (!globalTiger.__familyrTigerPool) {
     globalTiger.__familyrTigerPool = new pg.Pool({
-      connectionString: process.env.TIGERDATA_DATABASE_URL,
-      ssl: process.env.TIGERDATA_SSL === "disable" ? false : { rejectUnauthorized: false },
+      connectionString: tigerConnectionString(),
       max: 3,
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 5_000,

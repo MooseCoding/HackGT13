@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-27T05:27:41.315Z",
+  "generated_at": "2026-09-27T06:27:50.713Z",
   "reference_datetime": "2026-09-26T00:16:00.000Z",
   "summary": {
     "total": 10,
@@ -27,12 +27,12 @@
         "patient_id": "P01",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "No material personal-baseline shift detected for P01 versus the prior 30-day baseline.",
@@ -82,12 +82,12 @@
         "patient_id": "P02",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "No material personal-baseline shift detected for P02 versus the prior 30-day baseline.",
@@ -135,12 +135,12 @@
         "patient_id": "P03",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "No material personal-baseline shift detected for P03 versus the prior 30-day baseline.",
@@ -188,12 +188,12 @@
         "patient_id": "P04",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "No material personal-baseline shift detected for P04 versus the prior 30-day baseline.",
@@ -241,12 +241,12 @@
         "patient_id": "P05",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "No material personal-baseline shift detected for P05 versus the prior 30-day baseline.",
@@ -258,7 +258,7 @@
           }
         ],
         "evidence_ids": [
-          "P05-m35"
+          "P05-m36"
         ],
         "limitations": [
           "Signals reflect consented family communication patterns, not a clinical examination.",
@@ -305,12 +305,12 @@
         "patient_id": "P06",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
@@ -428,12 +428,12 @@
         "patient_id": "P07",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "Weekly engagement changed from 3.5 to 4.0. Review suggested — decision support for clinician judgment only.",
@@ -521,12 +521,12 @@
         "patient_id": "P08",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",
@@ -618,12 +618,12 @@
         "patient_id": "P09",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "Weekly engagement changed from 4.7 to 2.0. Review suggested — decision support for clinician judgment only.",
@@ -716,12 +716,12 @@
         "patient_id": "P10",
         "reporting_period": {
           "baseline_window": {
-            "start": "2026-08-13",
-            "end": "2026-09-12"
+            "start": "2026-08-12",
+            "end": "2026-09-11"
           },
           "current_window": {
-            "start": "2026-09-12",
-            "end": "2026-09-26"
+            "start": "2026-09-11",
+            "end": "2026-09-25"
           }
         },
         "headline": "Late-night activity changed from 0% to 100%. Review suggested — decision support for clinician judgment only.",

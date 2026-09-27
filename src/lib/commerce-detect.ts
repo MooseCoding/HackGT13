@@ -242,7 +242,7 @@ function commerceDelivery(
 const GIFT_PRONOUN_RE = /^(?:you|her|him|me|them|us)$/i;
 
 function cleanItemName(raw: string): string | null {
-  let item = raw
+  const item = raw
     .trim()
     .replace(/\s+/g, " ")
     .replace(/^(?:my|the|some|a|an)\s+/i, "")

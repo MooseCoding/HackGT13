@@ -122,6 +122,7 @@ export function personalCalendarRows(
   members: Member[],
   _anchor: Date,
 ): PersonalCalendarRow[] {
+  void _anchor;
   const nameById = Object.fromEntries(members.map((m) => [m.id, m.name.split(" ")[0] ?? m.name]));
   return events
     .filter((e) => e.calendarScope === "mine" || e.isGoogleSynced)

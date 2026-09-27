@@ -45,7 +45,6 @@ export function threadLabel(
   threadId: string,
   meId: string,
   members: Member[],
-  _familyName?: string,
 ) {
   if (isGroupThread(threadId)) return FAMILY_GC_LABEL;
   const partnerId = dmPartner(threadId, meId);

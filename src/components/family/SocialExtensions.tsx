@@ -245,9 +245,7 @@ export function SocialExtensions({
   meName,
   members,
   posts,
-  messages,
   body,
-  setMeId,
   mutualAidHint,
   setMutualAidHint,
   commerceHint,
@@ -265,9 +263,7 @@ export function SocialExtensions({
   meName: string;
   members: Member[];
   posts: Post[];
-  messages: Post[];
   body: string;
-  setMeId: (id: string) => void;
   mutualAidHint: MutualAidSuggestion | null;
   setMutualAidHint: (v: MutualAidSuggestion | null) => void;
   commerceHint: CommerceSuggestion | null;

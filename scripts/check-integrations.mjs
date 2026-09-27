@@ -56,16 +56,20 @@ async function checkTigerData() {
     failures++;
     return bad("the URL has no password. Use postgresql://tsdbadmin:<PASSWORD>@host:port/tsdb?sslmode=require");
   }
+  parsed.searchParams.set(
+    "sslmode",
+    process.env.TIGERDATA_SSL === "disable" ? "disable" : "verify-full",
+  );
   const client = new pg.Client({
-    connectionString: url,
-    ssl: process.env.TIGERDATA_SSL === "disable" ? false : { rejectUnauthorized: false },
+    connectionString: parsed.toString(),
     connectionTimeoutMillis: 10_000,
   });
   try {
     await client.connect();
     ok(`connected to ${parsed.hostname}`);
     const ext = await client.query("select extversion from pg_extension where extname = 'timescaledb'");
-    ext.rows[0] ? ok(`TimescaleDB ${ext.rows[0].extversion}`) : bad("TimescaleDB extension not found (trend chart needs time_bucket)");
+    if (ext.rows[0]) ok(`TimescaleDB ${ext.rows[0].extversion}`);
+    else bad("TimescaleDB extension not found (trend chart needs time_bucket)");
     await client.query(`create table if not exists clinical_metrics (
       member_id text not null, measured_at timestamptz not null, metric_name text not null,
       metric_value double precision not null, source_channel text not null default 'hearth',
