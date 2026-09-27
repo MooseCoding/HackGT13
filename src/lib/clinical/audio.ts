@@ -1,4 +1,5 @@
 import { groqApiBase, groqConfigured } from "@/lib/ai/config";
+import { elevenLabsConfigured, transcribeSpeech } from "@/lib/integrations/elevenlabs";
 import type { AudioMetrics } from "@/lib/types";
 
 type Segment = { start?: number; end?: number; text?: string };
@@ -37,12 +38,12 @@ export function deriveAudioMetrics(text: string, durationSeconds: number, segmen
   };
 }
 
-export async function transcribeAudio(input: {
+async function transcribeWithGroq(input: {
   bytes: ArrayBuffer;
   mimeType: string;
   fileName?: string;
-}): Promise<{ transcript: string; metrics: AudioMetrics }> {
-  if (!groqConfigured()) throw new Error("GROQ_API_KEY is required for live voice transcription.");
+}): Promise<{ transcript: string; metrics: AudioMetrics; provider: "groq" }> {
+  if (!groqConfigured()) throw new Error("GROQ_API_KEY is required for Groq voice fallback.");
   const form = new FormData();
   form.set("file", new Blob([input.bytes], { type: input.mimeType }), input.fileName || "voice-note.ogg");
   form.set("model", process.env.GROQ_TRANSCRIPTION_MODEL?.trim() || "whisper-large-v3-turbo");
@@ -54,10 +55,50 @@ export async function transcribeAudio(input: {
     body: form,
     cache: "no-store",
   });
-  if (!response.ok) throw new Error(`Voice transcription failed (${response.status}).`);
+  if (!response.ok) throw new Error(`Groq voice transcription failed (${response.status}).`);
   const result = (await response.json()) as TranscriptionResponse;
   const transcript = result.text?.trim();
-  if (!transcript) throw new Error("Voice transcription returned no text.");
+  if (!transcript) throw new Error("Groq voice transcription returned no text.");
   const duration = result.duration ?? result.segments?.at(-1)?.end ?? 0;
-  return { transcript, metrics: deriveAudioMetrics(transcript, duration, result.segments) };
+  return { transcript, metrics: deriveAudioMetrics(transcript, duration, result.segments), provider: "groq" };
+}
+
+async function transcribeWithElevenLabs(input: {
+  bytes: ArrayBuffer;
+  mimeType: string;
+  fileName?: string;
+}): Promise<{ transcript: string; metrics: AudioMetrics; provider: "elevenlabs" }> {
+  const result = await transcribeSpeech(input);
+  const segments: Segment[] = (result.words ?? [])
+    .filter((w) => w.type !== "spacing")
+    .map((w) => ({ start: w.start, end: w.end, text: w.text }));
+  return {
+    transcript: result.text,
+    metrics: deriveAudioMetrics(result.text, result.durationSeconds, segments),
+    provider: "elevenlabs",
+  };
+}
+
+/**
+ * Transcribe a voice note. Prefers ElevenLabs Scribe; falls back to Groq Whisper.
+ */
+export async function transcribeAudio(input: {
+  bytes: ArrayBuffer;
+  mimeType: string;
+  fileName?: string;
+}): Promise<{ transcript: string; metrics: AudioMetrics; provider?: "elevenlabs" | "groq" }> {
+  if (elevenLabsConfigured()) {
+    try {
+      return await transcribeWithElevenLabs(input);
+    } catch (error) {
+      console.error("ElevenLabs STT failed; trying Groq Whisper fallback.", error);
+      if (!groqConfigured()) throw error;
+    }
+  }
+
+  if (groqConfigured()) {
+    return transcribeWithGroq(input);
+  }
+
+  throw new Error("Set ELEVENLABS_API_KEY (preferred) or GROQ_API_KEY for voice transcription.");
 }

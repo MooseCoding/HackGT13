@@ -41,7 +41,7 @@ Families share messages, photos, voice notes and plans in one calm place. Each w
 
 **Words we use:** *Familyr* is the product. *Hestia* is the weekly story. A *Circle* is one household, and *Family* is the people in it. *Larger text* is the accessibility mode. *Familyr Assistant* is the in-app helper; it is not Hestia.
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase (Auth, Postgres, row-level security, Realtime) · Meta Muse with a Grok fallback for generation · Groq Whisper for voice transcription · deployed on Vercel.
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase (Auth, Postgres, row-level security, Realtime) · Meta Muse with a Grok fallback for generation · ElevenLabs for voice in/out (Groq Whisper STT fallback) · deployed on Vercel.
 
 ---
 
@@ -93,7 +93,8 @@ Copy `.env.example` to `.env.local`. Only the first group is needed for live mod
 | --- | --- |
 | `MODEL_API_KEY`, `AI_MODEL`, `AI_API_BASE` | Meta Muse, the main model for Hestia, Familyr Assistant and clinician briefs |
 | `GROK_API_KEY`, `GROK_MODEL`, `GROK_API_BASE` | Grok, used when Muse is unavailable. `AI_PROVIDER_MODE=grok` forces it. |
-| `GROQ_API_KEY`, `GROQ_TRANSCRIPTION_MODEL` | Voice-note transcription (Whisper) |
+| `ELEVENLABS_API_KEY` | Primary voice: TTS (Family Radio / Listen) and STT (WhatsApp + clinical voice notes). Needs Text to Speech + Speech to Text. |
+| `GROQ_API_KEY`, `GROQ_TRANSCRIPTION_MODEL` | Whisper STT fallback only when ElevenLabs is unset or fails |
 
 **Integrations (optional)**
 
@@ -181,7 +182,8 @@ Both are optional, focused add-ons. Supabase stays the source of truth for users
 | Backboard | Familyr Assistant's long-term memory | Anything the app reads as fact |
 | TigerData | Per-message clinical metric history, recent-vs-baseline aggregation | Flags, risk levels, alerts |
 | Muse / Grok | Reasoning and writing | — |
-| Groq | Voice transcription | — |
+| ElevenLabs | TTS (Family Radio / Listen) and primary STT | — |
+| Groq | Whisper STT fallback | — |
 
 **Backboard: assistant memory.** Each Circle gets one Backboard assistant, named `familyr-circle-<id>`. When someone asks Familyr Assistant something, the app loads the usual context from Supabase, then searches Backboard for relevant long-term notes, such as "Grandma prefers afternoon appointments". It passes both to Muse or Grok. After replying, it saves the member's own message to Backboard so durable facts can be extracted. Tool calls and the draft-then-confirm flow are unchanged. The extraction prompt tells Backboard to skip health, clinical and contact details. Code: `src/lib/integrations/backboard.ts`, wired in `src/app/api/assistant/route.ts`.
 
@@ -202,7 +204,7 @@ Changes can reflect language, device access, travel, illness or a family's norma
 
 - Set Meta's WhatsApp Business webhook callback to `https://<your-domain>/api/webhooks/whatsapp` and fill in the `WHATSAPP_*` variables.
 - Map senders to members explicitly with `WHATSAPP_PATIENT_MAP` (`{"14045550123":"member-id"}`). Senders who aren't mapped, or haven't opted in, are ignored.
-- Voice notes are transcribed and reduced to timing features. Familyr does not store the original audio.
+- Voice notes are transcribed with ElevenLabs Scribe (Groq Whisper fallback) and reduced to timing features. Familyr does not store the original audio.
 
 ---
 

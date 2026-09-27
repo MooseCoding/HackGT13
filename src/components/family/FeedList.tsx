@@ -11,10 +11,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
   function speak(text: string) {
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.92;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    void import("@/lib/tts-client").then(({ speakText }) => speakText(text, { rate: 0.92 }));
   }
 
   return (
