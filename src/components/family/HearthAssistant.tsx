@@ -80,30 +80,34 @@ export function HearthAssistantChat({
   const router = useRouter();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [turns, setTurns] = useState<Turn[]>(() => {
-    // Drop stale cached chats from before tool-calling so users see the new agent.
-    if (typeof window !== "undefined") {
-      try {
-        const raw = sessionStorage.getItem(TURNS_KEY);
-        if (raw?.includes("I can't add it for you") || raw?.includes("Open Calendar then tap Add event")) {
-          clearAssistantSession();
-          return [{ role: "assistant", content: defaultGreeting() }];
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return loadTurns();
-  });
+  // Default greeting on SSR + first client paint; restore session after mount.
+  const [turns, setTurns] = useState<Turn[]>(() => [{ role: "assistant", content: defaultGreeting() }]);
+  const [sessionReady, setSessionReady] = useState(false);
   const [pending, setPending] = useState<PendingAssistantAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(TURNS_KEY);
+      if (raw?.includes("I can't add it for you") || raw?.includes("Open Calendar then tap Add event")) {
+        clearAssistantSession();
+        setTurns([{ role: "assistant", content: defaultGreeting() }]);
+      } else {
+        setTurns(loadTurns());
+      }
+    } catch {
+      setTurns(loadTurns());
+    }
+    setSessionReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
     sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns.map(({ pending: _p, ...rest }) => rest)));
     const last = [...turns].reverse().find((t) => t.content.trim());
     if (last) sessionStorage.setItem(PREVIEW_KEY, last.content);
     window.dispatchEvent(new Event("hearth-assistant-preview"));
-  }, [turns]);
+  }, [turns, sessionReady]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
