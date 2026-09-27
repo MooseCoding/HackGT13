@@ -104,17 +104,70 @@ function parseToolArgs(raw: string): Record<string, unknown> {
   }
 }
 
-/** Deterministic draft path when the model is offline but the user clearly asks to schedule. */
+function wantsCalendarEvent(message: string) {
+  const q = message.toLowerCase();
+  if (
+    /\b(add|set|create|schedule|put|book)\b/.test(q) &&
+    /\b(event|calendar|drop\s?-?off|appointment|dinner|lunch|call|pickup|practice|game)\b/.test(q)
+  ) {
+    return true;
+  }
+  // “school dropoff on October 1 at 8am”
+  if (/\b(drop\s?-?off|appointment|dinner|practice)\b/.test(q) && /\b(on|at|october|november|\d{1,2}\/\d{1,2})\b/.test(q)) {
+    return true;
+  }
+  return false;
+}
+
+function wantsReminder(message: string) {
+  return /\b(remind|reminder|don't forget|dont forget)\b/i.test(message);
+}
+
+function isConfirmPhrase(message: string) {
+  return /^(yes|yeah|yep|yup|confirm|do it|do it yourself|create it|add it|sounds good|ok|okay|please do|go ahead)\b/i.test(
+    message.trim(),
+  );
+}
+
+function modelRefusedAction(reply: string) {
+  return /\b(can'?t|cannot|unable to|won'?t|will not)\b.{0,40}\b(add|create|schedule|set)\b/i.test(reply) ||
+    /\byou('ll| will) add it\b/i.test(reply) ||
+    /\bopen calendar\b.{0,40}\badd event\b/i.test(reply);
+}
+
+function lastUserScheduleRequest(history: AssistantTurn[] | undefined, current: string) {
+  if (wantsCalendarEvent(current) || wantsReminder(current)) return current;
+  const prior = [...(history ?? [])].reverse().find((turn) => turn.role === "user" && wantsCalendarEvent(turn.content));
+  return prior?.content ?? null;
+}
+
+/** Deterministic draft/create path when Muse skips tools or refuses. */
 async function localScheduleAssist(
   message: string,
   runtime: FamilyToolRuntime,
+  history?: AssistantTurn[],
 ): Promise<AssistantRunResult | null> {
-  const q = message.toLowerCase();
-  const wantsEvent =
-    /\b(add|set|create|schedule|put)\b/.test(q) &&
-    /\b(event|on the calendar|calendar|dropoff|appointment|dinner|call)\b/.test(q);
-  const confirm = /^(yes|yeah|yep|confirm|do it|create it|sounds good|ok|okay)\b/i.test(message.trim());
-  if (wantsEvent) {
+  const scheduleText = lastUserScheduleRequest(history, message);
+  if (isConfirmPhrase(message) && scheduleText && scheduleText !== message) {
+    const drafted = await executeFamilyTool("draft_calendar_event", { text: scheduleText }, runtime);
+    if (drafted.ok && drafted.pending?.kind === "event") {
+      const created = await executeFamilyTool(
+        "confirm_and_create_event",
+        { draft_text: drafted.pending.draftText, confirmed: true },
+        runtime,
+      );
+      return {
+        reply: created.ok
+          ? `${created.summary} It’s on the family calendar now.`
+          : created.summary,
+        source: "local",
+        pending: null,
+        toolsUsed: ["draft_calendar_event", "confirm_and_create_event"],
+      };
+    }
+  }
+
+  if (wantsCalendarEvent(message) || (scheduleText === message && wantsCalendarEvent(message))) {
     const drafted = await executeFamilyTool("draft_calendar_event", { text: message }, runtime);
     if (!drafted.ok || !drafted.pending || drafted.pending.kind !== "event") {
       return { reply: drafted.summary, source: "local", pending: null, toolsUsed: ["draft_calendar_event"] };
@@ -122,15 +175,26 @@ async function localScheduleAssist(
     return {
       reply: `Draft ready: ${drafted.pending.title} · ${drafted.pending.when}${
         drafted.pending.location ? ` @ ${drafted.pending.location}` : ""
-      }. Confirm and I’ll add it to the family calendar.`,
+      }. Tap Confirm and create and I’ll add it to the family calendar.`,
       source: "local",
       pending: drafted.pending,
       toolsUsed: ["draft_calendar_event"],
     };
   }
-  if (confirm) {
-    return null;
+
+  if (wantsReminder(message)) {
+    const drafted = await executeFamilyTool("draft_reminder", { text: message }, runtime);
+    if (!drafted.ok || !drafted.pending || drafted.pending.kind !== "reminder") {
+      return { reply: drafted.summary, source: "local", pending: null, toolsUsed: ["draft_reminder"] };
+    }
+    return {
+      reply: `Draft reminder for ${drafted.pending.assigneeName}: ${drafted.pending.text} (${drafted.pending.dueHint}). Tap Confirm and create to save it.`,
+      source: "local",
+      pending: drafted.pending,
+      toolsUsed: ["draft_reminder"],
+    };
   }
+
   return null;
 }
 
@@ -182,9 +246,10 @@ export async function runFamilyAssistant(input: {
     }
   }
 
-  if (input.runtime && !aiConfigured()) {
-    const local = await localScheduleAssist(message, input.runtime);
-    if (local) return local;
+  // Prefer deterministic calendar/reminder tools over a chatty refusal.
+  if (input.runtime && (wantsCalendarEvent(message) || wantsReminder(message) || isConfirmPhrase(message))) {
+    const forced = await localScheduleAssist(message, input.runtime, input.history);
+    if (forced) return forced;
   }
 
   if (aiConfigured() && input.runtime) {
@@ -232,6 +297,10 @@ export async function runFamilyAssistant(input: {
 
         if (!turn.toolCalls.length) {
           const reply = (turn.content || "").trim() || answerFamilyAssistant(message, input.context);
+          if (modelRefusedAction(reply) || wantsCalendarEvent(message) || wantsReminder(message)) {
+            const forced = await localScheduleAssist(message, input.runtime, input.history);
+            if (forced) return { ...forced, source };
+          }
           return { reply, source, pending, toolsUsed };
         }
 
@@ -253,6 +322,11 @@ export async function runFamilyAssistant(input: {
         }
       }
 
+      if (!pending && (wantsCalendarEvent(message) || wantsReminder(message))) {
+        const forced = await localScheduleAssist(message, input.runtime, input.history);
+        if (forced) return { ...forced, source };
+      }
+
       return {
         reply: pending
           ? pending.kind === "event"
@@ -268,7 +342,7 @@ export async function runFamilyAssistant(input: {
     } catch (error) {
       console.error("Hearth Assistant tool loop failed; using fallback.", error);
       if (input.runtime) {
-        const local = await localScheduleAssist(message, input.runtime);
+        const local = await localScheduleAssist(message, input.runtime, input.history);
         if (local) return local;
       }
     }
@@ -295,6 +369,10 @@ export async function runFamilyAssistant(input: {
           { role: "user", content: message },
         ],
       });
+      if (input.runtime && (modelRefusedAction(content) || wantsCalendarEvent(message))) {
+        const forced = await localScheduleAssist(message, input.runtime, input.history);
+        if (forced) return { ...forced, source };
+      }
       return { reply: content, source, pending: null };
     } catch (error) {
       console.error("Hearth Assistant AI request failed; using local fallback.", error);
@@ -302,7 +380,7 @@ export async function runFamilyAssistant(input: {
   }
 
   if (input.runtime) {
-    const local = await localScheduleAssist(message, input.runtime);
+    const local = await localScheduleAssist(message, input.runtime, input.history);
     if (local) return local;
   }
 
