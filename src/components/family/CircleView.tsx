@@ -73,7 +73,7 @@ export function CircleView({
       <header className="border-b border-rule pb-4">
         <h1 className={`font-bold ${easy ? "text-2xl" : "text-xl"}`}>Circle</h1>
         <p className="mt-1 text-sm leading-6 text-mute">
-          {familyName} — who&apos;s here, when you last heard from them, and photos from chat.
+          {familyName} - who&apos;s here, when you last heard from them, photos from chat.
         </p>
       </header>
 
@@ -103,12 +103,12 @@ export function CircleView({
       </section>
 
       {quiet.length ? (
-        <section className="mt-6" aria-labelledby="quiet-porch-heading">
-          <h2 id="quiet-porch-heading" className={`font-semibold text-ink ${easy ? "text-lg" : "text-base"}`}>
-            Quiet porch
+        <section className="mt-6" aria-labelledby="quiet-week-heading">
+          <h2 id="quiet-week-heading" className={`font-semibold text-ink ${easy ? "text-lg" : "text-base"}`}>
+            Quiet this week
           </h2>
           <p className="mt-1 text-sm text-mute">
-            Not a diagnosis — just a note that someone hasn&apos;t posted in a while.
+            Not a diagnosis. Just a note that someone hasn&apos;t posted in a while.
           </p>
           <ul className="mt-3 space-y-2">
             {quiet.map(({ member, lastHeard }) => (

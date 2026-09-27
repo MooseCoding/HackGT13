@@ -50,7 +50,7 @@ export function familyCallPeriodNoun(frequency: FamilyCallFrequency) {
 export function familyCallSetupHeading(frequency: FamilyCallFrequency, rescheduling: boolean) {
   if (frequency === "none") return "";
   const rhythm = familyCallFrequencyLabel(frequency).toLowerCase();
-  return rescheduling ? `Adjust your ${rhythm} family calls` : `Line up ${rhythm} family calls`;
+  return rescheduling ? `Change ${rhythm} family calls` : `Set up ${rhythm} family calls`;
 }
 
 export function familyCallReminderSource(frequency: FamilyCallFrequency = DEFAULT_FAMILY_CALL_FREQUENCY) {

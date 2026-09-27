@@ -94,7 +94,7 @@ export function InsuranceSettings({
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-mute">Settings</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Insurance</h1>
         <p className="mt-3 max-w-xl text-base leading-7 text-mute">
-          Add coverage for a family member so Hearth can match them with in-network clinicians when they appear in
+          Add coverage for a family member so Familyr can match them with in-network clinicians if they show up in
           the care-team portal.
         </p>
       </header>
@@ -122,7 +122,7 @@ export function InsuranceSettings({
       <section className="mt-8 rounded-xl border border-line bg-surface px-4 py-5 shadow-sm shadow-black/[0.03]">
         <h2 className="text-sm font-semibold text-ink">Coverage details</h2>
         <p className="mt-2 text-sm text-mute">
-          Demo only — stored locally for this session. Real eligibility checks would run against a payer API.
+          Demo only - stored locally for this session. Real eligibility checks would run against a payer API.
         </p>
 
         <div className="mt-5 space-y-4">

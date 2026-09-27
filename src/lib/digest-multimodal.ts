@@ -17,25 +17,12 @@ const THEME_MOOD: Record<string, StorybookMood> = {
   connection: "warm",
 };
 
-const THEME_ILLUSTRATION: Record<string, string> = {
-  gathering: "🍲",
-  outdoors: "🌳",
-  care: "💛",
-  memory: "📷",
-  celebration: "🎉",
-  connection: "🏠",
-};
-
 function memberName(members: Member[], id: string) {
   return members.find((m) => m.id === id)?.name.split(" ")[0] ?? "Someone";
 }
 
 function moodFor(theme?: string): StorybookMood {
   return THEME_MOOD[theme ?? "connection"] ?? "warm";
-}
-
-function illustrationFor(theme?: string) {
-  return THEME_ILLUSTRATION[theme ?? "connection"] ?? "🏠";
 }
 
 function weekOfFrom(weekOf: string) {
@@ -56,7 +43,7 @@ function buildPodcast(digest: Digest, weekPostsList: Post[], events: CalendarEve
   const chapters: PodcastChapter[] = [
     {
       id: "intro",
-      title: "Family Radio — this week on Hestia",
+      title: "Family Radio - this week on Hestia",
       narration: `Welcome to Family Radio, your two-minute Hestia broadcast. ${digest.title}.`,
     },
     {
@@ -102,7 +89,7 @@ function buildPodcast(digest: Digest, weekPostsList: Post[], events: CalendarEve
     id: "close",
     title: "Until next week",
     narration:
-      "That's your Family Radio news for this week — about two minutes of warmth from the circle. The hearth stays lit until next time.",
+      "That's the week. About two minutes. Talk next week.",
   });
 
   return chapters;
@@ -120,16 +107,14 @@ function buildStorybook(
       id: "cover",
       title: digest.title,
       caption: `Week of ${digest.weekOf}`,
-      scene: "The hearth glows as the family gathers around this week's story.",
-      illustration: illustrationFor(digest.theme),
+      scene: "What happened in the circle this week.",
       mood,
     },
     {
       id: "narrative",
       title: "This week's story",
       caption: digest.narrative,
-      scene: "A warm retelling of what happened in the circle.",
-      illustration: "📖",
+      scene: "What people actually said and did.",
       mood,
     },
   ];
@@ -140,8 +125,7 @@ function buildStorybook(
       id: `highlight-${i}`,
       title: name,
       caption: rest.join(": "),
-      scene: `${name} had a moment worth remembering.`,
-      illustration: ["⭐", "💬", "🌟", "✨"][i % 4],
+      scene: `${name} showed up this week.`,
       mood: i % 2 === 0 ? "joyful" : mood,
     });
   }
@@ -167,7 +151,6 @@ function buildStorybook(
         .map((e) => e.title)
         .join(" · "),
       scene: "Plans ahead for the circle.",
-      illustration: "📅",
       mood: "calm",
     });
   }
@@ -175,9 +158,8 @@ function buildStorybook(
   pages.push({
     id: "end",
     title: "See you next week",
-    caption: "Hestia will be back with another chapter from your circle.",
-    scene: "The porch light stays on.",
-    illustration: "🕯️",
+    caption: "Hestia will be back next week with another one.",
+    scene: "Same time next week.",
     mood: "warm",
   });
 

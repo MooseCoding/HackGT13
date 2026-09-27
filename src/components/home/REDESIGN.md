@@ -14,4 +14,4 @@ Keep the product flow; preserve the frosted-glass / Instagram Sans visual langua
 
 ## Out of scope for a visual pass
 
-Auth callback, onboarding form fields, RLS, and demo cookie (`hearth-demo`) — change those only if the flow itself is changing.
+Auth callback, onboarding form fields, RLS, and demo cookie (`hearth-demo`) - change those only if the flow itself is changing.

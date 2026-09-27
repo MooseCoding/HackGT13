@@ -1,5 +1,5 @@
 /**
- * Client-side demo data and mutations — no API calls during sample mode.
+ * Client-side demo data and mutations - no API calls during sample mode.
  * Live users continue to use /api routes.
  */
 

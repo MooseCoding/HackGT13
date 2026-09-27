@@ -1,6 +1,6 @@
 "use client";
 
-import { HearthMark } from "@/components/HearthMark";
+import { FamilyrMark } from "@/components/FamilyrMark";
 import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant";
 import { META_MUSE_ATTRIBUTION } from "@/lib/ai/attribution";
 import { DIGEST_NAME } from "@/lib/digest-constants";
@@ -20,7 +20,7 @@ const TURNS_KEY = "hearth-assistant-turns";
 const PREVIEW_KEY = "hearth-assistant-preview";
 
 function defaultGreeting() {
-  return `Hi! I'm Hearth Assistant. Ask about chats, calendar, ${DIGEST_NAME}, invites, or Larger text.`;
+  return `Hey. I'm Familyr Assistant. Ask about Messages, the calendar, ${DIGEST_NAME}, invites, or Larger text. I'm not Hestia, just in-app help.`;
 }
 
 function loadTurns(): Turn[] {
@@ -44,7 +44,7 @@ export function assistantPreviewText() {
   }
 }
 
-export function HearthAssistantChat({
+export function FamilyrAssistantChat({
   context,
   easy = false,
   demo = false,
@@ -124,11 +124,11 @@ export function HearthAssistantChat({
             <div key={`${t.role}-${i}`} className={`flex gap-2 ${mine ? "justify-end" : "justify-start"}`}>
               {!mine ? (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-tint">
-                  <HearthMark className="h-5 w-5" />
+                  <FamilyrMark className="h-5 w-5" />
                 </span>
               ) : null}
               <div className={`max-w-[85%] ${mine ? "flex flex-col items-end" : ""}`}>
-                {!mine ? <p className="mb-0.5 text-xs text-mute">Hearth Assistant</p> : null}
+                {!mine ? <p className="mb-0.5 text-xs text-mute">Familyr Assistant</p> : null}
                 <div
                   className={`whitespace-pre-wrap leading-relaxed ${
                     mine
@@ -154,10 +154,10 @@ export function HearthAssistantChat({
         {sending ? (
           <div className="flex gap-2">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-tint">
-              <HearthMark className="h-5 w-5" />
+              <FamilyrMark className="h-5 w-5" />
             </span>
             <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5 text-sm text-mute" role="status">
-              Hearth is thinking…
+              One sec…
             </div>
           </div>
         ) : null}
@@ -192,11 +192,11 @@ export function HearthAssistantChat({
         }}
       >
         <div className="flex items-end gap-2">
-          <label className="sr-only" htmlFor="hearth-assistant-input">
-            Message Hearth Assistant
+          <label className="sr-only" htmlFor="familyr-assistant-input">
+            Message Familyr Assistant
           </label>
           <textarea
-            id="hearth-assistant-input"
+            id="familyr-assistant-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -205,7 +205,7 @@ export function HearthAssistantChat({
                 send();
               }
             }}
-            placeholder="Ask about Hearth…"
+            placeholder="Ask how something works…"
             rows={1}
             className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none focus:border-accent ${
               easy ? "text-base" : "text-sm"

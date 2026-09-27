@@ -1,7 +1,7 @@
 import { formatWhen } from "./clock";
 import type { CalendarEvent, Member } from "./types";
 
-/** Demo personal ("mine") events for the Alvarez circle — privacy theater for scheduling. */
+/** Demo personal ("mine") events for the Alvarez circle - privacy theater for scheduling. */
 export const alvarezPersonalEvents: CalendarEvent[] = [
   {
     id: "evt-m-miguel-yard",

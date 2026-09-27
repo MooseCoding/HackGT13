@@ -23,7 +23,7 @@ export function Composer() {
     };
     const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SR) {
-      setBody((b) => b || "Voice isn't available in this browser — type instead.");
+      setBody((b) => b || "Voice isn't available in this browser. Just type instead.");
       return;
     }
     const rec = new SR();
@@ -82,7 +82,7 @@ export function Composer() {
         ref={textRef}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={easy ? "Tap Talk, or type a short note…" : "A note, a memory, a photo caption…"}
+        placeholder={easy ? "Tap Talk, or type a short note…" : "a note, a photo, whatever"}
         className={`mt-3 w-full resize-none border border-line bg-paper px-4 py-3 outline-none focus:border-ink ${
           easy ? "min-h-32 text-xl" : "min-h-24"
         }`}

@@ -43,8 +43,8 @@ export function LiveSignalDemo() {
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center rounded-sm bg-emerald-100 text-xs font-bold text-emerald-800">RO</span>
             <div>
-              <p className="text-sm font-semibold">Hearth Signal</p>
-              <p className="text-[10px] text-emerald-100">Hearth intake · online</p>
+              <p className="text-sm font-semibold">Familyr Signal</p>
+              <p className="text-[10px] text-emerald-100">Familyr intake · online</p>
             </div>
           </div>
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -79,7 +79,7 @@ export function LiveSignalDemo() {
               activeStep >= 1 ? "block" : "hidden"
             }`}
           >
-            Got it privately. I&apos;ve updated your communication trend — no diagnosis, and your family chat stays
+            Got it privately. I&apos;ve updated your communication trend - no diagnosis, and your family chat stays
             private.
           </div>
           <button
@@ -124,7 +124,7 @@ export function LiveSignalDemo() {
           </ol>
           {error ? (
             <p className="mt-4 border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">
-              {error} Open Hearth through &ldquo;Preview the demo family&rdquo; first.
+              {error} Open Familyr through &ldquo;Preview the demo family&rdquo; first.
             </p>
           ) : null}
         </section>

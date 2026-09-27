@@ -3,10 +3,10 @@ import type { Member, Post } from "./types";
 
 export const GROUP_THREAD = "group";
 export const ASSISTANT_THREAD = "assistant";
-/** Consented clinical intake — never shown in family chat threads. */
+/** Consented clinical intake - never shown in family chat threads. */
 export const CLINICAL_INTAKE_THREAD = "clinical:intake";
 export const FAMILY_GC_LABEL = "Family chat";
-export const ASSISTANT_LABEL = "Hearth Assistant";
+export const ASSISTANT_LABEL = "Familyr Assistant";
 
 export function familyInitials(name: string) {
   const words = name.replace(/^the\s+/i, "").split(/\s+/).filter(Boolean);

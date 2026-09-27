@@ -111,6 +111,7 @@ export function CalendarBoard({
   const [rsvpBusyId, setRsvpBusyId] = useState<string | null>(null);
   const [supplyBusyId, setSupplyBusyId] = useState<string | null>(null);
   const [orderingSupplyId, setOrderingSupplyId] = useState<string | null>(null);
+  const [supplyOrders, setSupplyOrders] = useState<Record<string, { message: string }>>({});
   const autoScheduledRef = useRef(false);
   const addEventRef = useRef<HTMLElement>(null);
   const demoDayPickedRef = useRef(false);
@@ -331,7 +332,7 @@ export function CalendarBoard({
         const rhythm = familyCallFrequencyLabel(familyCallFrequency).toLowerCase();
         setMsg(`${verb} ${data.count} ${rhythm} family call${data.count === 1 ? "" : "s"} to the calendar${g}.`);
       } else {
-        setMsg("No open time in the next few weeks. Check back once things clear up.");
+        setMsg("No open slots in the next few weeks. Try again later.");
       }
       if (data.events?.[0]) setPick(localDateKey(data.events[0].startsAt));
       setView("family");
@@ -492,7 +493,11 @@ export function CalendarBoard({
           kind: suggestion.kind,
           location: recipient?.location,
         });
-        setMsg(data.message);
+        if (suggestion.supplyId) {
+          setSupplyOrders((prev) => ({ ...prev, [suggestion.supplyId!]: { message: data.message } }));
+        } else {
+          setMsg(data.message);
+        }
         return;
       }
       const res = await fetch("/api/commerce", {
@@ -509,7 +514,12 @@ export function CalendarBoard({
       });
       if (res.ok) {
         const data = (await res.json()) as { message?: string };
-        setMsg(data.message ?? "Demo order placed — delivery on the way.");
+        const message = data.message ?? "Demo order placed. Delivery is on the way.";
+        if (suggestion.supplyId) {
+          setSupplyOrders((prev) => ({ ...prev, [suggestion.supplyId!]: { message } }));
+        } else {
+          setMsg(message);
+        }
       }
     } finally {
       setOrderingSupplyId(null);
@@ -533,7 +543,7 @@ export function CalendarBoard({
       if (googleToken) q.set("googleToken", googleToken);
       const res = await fetch(`/api/events?${q}`, { method: "DELETE", credentials: "include" });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error || "Couldn't remove that event — try again.");
+      if (!res.ok) throw new Error(data.error || "Couldn't remove that event. Try again.");
       setEvents((prev) => prev.filter((x) => x.id !== e.id));
       if (pick && picked.length <= 1) setPick(null);
       if (isWeeklyFamilyCall(e)) {
@@ -542,7 +552,7 @@ export function CalendarBoard({
         setMsg("Removed from the calendar.");
       }
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Couldn't remove that event — try again.");
+      setMsg(err instanceof Error ? err.message : "Couldn't remove that event. Try again.");
       await load();
     } finally {
       setDeletingId(null);
@@ -560,8 +570,8 @@ export function CalendarBoard({
           <p className="mt-1 text-sm text-mute">
             {view === "family"
               ? demoPersonalCalendars
-                ? "Shared plans for your circle. Scheduling also checks personal calendars."
-                : "What's coming up for everyone in your circle"
+                ? "Shared events for your circle. Call scheduling looks at personal calendars too."
+                : "Upcoming events for your circle"
               : googleConnected
                 ? demoPersonalCalendars
                   ? myPersonalCount
@@ -570,7 +580,7 @@ export function CalendarBoard({
                   : googlePersonalCount
                     ? `${googlePersonalCount} event${googlePersonalCount === 1 ? "" : "s"} from your Google Calendar`
                     : "Your Google Calendar is connected"
-                : "Your schedule. Connect Google Calendar to pull events in."}
+                : "Your events. Connect Google Calendar if you want them here too."}
           </p>
         </div>
         <div
@@ -610,7 +620,7 @@ export function CalendarBoard({
 
       {demo && familyId === "alvarez" && view === "family" ? (
         <p className="mt-3 rounded-sm border border-rule bg-accent-tint px-3 py-2 text-sm text-ink">
-          Demo: Saturday&apos;s soccer tournament has sample RSVPs — tap <span className="font-medium">Going</span>,{" "}
+          Demo: Saturday&apos;s soccer tournament has sample RSVPs. Tap <span className="font-medium">Going</span>,{" "}
           <span className="font-medium">Maybe</span>, or <span className="font-medium">Can&apos;t make it</span> to try it.
         </p>
       ) : null}
@@ -629,18 +639,18 @@ export function CalendarBoard({
                 {needsWeeklyCalls
                   ? familyCallSetupHeading(familyCallFrequency, hasWeeklyCalls)
                   : hasWeeklyCalls
-                    ? "Your family calls are all set"
+                    ? "Family calls are set up"
                     : familyCallSetupHeading(familyCallFrequency, false)}
               </p>
               {needsWeeklyCalls ? (
                 <p className="mt-1 text-sm text-mute">
                   {hasWeeklyCalls
                     ? `${weeklyProposal.length} ${familyCallPeriodNoun(familyCallFrequency)}${weeklyProposal.length === 1 ? "" : "es"} still need${weeklyProposal.length === 1 ? "s" : ""} a call. ${consistentSlotLabel(weeklyProposal)}.`
-                    : `${consistentSlotLabel(weeklyProposal)}. We skip times that are already booked${googleConnected ? ", including your Google Calendar" : ""}.`}
+                    : `${consistentSlotLabel(weeklyProposal)}. We skip times that conflict${googleConnected ? ", including your Google Calendar" : ""}.`}
                 </p>
               ) : hasWeeklyCalls ? (
                 <p className="mt-1 text-sm text-mute">
-                  We&apos;ll suggest new call times on your {familyCallFrequencyLabel(familyCallFrequency).toLowerCase()} schedule.
+                  We&apos;ll pick new call times when your schedule changes.
                 </p>
               ) : null}
             </div>
@@ -673,9 +683,9 @@ export function CalendarBoard({
               </ul>
               {demoPersonalCalendars && personalRows.length ? (
                 <div className="mt-4 border-t border-rule pt-3">
-                  <p className="text-sm font-medium">What we skipped</p>
+                  <p className="text-sm font-medium">Busy times</p>
                   <p className="mt-0.5 text-xs text-mute">
-                    Demo only. In the real app, other people&apos;s calendars stay private — we only use them to find open slots.
+                    Demo only. Other people&apos;s calendars stay private in the real app. We only look at free/busy.
                   </p>
                   <ul className="mt-2 space-y-1.5 text-sm">
                     {personalRows.slice(0, 6).map((row) => (
@@ -695,8 +705,8 @@ export function CalendarBoard({
                   </ul>
                   {personalConflicts.length ? (
                     <p className="mt-2 text-xs text-clinic">
-                      {personalConflicts.map((r) => `${r.memberName}'s ${r.title.toLowerCase()}`).join(" and ")} overlap
-                      the usual Sunday call time, so we skip or move those weeks.
+                      {personalConflicts.map((r) => `${r.memberName}'s ${r.title.toLowerCase()}`).join(" and ")} hit the
+                      usual Sunday call slot, so we moved or skipped those weeks.
                     </p>
                   ) : null}
                 </div>
@@ -721,7 +731,7 @@ export function CalendarBoard({
       {view === "family" && familyCallFrequency === "none" && !demo ? (
         <div className="mt-4 border border-rule bg-surface p-4">
           <p className="font-medium text-ink">Family call rhythm</p>
-          <p className="mt-1 text-sm text-mute">Family calls won&apos;t be suggested automatically. You can change that here.</p>
+          <p className="mt-1 text-sm text-mute">Family calls won&apos;t be added automatically. Change that here if you want.</p>
           <label className="mt-3 block text-sm">
             <span className="sr-only">Call rhythm</span>
             <select
@@ -903,6 +913,7 @@ export function CalendarBoard({
                       meId={me.id}
                       busySupplyId={supplyBusyId}
                       orderingSupplyId={orderingSupplyId}
+                      orderedBySupplyId={supplyOrders}
                       onClaim={(supplyId) => void claimSupply(e, supplyId)}
                       onOrder={(suggestion) => void orderSupply(suggestion)}
                     />
@@ -922,12 +933,12 @@ export function CalendarBoard({
         aria-labelledby="add-event-heading"
       >
         <h3 id="add-event-heading" className="font-semibold">Add an event</h3>
-        <p className="mt-1 text-sm text-mute">Just type it naturally — &quot;family dinner Sunday at 6&quot; works fine.</p>
+        <p className="mt-1 text-sm text-mute">Type it like you&apos;d say it. Example: family dinner Sunday at 6.</p>
         {demo ? (
           <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
-            <p className="font-medium">Try the conflict check</p>
+            <p className="font-medium">Try a schedule conflict</p>
             <p className="mt-1 text-xs text-amber-900">
-              Schedule something near Sofia&apos;s soccer tournament — Hearth flags overlaps before you save.
+              Schedule brunch near Sofia&apos;s soccer tournament. You&apos;ll get a warning before you save.
             </p>
             <button
               type="button"

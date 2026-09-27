@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Clinician sharing — Familyr",
+  title: "Clinician sharing - Familyr",
   description: "Review warnings and confirm clinician pattern sharing for your profile.",
 };
 

@@ -1,4 +1,4 @@
-# Hearth demo runbook
+# Familyr demo runbook
 
 ## Before judges arrive
 
@@ -8,15 +8,15 @@
 4. In profile A, create a family with both people. Copy the invite code from the family header.
 5. In profile B, choose **Join a circle**, enter the code, and claim the exact member name created in step 4.
 6. Send a harmless test post from profile A. Confirm it appears in profile B within four seconds and remains after refresh. Delete test-only data in Supabase before judging if desired.
-7. Return both profiles to the family chat. Keep the Alvarez sample family ready via the homepage **Preview the demo family** button (demo is entry-only — there is no in-app Demo toggle).
+7. Return both profiles to the family chat. Keep the Alvarez sample family ready via the homepage **Preview the demo family** button (demo is entry-only - there is no in-app Demo toggle).
 
 ## 90-second live path
 
-1. **0:00–0:20 — Real family feed.** Post from browser profile A. Point to the same post appearing in profile B, then refresh profile B to show persistence and family isolation.
-2. **0:20–0:45 — Explainable signal.** Open **Clinician → Elena Alvarez**. Read the late-night percentage change, show both date ranges, and expand the visible source posts. Say: “This describes activity; it does not diagnose from word choice.”
-3. **0:45–1:00 — Insufficient data.** Open **Ruth Okonkwo** in demo mode and show the explicit minimum-data state.
-4. **1:00–1:15 — Consent.** In the family header, turn **Clinician sharing** off. Refresh the clinician list to show Elena disappear. Turn it back on and show her return.
-5. **1:15–1:30 — Close the loop.** Reopen Elena and click **Contact patient directly**. Show the prefilled outreach draft and note that family members are not notified.
+1. **0:00–0:20 - Real family feed.** Post from browser profile A. Point to the same post appearing in profile B, then refresh profile B to show persistence and family isolation.
+2. **0:20–0:45 - Explainable signal.** Open **Clinician → Elena Alvarez**. Read the late-night percentage change, show both date ranges, and expand the visible source posts. Say: “This describes activity; it does not diagnose from word choice.”
+3. **0:45–1:00 - Insufficient data.** Open **Ruth Okonkwo** in demo mode and show the explicit minimum-data state.
+4. **1:00–1:15 - Consent.** In the family header, turn **Clinician sharing** off. Refresh the clinician list to show Elena disappear. Turn it back on and show her return.
+5. **1:15–1:30 - Close the loop.** Reopen Elena and click **Contact patient directly**. Show the prefilled outreach draft and note that family members are not notified.
 
 ## Backup recording shot list
 

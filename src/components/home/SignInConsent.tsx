@@ -63,7 +63,7 @@ export function SignInConsent({
           ))}
         </select>
         <span className="mt-1 block text-xs text-mute">
-          We suggest open times that fit everyone&apos;s calendars. You can change this later.
+          We suggest open times that fit everyones calendars. You can change this later.
         </span>
       </label>
     </div>

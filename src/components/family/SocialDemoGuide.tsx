@@ -30,7 +30,7 @@ export function SocialDemoGuide() {
   return (
     <div className="mx-3 mb-2 flex items-center justify-between gap-3 border border-rule bg-accent-tint px-3 py-2">
       <p className="text-sm text-ink">
-        Try mutual aid, conversation starters, check-in, or supply hints in chat.
+        Try mutual aid, conversation starters, check-in, or supply hints in chat. Kinda the whole demo.
       </p>
       <button
         type="button"

@@ -54,7 +54,7 @@ function eventBlob(event: CalendarEvent) {
   return [event.title, event.location, event.sourceText].filter(Boolean).join(" ").toLowerCase();
 }
 
-/** Local keyword rules — one or more reminders per calendar event. */
+/** Local keyword rules - one or more reminders per calendar event. */
 export function remindersFromCalendarEvent(
   event: CalendarEvent,
   members: Member[],
@@ -99,7 +99,7 @@ export function remindersFromCalendarEvent(
       add(driver, "Pick up tomatoes from the south fence");
     } else {
       const elder = elderAttendee(familyMembers, attendeeIds);
-      add(driver, elder ? `Pick up ${firstName(elder)} — ${event.title}` : `Pick up for ${event.title}`);
+      add(driver, elder ? `Pick up ${firstName(elder)} - ${event.title}` : `Pick up for ${event.title}`);
     }
     return drafts;
   }

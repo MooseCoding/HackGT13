@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** Temporarily hidden — live signal demo is still a test idea. */
+/** Temporarily hidden - live signal demo is still a test idea. */
 const SHOW_LIVE_SIGNAL = false;
 
 function navClass(active: boolean) {

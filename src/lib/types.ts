@@ -14,7 +14,7 @@ export type AudioMetrics = {
 };
 
 export type MemberInsurance = {
-  /** Demo carrier id — see INSURANCE_CARRIERS in clinical/insurance.ts */
+  /** Demo carrier id - see INSURANCE_CARRIERS in clinical/insurance.ts */
   carrierId: string;
   policyMemberId?: string;
   groupId?: string;
@@ -78,9 +78,8 @@ export type StorybookPage = {
   id: string;
   title: string;
   caption: string;
-  /** Short scene description for illustrated pages without photos. */
+  /** Short scene description for pages without photos. */
   scene?: string;
-  illustration?: string;
   photoUrl?: string;
   photoAlt?: string;
   mood: StorybookMood;
@@ -180,26 +179,6 @@ export type SafeCheckInStatus = {
   primaryContactName?: string;
 };
 
-export type WishlistStatus = "wishlist" | "ordered" | "purchased";
-
-export type WishlistItem = {
-  id: string;
-  familyId: FamilyId;
-  /** Who wants or needs this */
-  forMemberId: MemberId;
-  title: string;
-  note?: string;
-  kind?: CommerceKind;
-  items?: CommerceItem[];
-  estimatedTotal?: number;
-  sourcePostId?: string;
-  createdBy: MemberId;
-  createdAt: string;
-  status: WishlistStatus;
-  orderedBy?: MemberId;
-  orderedAt?: string;
-};
-
 export type ReminderStatus = "open" | "done" | "snoozed";
 
 export type Reminder = {
@@ -235,7 +214,7 @@ export type CalendarEvent = {
   createdBy: MemberId;
   /** Per-member RSVP for family events. */
   attending?: Partial<Record<MemberId, RsvpStatus>>;
-  /** Shared bring list for gatherings — family members claim items. */
+  /** Shared bring list for gatherings - family members claim items. */
   supplies?: EventSupplyItem[];
   /** Which board this event belongs on. Google events and new local events set this explicitly. */
   calendarScope?: "family" | "mine";
@@ -249,7 +228,7 @@ export type Family = {
   name: string;
   tagline: string;
   inviteCode?: string;
-  /** When true, Hearth schedules family calls without a manual "Add to calendar" step. */
+  /** When true, Familyr schedules family calls without a manual "Add to calendar" step. */
   autoAddFamilyCalls?: boolean;
 };
 
@@ -262,7 +241,7 @@ export type Digest = {
   highlights: string[];
   theme?: string;
   generatedAt: string;
-  /** How the story was written — Muse/Groq when configured, else local templates. */
+  /** How the story was written - Muse/Groq when configured, else local templates. */
   source?: "muse" | "groq" | "local";
   /** Full narration script for podcast / listen mode. */
   audioScript?: string;
@@ -270,7 +249,7 @@ export type Digest = {
   podcast?: PodcastChapter[];
   /** Stylized digital storybook pages for kids and visual browsing. */
   storybook?: StorybookPage[];
-  /** Interactive nostalgia throwbacks — "On This Day" memory cards. */
+  /** Interactive nostalgia throwbacks - "On This Day" memory cards. */
   onThisDay?: OnThisDayMemory[];
   /** Family Radio broadcast metadata (browser TTS, no server audio). */
   familyRadio?: FamilyRadioMeta;

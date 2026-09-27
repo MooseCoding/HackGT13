@@ -1,6 +1,6 @@
 "use client";
 
-import { HearthMark } from "@/components/HearthMark";
+import { FamilyrLogo } from "@/components/FamilyrLogo";
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import Link from "next/link";
@@ -10,15 +10,15 @@ import { useState } from "react";
 const TRUST_POINTS = [
   {
     title: "Opt-in only",
-    body: "Patients appear after a family member turns clinician sharing on.",
+    body: "Patients show up after someone in the family turns clinician sharing on.",
   },
   {
-    title: "Patterns, not raw chat",
-    body: "You see activity signals and source posts — never the full group thread by default.",
+    title: "Patterns, not the whole chat",
+    body: "You get activity signals and source posts. Not the full family thread by default.",
   },
   {
-    title: "Personal baselines",
-    body: "Changes are measured against each person's own history, not a generic norm.",
+    title: "Their own baseline",
+    body: "We compare someone to their own history, not a generic average.",
   },
 ] as const;
 
@@ -61,16 +61,15 @@ export function ClinicianLoginPage({
     <div className="flex min-h-full flex-col bg-ground text-ink">
       <header className="border-b border-chrome-border bg-chrome-bg px-4 py-4 text-chrome-fg sm:px-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <HearthMark className="h-6 w-6" />
-            <span className="font-brand text-xl">Hearth</span>
+          <div className="flex items-center gap-2">
+            <FamilyrLogo />
             <span className="text-sm font-semibold text-chrome-fg-muted">Clinical</span>
-          </Link>
+          </div>
           <Link
             href="/"
             className="rounded-sm px-3 py-2 text-sm font-semibold text-chrome-fg-muted hover:text-chrome-fg"
           >
-            Back to Hearth home
+            Back to Familyr home
           </Link>
         </div>
       </header>
@@ -81,11 +80,11 @@ export function ClinicianLoginPage({
       >
         <section className="lg:pr-4" aria-labelledby="clinician-login-intro">
           <h1 id="clinician-login-intro" className="text-3xl font-bold leading-tight tracking-[-0.02em] text-ink sm:text-4xl">
-            Decision support between visits
+            Catch up between visits
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-mute">
-            Review consented activity patterns, pre-visit notes, and alerts from families who chose to share — with
-            source posts and personal baselines attached.
+            Look at activity patterns, notes, and alerts from families who chose to share.
+            Source posts and each person&apos;s own baseline come with it.
           </p>
 
           <ul className="mt-8 space-y-4">
@@ -108,7 +107,7 @@ export function ClinicianLoginPage({
           </ul>
 
           <p className="mt-8 border border-line bg-surface px-4 py-3 text-xs leading-5 text-mute">
-            Screening signals only. Not a diagnosis, treatment recommendation, or medical device.
+            Screening signals only. Not a diagnosis, not a treatment plan, not a medical device.
           </p>
         </section>
 
@@ -118,7 +117,7 @@ export function ClinicianLoginPage({
               Sign in to the portal
             </h2>
             <p className="mt-2 text-sm leading-6 text-mute">
-              Use your authorized Google account. Access is limited to approved clinician emails.
+              Use an approved Google account. Only clinician emails on the list get in.
             </p>
 
             {accessDenied ? (
@@ -166,7 +165,7 @@ export function ClinicianLoginPage({
             <div className="mt-6 border-t border-line pt-6">
               <p className="text-sm font-semibold text-ink">Preview without signing in</p>
               <p className="mt-1 text-sm leading-6 text-mute">
-                Walk through the sample patient list and Elena&apos;s signal view from the demo.
+                Sample patient list plus Elena&apos;s signal view. No account needed.
               </p>
               <button
                 type="button"
@@ -191,7 +190,7 @@ export function ClinicianLoginPage({
             </p>
             <p className="flex flex-wrap gap-x-4 gap-y-2">
               <Link href="/" className="font-medium underline-offset-4 hover:text-ink hover:underline">
-                Back to Hearth home
+                Back to Familyr home
               </Link>
               <Link href="/privacy" className="font-medium underline-offset-4 hover:text-ink hover:underline">
                 Privacy

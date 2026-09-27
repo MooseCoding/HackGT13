@@ -132,7 +132,7 @@ function explainActivity(
     return {
       status: "insufficient_data",
       title: "Not enough data to compare",
-      summary: `Hearth needs at least 3 recent posts and 4 baseline posts. Right now there are ${current.length} recent and ${baseline.length} baseline.`,
+      summary: `Need at least 3 recent posts and 4 baseline posts. Right now there are ${current.length} recent and ${baseline.length} baseline.`,
       currentLabel: `${current.length} recent post${current.length === 1 ? "" : "s"}`,
       baselineLabel: `${baseline.length} baseline post${baseline.length === 1 ? "" : "s"}`,
       ...ranges,
@@ -353,8 +353,8 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
       severity: (speechRateDelta ?? 0) <= -0.35 || (pauseDelta ?? 0) >= 0.3 ? "high" : "elevated",
       title: "Voice fluency pattern changed",
       detail: `Speech pace changed ${speechRateDelta === null ? "n/a" : `${Math.round(speechRateDelta * 100)}%`} and pause share changed ${pauseDelta === null ? "n/a" : `${Math.round(pauseDelta * 100)} points`} versus baseline.`,
-      current: `${currentVoice.wordsPerMinute?.toFixed(0) ?? "—"} wpm · ${percent(currentVoice.pauseRatio ?? 0)} pauses`,
-      baseline: `${baselineVoice.wordsPerMinute?.toFixed(0) ?? "—"} wpm · ${percent(baselineVoice.pauseRatio ?? 0)} pauses`,
+      current: `${currentVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(currentVoice.pauseRatio ?? 0)} pauses`,
+      baseline: `${baselineVoice.wordsPerMinute?.toFixed(0) ?? "-"} wpm · ${percent(baselineVoice.pauseRatio ?? 0)} pauses`,
     });
   }
 

@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 
-export function HearthMark({ className = "h-5 w-5" }: { className?: string }) {
+export function FamilyrMark({ className = "h-5 w-5" }: { className?: string }) {
   const gradId = useId();
 
   return (

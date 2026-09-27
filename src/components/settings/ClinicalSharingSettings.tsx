@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const WARNINGS = [
-  "Authorized care-team accounts can see posting patterns tied to your profile — timing, word variety, repetition — not raw message text by default.",
+  "Authorized care-team accounts can see posting patterns tied to your profile (timing, word variety, repetition). Not raw message text by default.",
   "Signals are decision support only. They are not a diagnosis and Familyr is not a medical device.",
-  "Family messages stay in your circle unless you turn this on. Revoking consent removes your profile from the clinician portal.",
+  "Family messages stay in your circle unless you turn this on. Turning it off removes your profile from the clinician portal.",
 ] as const;
 
 export function ClinicalSharingSettings({
@@ -58,8 +58,8 @@ export function ClinicalSharingSettings({
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-mute">Settings</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Clinician sharing</h1>
         <p className="mt-3 max-w-xl text-base leading-7 text-mute">
-          Off by default. Turning this on exposes activity patterns from your profile to authorized care-team
-          accounts in the clinician view.
+          Off by default. Turn this on and authorized care-team accounts can see activity patterns
+          from your profile.
         </p>
       </header>
 
@@ -75,7 +75,7 @@ export function ClinicalSharingSettings({
         <p className="mt-4 text-sm leading-6 text-amber-950/80">
           Read more in{" "}
           <Link href="/privacy" className="font-medium text-clinic underline-offset-4 hover:underline">
-            Privacy &amp; data practices
+            Privacy
           </Link>
           .
         </p>

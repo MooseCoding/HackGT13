@@ -2,7 +2,7 @@
 
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
 import { SignInConsent } from "@/components/home/SignInConsent";
-import { HearthMark } from "@/components/HearthMark";
+import { FamilyrLogo } from "@/components/FamilyrLogo";
 import { DEFAULT_FAMILY_CALL_FREQUENCY, type FamilyCallFrequency } from "@/lib/family-call-frequency";
 import type { InvitationPreview } from "@/lib/invitations-types";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
@@ -50,9 +50,8 @@ export function AcceptInvite({
 
   return (
     <main className="min-h-dvh bg-ground px-4 py-10">
-      <div className="mb-6 flex items-center gap-2 border-b border-line pb-4">
-        <HearthMark className="h-8 w-8" />
-        <p className="font-brand text-2xl">Familyr</p>
+      <div className="mb-6 border-b border-line pb-4">
+        <FamilyrLogo href={null} markClassName="h-8 w-8" wordmarkClassName="font-brand text-2xl" />
       </div>
 
       <h1 className="text-2xl font-bold text-ink">Join {invitation.familyName}</h1>
@@ -72,7 +71,7 @@ export function AcceptInvite({
           This invitation is {invitation.status}.{" "}
           {invitation.status === "accepted" ? (
             <a href="/family" className="font-medium text-accent hover:underline">
-              Open chats
+              Open Messages
             </a>
           ) : null}
         </p>

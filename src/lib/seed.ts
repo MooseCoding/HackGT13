@@ -1,7 +1,12 @@
 import { atDay } from "./clock";
 import { dmThreadId } from "./chat";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
-import type { CalendarEvent, Family, Member, Post, Reminder, WishlistItem } from "./types";
+import { MEMBER_COLORS } from "./ids";
+import type { CalendarEvent, Family, Member, Post, Reminder } from "./types";
+
+function memberColor(index: number) {
+  return MEMBER_COLORS[index % MEMBER_COLORS.length];
+}
 
 export const families: Family[] = [
   {
@@ -28,7 +33,7 @@ export const members: Member[] = [
     role: "Abuela",
     age: 78,
     initials: "EA",
-    color: "#b45309",
+    color: memberColor(0),
     location: "Grant Park",
     clinicalOptIn: true,
     easyModeDefault: true,
@@ -41,7 +46,7 @@ export const members: Member[] = [
     role: "Son",
     age: 52,
     initials: "MA",
-    color: "#9a3412",
+    color: memberColor(1),
     location: "Inman Park",
     clinicalOptIn: false,
   },
@@ -52,7 +57,7 @@ export const members: Member[] = [
     role: "Daughter-in-law",
     age: 48,
     initials: "PA",
-    color: "#7c2d12",
+    color: memberColor(2),
     location: "Inman Park",
     clinicalOptIn: false,
   },
@@ -63,7 +68,7 @@ export const members: Member[] = [
     role: "Granddaughter",
     age: 17,
     initials: "SA",
-    color: "#c2410c",
+    color: memberColor(3),
     location: "Grady High",
     clinicalOptIn: false,
   },
@@ -74,7 +79,7 @@ export const members: Member[] = [
     role: "Grandson (GT)",
     age: 21,
     initials: "JA",
-    color: "#92400e",
+    color: memberColor(4),
     location: "Georgia Tech",
     clinicalOptIn: false,
   },
@@ -85,7 +90,7 @@ export const members: Member[] = [
     role: "Nana",
     age: 74,
     initials: "RO",
-    color: "#0f766e",
+    color: memberColor(0),
     location: "Decatur",
     clinicalOptIn: true,
     easyModeDefault: true,
@@ -98,7 +103,7 @@ export const members: Member[] = [
     role: "Daughter",
     age: 50,
     initials: "AO",
-    color: "#115e59",
+    color: memberColor(1),
     location: "Decatur",
     clinicalOptIn: false,
   },
@@ -109,7 +114,7 @@ export const members: Member[] = [
     role: "Son",
     age: 47,
     initials: "KO",
-    color: "#134e4a",
+    color: memberColor(2),
     location: "Denver",
     clinicalOptIn: false,
   },
@@ -120,7 +125,7 @@ export const members: Member[] = [
     role: "Granddaughter",
     age: 19,
     initials: "CO",
-    color: "#0d9488",
+    color: memberColor(3),
     location: "Emory",
     clinicalOptIn: false,
   },
@@ -131,7 +136,7 @@ export const members: Member[] = [
     role: "Son-in-law",
     age: 52,
     initials: "EO",
-    color: "#047857",
+    color: memberColor(4),
     location: "Decatur",
     clinicalOptIn: false,
   },
@@ -148,7 +153,7 @@ const photoCampus =
 const photoJollof =
   "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=1200&q=80";
 
-/** Shared demo photos — same URLs as seeded chat posts. */
+/** Shared demo photos - same URLs as seeded chat posts. */
 export const seedPhotos = {
   garden: photoGarden,
   soccer: photoSoccer,
@@ -395,7 +400,7 @@ export const posts: Post[] = [
     familyId: "alvarez",
     authorId: "sofia",
     kind: "text",
-    body: "Biology midterm today — nervous but I think it went okay. Abuela, wish me luck next time you see this?",
+    body: "Biology midterm today - nervous but I think it went okay. Abuela, wish me luck next time you see this?",
     createdAt: atDay(0, 15, 30),
   },
   {
@@ -419,7 +424,7 @@ export const posts: Post[] = [
     familyId: "alvarez",
     authorId: "priya",
     kind: "text",
-    body: "Sofia has a volcano science project due Friday — we need baking soda, food coloring, and poster board before then.",
+    body: "Sofia has a volcano science project due Friday - we need baking soda, food coloring, and poster board before then.",
     createdAt: atDay(0, 12, 20),
   },
   {
@@ -435,7 +440,7 @@ export const posts: Post[] = [
     familyId: "alvarez",
     authorId: "elena",
     kind: "text",
-    body: "Not feeling well today — stuck at home with a bad cold. Miss everyone.",
+    body: "Not feeling well today - stuck at home with a bad cold. Miss everyone.",
     createdAt: atDay(0, 10, 40),
   },
   {
@@ -443,7 +448,7 @@ export const posts: Post[] = [
     familyId: "alvarez",
     authorId: "priya",
     kind: "text",
-    body: "Sofia's tournament is tomorrow at 10 — I pinned it to the calendar so we're all looking at the same plan.",
+    body: "Sofia's tournament is tomorrow at 10 - I pinned it to the calendar so we're all looking at the same plan.",
     createdAt: atDay(0, 16, 40),
   },
   {
@@ -461,7 +466,7 @@ export const posts: Post[] = [
     familyId: "alvarez",
     authorId: "miguel",
     kind: "text",
-    body: "Perfect — I'll pick up Ma at 9:15. Tap Add to My Calendar if you want it on your phone too.",
+    body: "Perfect - I'll pick up Ma at 9:15. Tap Add to My Calendar if you want it on your phone too.",
     createdAt: atDay(0, 16, 48),
   },
   {
@@ -599,7 +604,7 @@ export const posts: Post[] = [
     familyId: "okonkwo",
     authorId: "ada",
     kind: "text",
-    body: "Got your note about Sunday stew, Mama. I am bringing jollof and plantains — Emeka is setting up the porch chairs.",
+    body: "Got your note about Sunday stew, Mama. I am bringing jollof and plantains - Emeka is setting up the porch chairs.",
     createdAt: atDay(27, 14, 30),
   },
   {
@@ -651,7 +656,7 @@ export const posts: Post[] = [
     familyId: "okonkwo",
     authorId: "emeka",
     kind: "text",
-    body: "I'll drive Ruth Saturday morning. Chioma, focus on your exam — we've got the porch covered.",
+    body: "I'll drive Ruth Saturday morning. Chioma, focus on your exam - we've got the porch covered.",
     createdAt: atDay(1, 10, 2),
   },
   {
@@ -667,7 +672,7 @@ export const posts: Post[] = [
     familyId: "okonkwo",
     authorId: "chioma",
     kind: "text",
-    body: "Biology lab practical Friday — nervous but the study group helped. Nana, tell me about your first science fair?",
+    body: "Biology lab practical Friday - nervous but the study group helped. Nana, tell me about your first science fair?",
     createdAt: atDay(0, 16, 15),
   },
   {
@@ -711,7 +716,7 @@ export const posts: Post[] = [
     authorId: "kojo",
     threadId: dmThreadId("ruth", "kojo"),
     kind: "text",
-    body: "Just landed. Sunday after stew — promise.",
+    body: "Just landed. Sunday after stew - promise.",
     createdAt: atDay(6, 22, 5),
   },
   {
@@ -729,7 +734,7 @@ export const posts: Post[] = [
     authorId: "ada",
     threadId: dmThreadId("chioma", "ada"),
     kind: "text",
-    body: "Emeka already said yes. You study — we'll send photos.",
+    body: "Emeka already said yes. You study - we'll send photos.",
     createdAt: atDay(2, 9, 5),
   },
 ];
@@ -962,76 +967,4 @@ export const events: CalendarEvent[] = [
     calendarScope: "family",
   },
   ...alvarezPersonalEvents,
-];
-
-export const wishlistItems: WishlistItem[] = [
-  {
-    id: "wl1",
-    familyId: "alvarez",
-    forMemberId: "sofia",
-    title: "Wireless earbuds",
-    note: "For the bus commute — birthday in October",
-    estimatedTotal: 49.99,
-    createdBy: "sofia",
-    createdAt: atDay(5, 14, 20),
-    status: "wishlist",
-  },
-  {
-    id: "wl2",
-    familyId: "alvarez",
-    forMemberId: "elena",
-    title: "Cozy throw blanket",
-    note: "Something warm for the living room couch",
-    estimatedTotal: 34.99,
-    createdBy: "priya",
-    createdAt: atDay(4, 9, 10),
-    status: "wishlist",
-  },
-  {
-    id: "wl3",
-    familyId: "alvarez",
-    forMemberId: "sofia",
-    title: "Volcano science project supplies",
-    note: "Baking soda, food coloring, poster board",
-    kind: "supply",
-    items: [
-      { name: "Baking soda", quantity: 1 },
-      { name: "Food coloring", quantity: 1 },
-      { name: "Poster board", quantity: 1 },
-    ],
-    estimatedTotal: 18.5,
-    sourcePostId: "demo-commerce-volcano",
-    createdBy: "priya",
-    createdAt: atDay(0, 12, 25),
-    status: "wishlist",
-  },
-  {
-    id: "wl4",
-    familyId: "alvarez",
-    forMemberId: "elena",
-    title: "Chamomile tea (3 boxes)",
-    note: "Her usual brand — evening ritual",
-    kind: "supply",
-    items: [{ name: "Chamomile tea", quantity: 3 }],
-    estimatedTotal: 12.99,
-    sourcePostId: "demo-commerce-tea",
-    createdBy: "miguel",
-    createdAt: atDay(0, 11, 30),
-    status: "ordered",
-    orderedBy: "miguel",
-    orderedAt: atDay(0, 14, 5),
-  },
-  {
-    id: "wl5",
-    familyId: "alvarez",
-    forMemberId: "james",
-    title: "GT hoodie (medium)",
-    note: "Navy or gold",
-    estimatedTotal: 54.0,
-    createdBy: "james",
-    createdAt: atDay(8, 16, 0),
-    status: "purchased",
-    orderedBy: "priya",
-    orderedAt: atDay(7, 10, 0),
-  },
 ];

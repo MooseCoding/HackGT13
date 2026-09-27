@@ -1,10 +1,10 @@
-# Hearth
+# Familyr
 
-HackGT 13 — a digital living room for families, with an Impiricus clinician channel for opted-in members.
+HackGT 13 - a digital living room for families, with an Impiricus clinician channel for opted-in members.
 
 ## What it is
 
-**Hearth** is the consumer “porch”: async family chat, photos, voice notes, a natural-language calendar, and a weekly story digest so nobody has to live in the group thread.
+**Familyr** is the consumer “porch”: async family chat, photos, voice notes, a natural-language calendar, and a weekly story digest so nobody has to live in the group thread.
 
 **Impiricus portal** (`/hcp`) is the clinician view. It never sees family members who did not opt in. Markers (lexical diversity, sentence length, repetition, sentiment, posting hours) are compared to **that person’s own baseline**, then turned into a structured pre-visit note. This is decision support, not a diagnosis, and not a medical device.
 
@@ -18,9 +18,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-1. **Homepage** — Continue with Google (or preview the demo family).
-2. **Onboarding** — name the circle and add family members.
-3. **App** — chats, calendar, weekly story, clinician view.
+1. **Homepage** - Continue with Google (or preview the demo family).
+2. **Onboarding** - name the circle and add family members.
+3. **App** - chats, calendar, weekly story, clinician view.
 
 ### Google sign-in
 
@@ -54,11 +54,11 @@ The output is clinical decision support, not a diagnosis or treatment recommenda
 
 ### Ambient WhatsApp and voice intake
 
-Hearth is designed as a signal layer for communication families already use, not as a replacement messenger.
+Familyr is designed as a signal layer for communication families already use, not as a replacement messenger.
 
 - Configure Meta's WhatsApp Business webhook callback as `/api/webhooks/whatsapp` and copy the `WHATSAPP_*` values from `.env.example`.
 - Incoming opted-in text messages and voice notes are normalized into the existing longitudinal timeline.
-- Voice notes are transcribed with Groq Whisper and reduced to speech pace, pause share, average pause, and hesitation markers. Original media is not stored by Hearth.
+- Voice notes are transcribed with Groq Whisper and reduced to speech pace, pause share, average pause, and hesitation markers. Original media is not stored by Familyr.
 - Sender-to-patient mapping is explicit through `WHATSAPP_PATIENT_MAP`; unrecognized or non-consented senders are ignored.
 - `/hcp/live` provides a deterministic judge demo of the complete flow when external credentials or venue Wi-Fi are unavailable.
 

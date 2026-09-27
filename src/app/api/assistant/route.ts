@@ -2,7 +2,7 @@ import { runFamilyAssistant, type AssistantContext, type AssistantTurn } from "@
 import { eventsOf, familyById, membersOf, postsOf, requireFamilyAccess, resolveFamilyId } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
-/** Kept for older clients. Answers locally from Hearth data — never calls a vendor model. */
+/** Kept for older clients. Answers locally from Familyr data - never calls a vendor model. */
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {

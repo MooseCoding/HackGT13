@@ -1,4 +1,4 @@
-/** Local, dependency-free text models — keyword scoring + Markov chains. */
+/** Local, dependency-free text models - keyword scoring + Markov chains. */
 
 import type { Member, Post } from "./types";
 
@@ -100,13 +100,13 @@ const OPENERS: Record<string, string[]> = {
 };
 
 const CLOSERS: Record<string, string[]> = {
-  gathering: ["Everyone left with full plates."],
-  outdoors: ["Fresh air and familiar faces."],
-  care: ["Small steps, steady support."],
-  memory: ["The past felt close this week."],
-  celebration: ["Worth a toast."],
-  connection: ["The circle stayed in touch."],
-  default: ["Another week together."],
+  gathering: ["Plates got cleared. People hung around anyway."],
+  outdoors: ["Fresh air. Same faces."],
+  care: ["Appointments got mentioned. Folks checked in."],
+  memory: ["Old stories came back this week."],
+  celebration: ["Worth a toast, honestly."],
+  connection: ["People actually answered."],
+  default: ["Another week in the circle."],
 };
 
 export function generateStory(
@@ -146,7 +146,7 @@ export function generateStory(
 
   const narrativeParts = who
     ? [`${opener}, ${who} checked in.`]
-    : [`${opener} — not much landed in chat this week.`];
+    : [`${opener}. Not much landed in chat this week.`];
   if (generated) narrativeParts.push(generated + ".");
   if (topic?.hits.length) {
     narrativeParts.push(`Most of the week was about ${topic.hits.slice(0, 3).join(", ")}.`);

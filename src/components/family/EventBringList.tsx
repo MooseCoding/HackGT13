@@ -11,6 +11,7 @@ export function EventBringList({
   onClaim,
   onOrder,
   orderingSupplyId,
+  orderedBySupplyId,
   compact,
   showTitle = true,
 }: {
@@ -21,6 +22,7 @@ export function EventBringList({
   onClaim: (supplyId: string) => void;
   onOrder?: (suggestion: CommerceSuggestion) => void;
   orderingSupplyId?: string | null;
+  orderedBySupplyId?: Record<string, { message: string }>;
   compact?: boolean;
   showTitle?: boolean;
 }) {
@@ -42,6 +44,7 @@ export function EventBringList({
             meId={meId}
             busy={busySupplyId === supply.id}
             ordering={orderingSupplyId === supply.id}
+            ordered={orderedBySupplyId?.[supply.id] ?? null}
             onClaim={() => onClaim(supply.id)}
             onOrder={onOrder}
             compact={compact}
@@ -59,6 +62,7 @@ function SupplyRow({
   meId,
   busy,
   ordering,
+  ordered,
   onClaim,
   onOrder,
   compact,
@@ -69,6 +73,7 @@ function SupplyRow({
   meId: string;
   busy?: boolean;
   ordering?: boolean;
+  ordered?: { message: string } | null;
   onClaim: () => void;
   onOrder?: (suggestion: CommerceSuggestion) => void;
   compact?: boolean;
@@ -77,6 +82,7 @@ function SupplyRow({
   const mine = claimed === meId;
   const who = claimerName(members, claimed);
   const member = members.find((m) => m.id === meId);
+  const suggestion = member ? buildBringListCommerceSuggestion(event, supply, member) : null;
 
   return (
     <li
@@ -93,8 +99,19 @@ function SupplyRow({
         ) : (
           <span className="ml-1.5 text-mute">· open</span>
         )}
+        {ordered ? <p className="mt-1 text-[11px] leading-4 text-mute">{ordered.message}</p> : null}
       </div>
       <div className="flex shrink-0 flex-wrap gap-1.5">
+        {!claimed && onOrder && suggestion && !ordered ? (
+          <button
+            type="button"
+            disabled={ordering}
+            onClick={() => onOrder(suggestion)}
+            className="rounded-sm border border-clinic/40 bg-clinic/5 px-2 py-0.5 text-xs font-medium text-clinic hover:bg-clinic/10 disabled:opacity-50"
+          >
+            {ordering ? "…" : suggestion.orderLabel}
+          </button>
+        ) : null}
         {!claimed || mine ? (
           <button
             type="button"
@@ -107,16 +124,6 @@ function SupplyRow({
             }`}
           >
             {busy ? "…" : mine ? "Unclaim" : "Claim"}
-          </button>
-        ) : null}
-        {!claimed && onOrder && member ? (
-          <button
-            type="button"
-            disabled={ordering}
-            onClick={() => onOrder(buildBringListCommerceSuggestion(event, supply, member))}
-            className="rounded-sm border border-clinic/40 bg-clinic/5 px-2 py-0.5 text-xs font-medium text-clinic hover:bg-clinic/10 disabled:opacity-50"
-          >
-            {ordering ? "…" : "Order instead"}
           </button>
         ) : null}
       </div>

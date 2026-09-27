@@ -243,7 +243,7 @@ export function FamilyCircleForm({
       ) : compact ? (
         <div className="space-y-3">
           <p className="text-sm leading-6 text-mute">
-            Start a new circle for another household. You can add everyone else later from Chats.
+            Start a new circle for another household. You can add everyone else later from Messages.
           </p>
           <div>
             <label htmlFor="fc-family-name" className="block text-sm font-medium text-ink">Circle name</label>
@@ -288,7 +288,7 @@ export function FamilyCircleForm({
           <fieldset className="space-y-3">
             <legend className="text-sm font-bold text-ink">People in this circle</legend>
             <p className="text-sm leading-6 text-mute">
-              Add yourself first. You can add grandparents, kids, and others — they don&apos;t need Google
+              Add yourself first. You can add grandparents, kids, and others. They dont need Google
               accounts yet.
             </p>
             {members.map((m, i) => (

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Insurance — Hearth",
+  title: "Insurance - Familyr",
   description: "Add insurance coverage and see in-network clinician matches.",
 };
 

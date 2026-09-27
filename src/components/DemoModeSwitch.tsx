@@ -34,7 +34,7 @@ export function DemoModeSwitch({
           disabled={busy || (!demo && !canGoLive)}
           onChange={(e) => setDemo(e.target.checked)}
         />
-        Sample family
+        Sample circle
       </label>
     );
   }
@@ -42,7 +42,7 @@ export function DemoModeSwitch({
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <span className={demo ? "font-medium text-ink" : "text-mute"}>
-        {demo ? "Demo mode (mock data)" : "Live (Supabase)"}
+        {demo ? "Sample circle" : "Your circle"}
       </span>
       {canGoLive ? (
         <button
@@ -51,10 +51,10 @@ export function DemoModeSwitch({
           onClick={() => setDemo(!demo)}
           className="border border-line px-2 py-1 text-xs hover:underline"
         >
-          {demo ? "Use Supabase" : "Use mock data"}
+          {demo ? "Use your circle" : "Try sample circle"}
         </button>
       ) : (
-        <span className="text-xs text-mute">Add Supabase keys to leave demo mode</span>
+        <span className="text-xs text-mute">Sign in to use your own circle</span>
       )}
     </div>
   );
@@ -66,8 +66,8 @@ export function DemoBanner({ demo, canGoLive }: { demo: boolean; canGoLive: bool
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
         <p className="text-xs text-mute">
           {demo
-            ? "Sample mode uses the Alvarez and Okonkwo mock families. Open Chats → group thread for Social Good demos."
-            : "Live mode reads and writes your Supabase project."}
+            ? "Sample mode uses the Alvarez and Okonkwo circles. Open Messages, then the group thread, if you want the Social Good demos."
+            : "You're signed in with your own circle."}
         </p>
         <DemoModeSwitch demo={demo} canGoLive={canGoLive} compact />
       </div>

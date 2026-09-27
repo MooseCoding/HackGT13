@@ -45,7 +45,7 @@ function isMiddleGen(member: Member) {
   return member.age >= 35 && member.age <= 60;
 }
 
-/** Warm prompts that work even when chat is quiet — one per eligible member. */
+/** Warm prompts that work even when chat is quiet - one per eligible member. */
 function baselinePrompts(members: Member[]): LifeStoryPrompt[] {
   const elders = members.filter(isElder);
   const young = members.filter(isYounger);
@@ -63,8 +63,8 @@ function baselinePrompts(members: Member[]): LifeStoryPrompt[] {
         forMemberName: firstName(grandchild),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `Ask ${firstName(elder)} what made them laugh this week — a small moment counts.`,
-        reason: "A light check-in keeps the circle warm.",
+        prompt: `Ask ${firstName(elder)} what made them laugh this week - a small moment counts.`,
+        reason: "A light check-in. That's it.",
       });
     }
     if (parent) {
@@ -74,8 +74,8 @@ function baselinePrompts(members: Member[]): LifeStoryPrompt[] {
         forMemberName: firstName(parent),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `Plan a quick call with ${firstName(elder)} — even ten minutes on the porch phone helps.`,
-        reason: "Async families stay close with small rituals.",
+        prompt: `Plan a quick call with ${firstName(elder)} - even ten minutes on the porch phone helps.`,
+        reason: "Small calls still count when people live far apart.",
       });
     }
   }
@@ -90,14 +90,14 @@ function baselinePrompts(members: Member[]): LifeStoryPrompt[] {
       aboutMemberId: elder.id,
       aboutMemberName: firstName(elder),
       prompt: `Share one thing from your week ${firstName(elder)} would enjoy hearing about.`,
-      reason: "Younger voices keep elders in the loop.",
+      reason: "Younger voices help everyone stay in the loop.",
     });
   }
 
   return prompts;
 }
 
-/** Local fallback — keyword-driven intergenerational prompts. */
+/** Local fallback - keyword-driven intergenerational prompts. */
 export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeStoryPrompt[] {
   const recent = recentTexts(posts);
   if (!recent.length) return [];
@@ -118,7 +118,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(grandchild),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `Ask ${firstName(elder)} about ${interest === "cars" ? "his first job — he mentioned loving cars back then!" : `when ${interest} became important to them.`}`,
+        prompt: `Ask ${firstName(elder)} about ${interest === "cars" ? "his first job - he mentioned loving cars back then!" : `when ${interest} became important to them.`}`,
         reason: `Recent chat mentions ${interest}.`,
       });
     }
@@ -137,7 +137,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(elder),
         aboutMemberId: kid.id,
         aboutMemberName: firstName(kid),
-        prompt: `${firstName(kid)} posted about school lately — ask how it went!`,
+        prompt: `${firstName(kid)} posted about school lately - ask how it went!`,
         reason: "School came up in chat.",
       });
     }
@@ -148,7 +148,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(elder),
         aboutMemberId: kid.id,
         aboutMemberName: firstName(kid),
-        prompt: `${firstName(kid)} had something on the calendar — ask about the game!`,
+        prompt: `${firstName(kid)} had something on the calendar - ask about the game!`,
         reason: "Sports came up in chat.",
       });
     }
@@ -161,8 +161,8 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
           forMemberName: firstName(parent),
           aboutMemberId: kid.id,
           aboutMemberName: firstName(kid),
-          prompt: `${firstName(kid)} mentioned missing home — send a photo from the kitchen table tonight.`,
-          reason: "Distance makes small gestures matter.",
+          prompt: `${firstName(kid)} mentioned missing home - send a photo from the kitchen table tonight.`,
+          reason: "When people live far away, a photo still helps.",
         });
       }
     }
@@ -181,8 +181,8 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(parent),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `Sunday plans came up — confirm timing with ${firstName(elder)} so nobody hunts through messages.`,
-        reason: "Meals on the calendar keep everyone aligned.",
+        prompt: `Sunday plans came up - confirm timing with ${firstName(elder)} so nobody hunts through messages.`,
+        reason: "Sunday lunch is easier if the time is actually on the calendar.",
       });
     }
   }
@@ -198,7 +198,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
         prompt: `Ask ${firstName(elder)} to share the recipe everyone still talks about.`,
-        reason: "Food threads are easy doorways to longer stories.",
+        reason: "Food talk is an easy way into a longer story.",
       });
     }
   }
@@ -213,8 +213,8 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(kid),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `Someone shared a photo — ask ${firstName(elder)} who else was in the room that day.`,
-        reason: "Pictures unlock stories chat alone can't carry.",
+        prompt: `Someone shared a photo - ask ${firstName(elder)} who else was in the room that day.`,
+        reason: "Photos usually get people talking.",
       });
     }
   }
@@ -229,8 +229,8 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(parent),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `${firstName(elder)} mentioned a group or walk — ask how it went and who showed up.`,
-        reason: "Community routines are worth celebrating.",
+        prompt: `${firstName(elder)} mentioned a group or walk - ask how it went and who showed up.`,
+        reason: "Ask how it went. People like being asked.",
       });
     }
   }
@@ -245,7 +245,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
         forMemberName: firstName(parent),
         aboutMemberId: elder.id,
         aboutMemberName: firstName(elder),
-        prompt: `${firstName(elder)} asked for a small favor — follow up and offer a visit if you can.`,
+        prompt: `${firstName(elder)} asked for a small favor - follow up and offer a visit if you can.`,
         reason: "Practical help is how families show up.",
       });
     }
@@ -259,7 +259,7 @@ export function localLifeStoryPrompts(posts: Post[], members: Member[]): LifeSto
       forMemberName: firstName(young[0]),
       aboutMemberId: elders[0].id,
       aboutMemberName: firstName(elders[0]),
-      prompt: `Someone shared a memory this week — ask ${firstName(elders[0])} to tell the longer version.`,
+      prompt: `Someone shared a memory this week - ask ${firstName(elders[0])} to tell the longer version.`,
       reason: "Memory theme in recent posts.",
     });
   }

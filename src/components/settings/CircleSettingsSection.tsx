@@ -137,7 +137,7 @@ export function CircleSettingsSection({
           <h3 id="settings-circle-heading" className="text-xs font-semibold uppercase tracking-[0.12em] text-mute">
             Circle
           </h3>
-          <p className="mt-1 text-sm text-mute">Chats, calendar, and Hestia follow the circle you choose.</p>
+          <p className="mt-1 text-sm text-mute">Messages, calendar, and Hestia follow whichever circle you pick.</p>
         </div>
 
         <div className="space-y-2">
@@ -185,7 +185,7 @@ export function CircleSettingsSection({
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-ink">Auto-add family calls</span>
                 <span id="settings-auto-calls-desc" className="mt-0.5 block text-sm text-mute">
-                  When on, Hearth places family calls on the calendar using your call rhythm — no extra step needed.
+                  When this is on, Familyr puts family calls on the calendar based on your call rhythm. No extra click.
                 </span>
               </span>
               <button

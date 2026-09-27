@@ -16,14 +16,11 @@ import {
   addEvent,
   addPost,
   addReminder,
-  addWishlistItem,
   db,
   deleteEvent,
   patchEvent,
   patchReminder,
-  patchWishlistItem,
   remindersOf as remindersOfDemo,
-  wishlistOf as wishlistOfDemo,
   digestFor as digestForDemo,
   eventsOf as eventsOfDemo,
   familyById as familyByIdDemo,
@@ -35,7 +32,7 @@ import {
 } from "./store";
 import { createSupabaseServer } from "./supabase/server";
 import type { Database, Json } from "./supabase/types";
-import type { AudioMetrics, CalendarEvent, Digest, EventSupplyItem, Family, IntakeChannel, Member, MemberId, MemberInsurance, PatientSnapshot, Post, PostKind, Reminder, RsvpStatus, WishlistItem } from "./types";
+import type { AudioMetrics, CalendarEvent, Digest, EventSupplyItem, Family, IntakeChannel, Member, MemberId, MemberInsurance, PatientSnapshot, Post, PostKind, Reminder, RsvpStatus } from "./types";
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
@@ -246,25 +243,6 @@ export async function patchReminderRow(
 ): Promise<Reminder | null> {
   if (await isDemoMode()) return patchReminder(id, familyId, patch);
   return patchReminder(id, familyId, patch);
-}
-
-export async function wishlistOf(familyId: string): Promise<WishlistItem[]> {
-  if (await isDemoMode()) return wishlistOfDemo(familyId);
-  return wishlistOfDemo(familyId);
-}
-
-export async function addWishlistRow(item: WishlistItem): Promise<WishlistItem> {
-  if (await isDemoMode()) return addWishlistItem(item);
-  return addWishlistItem(item);
-}
-
-export async function patchWishlistRow(
-  id: string,
-  familyId: string,
-  patch: Partial<WishlistItem>,
-): Promise<WishlistItem | null> {
-  if (await isDemoMode()) return patchWishlistItem(id, familyId, patch);
-  return patchWishlistItem(id, familyId, patch);
 }
 
 /** Auto-create open reminders from upcoming calendar events (local rules only). */

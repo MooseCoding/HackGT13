@@ -1,4 +1,4 @@
-/** Groq OpenAI-compatible API — https://console.groq.com */
+/** Groq OpenAI-compatible API - https://console.groq.com */
 
 export function groqConfigured() {
   return Boolean(process.env.GROQ_API_KEY?.trim());
@@ -12,7 +12,7 @@ export function groqApiBase() {
   return (process.env.GROQ_API_BASE?.trim() || "https://api.groq.com/openai/v1").replace(/\/$/, "");
 }
 
-/** Meta Model API (Muse Spark) — https://dev.meta.ai */
+/** Meta Model API (Muse Spark) - https://dev.meta.ai */
 
 export function museConfigured() {
   return Boolean(

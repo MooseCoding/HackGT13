@@ -80,8 +80,8 @@ export default async function HcpHome({
         <div>
           <h1 className="text-2xl font-semibold text-ink">Patient overview</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-mute">
-            Add patients who&apos;ve agreed to share, then see how their communication patterns compare to their
-            own history.
+            Add patients who agreed to share, then see how their communication looks compared to
+            their own history.
           </p>
         </div>
         {lastRunAt ? (
@@ -184,7 +184,7 @@ export default async function HcpHome({
             {patients.length
               ? `${patients.length} in-network patient${patients.length === 1 ? "" : "s"} available`
               : autoAcceptPatients
-                ? "Auto-accept is on — new in-network patients join your roster on their own"
+                ? "Auto-accept is on. New in-network patients join your roster on their own."
                 : "Only in-network patients show up here"}
           </p>
           <p className="mt-1 text-sm leading-6 text-mute">

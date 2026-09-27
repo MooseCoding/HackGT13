@@ -105,8 +105,8 @@ export function evaluateSafeCheckIns(input: {
     const contact = primaryContact(input.members, member);
     const pingMessage =
       stage === "alert"
-        ? `${firstName(member)} hasn't checked in recently. ${contact ? `${firstName(contact)}, ` : ""}could someone send a warm note?`
-        : `Hestia missed ${firstName(member)} today! Tap the sun below to send a quick sunny emoji to the family.`;
+        ? `${firstName(member)} hasn't checked in recently. ${contact ? `${firstName(contact)}, ` : ""}could someone send a note?`
+        : `Haven't heard from ${firstName(member)} today. Tap below to send a quick hello to the family.`;
 
     statuses.push({
       memberId: member.id,

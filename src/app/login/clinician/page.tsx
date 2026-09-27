@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Clinician sign in — Hearth Clinical",
+  title: "Clinician sign in - Familyr Clinical",
   description: "Sign in to the authorized clinician portal for consented family activity patterns.",
 };
 

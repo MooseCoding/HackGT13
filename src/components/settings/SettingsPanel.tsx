@@ -2,7 +2,7 @@
 
 import { CircleSettingsSection } from "@/components/settings/CircleSettingsSection";
 import { useSettings } from "@/components/settings/SettingsProvider";
-import { SETTING_META, THEME_OPTIONS, type HearthSettings, type SettingKey } from "@/lib/settings";
+import { SETTING_META, THEME_OPTIONS, type FamilyrSettings, type SettingKey } from "@/lib/settings";
 import type { Family } from "@/lib/types";
 import {
   COMMON_TIMEZONES,
@@ -295,8 +295,8 @@ function SettingsPanel({
 
   const timezoneOptions = useMemo(() => {
     const autoLabel = geoTimezone
-      ? `Auto — ${formatTimezoneLabel(geoTimezone)} (location)`
-      : `Auto — ${formatTimezoneLabel(deviceTimezone)} (device)`;
+      ? `Auto - ${formatTimezoneLabel(geoTimezone)} (location)`
+      : `Auto - ${formatTimezoneLabel(deviceTimezone)} (device)`;
     const zones = new Set<string>([deviceTimezone, geoTimezone ?? "", ...COMMON_TIMEZONES]);
     zones.delete("");
     return [
@@ -338,7 +338,7 @@ function SettingsPanel({
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-rule bg-surface px-5 py-4">
           <div>
             <h2 id="settings-title" className="text-lg font-semibold tracking-tight text-ink">Settings</h2>
-            <p className="mt-0.5 text-sm text-mute">Your preferences on this device.</p>
+            <p className="mt-0.5 text-sm text-mute">Stuff that stays on this device.</p>
           </div>
           <button
             type="button"
@@ -399,7 +399,7 @@ function SettingsPanel({
                         />
                         <div className="mt-3">
                           <SegmentedControl
-                            value={value as HearthSettings["theme"]}
+                            value={value as FamilyrSettings["theme"]}
                             options={THEME_OPTIONS}
                             onChange={(next) => setSetting("theme", next)}
                             labelledBy={`setting-desc-${key}`}
@@ -417,7 +417,7 @@ function SettingsPanel({
                           id={`setting-${key}`}
                           value={value}
                           onChange={(e) =>
-                            setSetting(key, e.target.value as HearthSettings[typeof key])
+                            setSetting(key, e.target.value as FamilyrSettings[typeof key])
                           }
                           className={SELECT_CLASS}
                         >

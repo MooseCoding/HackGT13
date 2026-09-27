@@ -81,7 +81,7 @@ const CALENDAR_HINT_CUE_RE =
 
 const keywordCache = new Map<string, { stamp: string; keys: Set<string> }>();
 
-/** Cheap first pass — skip scoring every calendar event for ordinary chat. */
+/** Cheap first pass - skip scoring every calendar event for ordinary chat. */
 export function looksLikeCalendarHintText(text: string) {
   const raw = text.trim();
   if (raw.length < 3) return false;

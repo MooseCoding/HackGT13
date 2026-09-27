@@ -98,7 +98,7 @@ export type BringListHint = {
 
 const BRING_ITEM_HINT_RE = /\bjollof|chairs|drinks|snacks|dessert|plates\b/i;
 
-/** Cheap first pass — skip bring-list matching unless the message is about bringing something. */
+/** Cheap first pass - skip bring-list matching unless the message is about bringing something. */
 export function looksLikeBringListText(text: string) {
   const raw = text.trim();
   if (raw.length < 8) return false;
@@ -166,7 +166,7 @@ export function buildBringListCommerceSuggestion(
     estimatedTotal: 14.99,
     deliveryAddress: address,
     sourceText: `Order ${supply.item} for ${event.title}`,
-    orderLabel: `Order ${supply.item} instead of bringing`,
+    orderLabel: `Order ${supply.item} instead`,
     eventId: event.id,
     supplyId: supply.id,
   };

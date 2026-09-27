@@ -1,5 +1,6 @@
 "use client";
 
+import { FamilyrLogo } from "@/components/FamilyrLogo";
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
 import { SignInConsent } from "@/components/home/SignInConsent";
 import { clearPendingConsent, readPendingConsent } from "@/lib/consent";
@@ -100,7 +101,7 @@ export function SignupPage({
       <div className="flex min-h-full flex-col bg-ground">
         <main id="main-content" className="mx-auto w-full max-w-md flex-1 px-4 py-16 text-center">
           <p className="text-lg font-semibold text-ink">Saving your choices…</p>
-          <p className="mt-2 text-sm text-mute">One moment while we finish sign-up.</p>
+          <p className="mt-2 text-sm text-mute">Hang on, wrapping up sign-up.</p>
         </main>
       </div>
     );
@@ -110,9 +111,7 @@ export function SignupPage({
     <div className="flex min-h-full flex-col bg-ground">
       <header className="border-b border-line bg-surface px-4 py-4 sm:px-6">
         <div className="mx-auto flex max-w-md items-center justify-between gap-4">
-          <Link href="/" className="font-brand text-xl">
-            Familyr
-          </Link>
+          <FamilyrLogo />
         </div>
       </header>
 
@@ -120,8 +119,8 @@ export function SignupPage({
         <h1 className="text-2xl font-bold text-ink">Sign up</h1>
         <p className="mt-2 text-sm leading-6 text-mute">
           {signedIn
-            ? "Review and accept the consent choices below to finish creating your account."
-            : "Review the consent choices below, then sign up with Google. Calendar access is separate and optional."}
+            ? "Check the boxes below so we can finish setting up your account."
+            : "Read the boxes below, then sign up with Google. Calendar is optional and separate."}
         </p>
 
         <section className="mt-8 border border-line bg-surface p-5">

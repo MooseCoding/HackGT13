@@ -202,7 +202,7 @@ export async function PATCH(req: NextRequest) {
     if (!event) return NextResponse.json({ error: "Event not found." }, { status: 404 });
     if (event.isGoogleSynced || event.id.startsWith("google_")) {
       return NextResponse.json(
-        { error: "Updates are only available for family events saved in Hearth." },
+        { error: "Updates are only available for family events saved in Familyr." },
         { status: 400 },
       );
     }

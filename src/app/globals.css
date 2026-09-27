@@ -34,18 +34,21 @@
   --clinic: var(--blue);
   --chat-bg: var(--ground);
 
-  --chrome-bg: #121212;
-  --chrome-fg: #ffffff;
-  --chrome-fg-muted: rgba(255, 255, 255, 0.7);
-  --chrome-fg-subtle: rgba(255, 255, 255, 0.6);
-  --chrome-border: rgba(255, 255, 255, 0.3);
-  --chrome-divider: rgba(255, 255, 255, 0.2);
+  --chrome-bg: #fffefb;
+  --chrome-fg: var(--ink);
+  --chrome-fg-muted: var(--mute);
+  --chrome-fg-subtle: rgba(92, 88, 80, 0.75);
+  --chrome-border: var(--rule);
+  --chrome-divider: rgba(18, 18, 18, 0.1);
   --nav-rail-bg: #fffefb;
   --nav-rail-fg: var(--ink);
   --nav-rail-fg-muted: var(--mute);
   --nav-rail-border: var(--rule);
   --nav-rail-active-bg: var(--accent-tint);
   --overlay: rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(255, 254, 251, 0.9);
+  --glass-border: var(--rule);
+  --glass-shadow: 0 1px 4px rgba(18, 18, 18, 0.08);
 }
 
 html.dark {
@@ -66,18 +69,21 @@ html.dark {
   --line: var(--rule);
   --chat-bg: var(--ground);
 
-  --chrome-bg: #0f0e0d;
+  --chrome-bg: #242220;
   --chrome-fg: #f3f0ea;
   --chrome-fg-muted: rgba(243, 240, 234, 0.72);
   --chrome-fg-subtle: rgba(243, 240, 234, 0.55);
-  --chrome-border: rgba(243, 240, 234, 0.28);
-  --chrome-divider: rgba(243, 240, 234, 0.18);
+  --chrome-border: rgba(243, 240, 234, 0.2);
+  --chrome-divider: rgba(243, 240, 234, 0.14);
   --nav-rail-bg: #2a2825;
   --nav-rail-fg: var(--ink);
   --nav-rail-fg-muted: var(--mute);
   --nav-rail-border: var(--rule);
   --nav-rail-active-bg: var(--accent-tint);
   --overlay: rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(36, 34, 32, 0.9);
+  --glass-border: rgba(243, 240, 234, 0.16);
+  --glass-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 @theme inline {
@@ -193,6 +199,14 @@ a {
   background: var(--ground);
 }
 
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
 .easy body,
 html.easy {
   font-size: 18px;
@@ -233,10 +247,20 @@ html.easy {
   animation-delay: 0.16s;
 }
 
+.landing-rise-delay-3 {
+  animation-delay: 0.24s;
+}
+
+.landing-rise-delay-4 {
+  animation-delay: 0.32s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-rise,
   .landing-rise-delay-1,
-  .landing-rise-delay-2 {
+  .landing-rise-delay-2,
+  .landing-rise-delay-3,
+  .landing-rise-delay-4 {
     animation: none;
   }
 }

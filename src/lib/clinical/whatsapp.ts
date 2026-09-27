@@ -90,7 +90,7 @@ export async function acknowledgeWhatsAppMessage(to: string) {
       recipient_type: "individual",
       to,
       type: "text",
-      text: { body: "Hearth received your update. Your private message will be reduced to consented communication signals for your care team." },
+      text: { body: "Familyr received your update. Your private message will be reduced to consented communication signals for your care team." },
     }),
     cache: "no-store",
   });

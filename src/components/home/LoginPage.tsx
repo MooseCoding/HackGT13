@@ -1,5 +1,6 @@
 "use client";
 
+import { FamilyrLogo } from "@/components/FamilyrLogo";
 import { GoogleSignInButton } from "@/components/home/GoogleSignInButton";
 import type { PublicSupabaseConfig } from "@/lib/supabase/public";
 import Link from "next/link";
@@ -17,16 +18,14 @@ export function LoginPage({
     <div className="flex min-h-full flex-col bg-ground">
       <header className="border-b border-line bg-surface px-4 py-4 sm:px-6">
         <div className="mx-auto flex max-w-md items-center justify-between gap-4">
-          <Link href="/" className="font-brand text-xl">
-            Familyr
-          </Link>
+          <FamilyrLogo />
         </div>
       </header>
 
       <main id="main-content" className="mx-auto w-full max-w-md flex-1 px-4 py-10 sm:px-6 sm:py-14">
         <h1 className="text-2xl font-bold text-ink">Sign in</h1>
         <p className="mt-2 text-sm leading-6 text-mute">
-          Welcome back. Sign in with Google to open your circle. Calendar access is separate and optional.
+          Welcome back. Google sign-in opens your circle. Calendar is optional, we wont grab it unless you connect it.
         </p>
 
         <section className="mt-8 border border-line bg-surface p-5">

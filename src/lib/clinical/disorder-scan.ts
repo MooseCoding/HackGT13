@@ -8,13 +8,13 @@ export type DisorderSignalHit = {
   id: string;
   concern: string;
   label: string;
-  /** 0–100 language-match strength — not diagnostic probability. */
+  /** 0–100 language-match strength - not diagnostic probability. */
   confidence: number;
   guidance: string;
   tags: string[];
   channel: string;
   receivedAt: string;
-  /** Clinician-only preview — withheld from family chat. */
+  /** Clinician-only preview - withheld from family chat. */
   clinicianPreview: string;
 };
 
