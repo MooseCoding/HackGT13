@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Familyr — HackGT Pitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink: #ff66c4;
+      --pink-dark: #e855b0;
+      --yellow: #ffde59;
+      --gold: #c99500;
+      --ground: #f3f0ea;
+      --surface: #fffefb;
+      --ink: #121212;
+      --mute: #5c5850;
+      --rule: #d2ccc2;
+      --chat-out: #fff8e6;
+      --tint: #fff0f9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #0e0d0c; color: var(--ink); font-family: "DM Sans", system-ui, sans-serif; }
+    body { overflow: hidden; }
+
+    .deck { height: 100%; width: 100%; position: relative; }
+    .slide {
+      position: absolute; inset: 0;
+      display: none;
+      padding: clamp(2rem, 4vw, 3.5rem) clamp(2.5rem, 6vw, 5rem);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(255, 102, 196, 0.14), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(255, 222, 89, 0.16), transparent 50%),
+        var(--ground);
+      overflow: hidden;
+    }
+    .slide.active { display: grid; animation: rise 420ms cubic-bezier(.2,.8,.2,1); }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .brand {
+      font-family: "Architects Daughter", cursive;
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+    .brand .dot {
+      display: inline-grid; place-items: center;
+      width: 1.55rem; height: 1.55rem; border-radius: 999px;
+      background: linear-gradient(90deg, var(--pink), var(--yellow));
+      color: white; font-size: 0.95rem; margin-right: 0.4rem;
+      vertical-align: -0.15rem;
+    }
+
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 700;
+      font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      max-width: 16ch;
+    }
+    h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 700;
+      font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+    .sub {
+      margin-top: 1rem;
+      font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+      line-height: 1.45;
+      color: var(--mute);
+      max-width: 36ch;
+    }
+    .tiny {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+
+    .progress {
+      position: fixed; left: 0; right: 0; bottom: 0; height: 4px;
+      background: rgba(18,18,18,0.08); z-index: 50;
+    }
+    .progress > i {
+      display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, var(--pink), var(--yellow));
+      transition: width 280ms ease;
+    }
+    .chrome {
+      position: fixed; left: clamp(1rem, 3vw, 2rem); right: clamp(1rem, 3vw, 2rem);
+      bottom: 1rem; z-index: 40;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; color: var(--mute); font-size: 0.78rem; font-weight: 500;
+    }
+    .chrome kbd {
+      pointer-events: auto;
+      border: 1px solid var(--rule);
+      background: var(--surface);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.7rem;
+    }
+
+    /* shared UI chrome */
+    .device {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      box-shadow: 0 18px 50px rgba(18,18,18,0.08), 0 2px 0 rgba(255,255,255,0.7) inset;
+      overflow: hidden;
+    }
+    .device-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid var(--rule);
+      background: rgba(255,254,251,0.92);
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1px solid var(--rule);
+      background: var(--ground);
+      border-radius: 4px;
+      padding: 0.2rem 0.45rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--mute);
+    }
+    .avatar {
+      width: 1.55rem; height: 1.55rem; border-radius: 999px;
+      display: grid; place-items: center;
+      color: white; font-size: 0.65rem; font-weight: 700;
+    }
+    .msg {
+      max-width: 78%;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+    .msg.in { background: var(--surface); border: 1px solid var(--rule); }
+    .msg.out { background: var(--chat-out); margin-left: auto; }
+    .callout {
+      position: absolute;
+      border: 2px solid var(--pink);
+      border-radius: 8px;
+      box-shadow: 0 0 0 6px rgba(255,102,196,0.12);
+      pointer-events: none;
+    }
+    .arrow {
+      position: absolute;
+      color: var(--pink-dark);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* SLIDE 1 */
+    .s1 { grid-template-rows: auto 1fr; gap: 1.5rem; }
+    .s1-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: clamp(1.5rem, 3vw, 3rem);
+      align-items: center;
+      min-height: 0;
+    }
+    .flow {
+      display: grid; gap: 0.75rem;
+    }
+    .flow-card {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 0.85rem; align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      transform-origin: left center;
+      animation: floatIn 700ms cubic-bezier(.2,.8,.2,1) both;
+    }
+    .flow-card:nth-child(2) { animation-delay: 120ms; }
+    .flow-card:nth-child(3) { animation-delay: 240ms; }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateX(18px); }
+      to { opacity: 1; transform: none; }
+    }
+    .ico {
+      width: 2.4rem; height: 2.4rem; border-radius: 8px;
+      display: grid; place-items: center;
+      background: var(--tint);
+      color: var(--pink-dark);
+      font-size: 1.1rem;
+    }
+    .signal-pulse {
+      width: 0.55rem; height: 0.55rem; border-radius: 999px;
+      background: var(--pink);
+      box-shadow: 0 0 0 0 rgba(255,102,196,0.5);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      70% { box-shadow: 0 0 0 10px rgba(255,102,196,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,102,196,0); }
+    }
+
+    /* SLIDE 2 */
+    .s2 { grid-template-rows: auto 1fr; }
+    .s2-stage {
+      margin-top: 1.2rem;
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr;
+      gap: 1.25rem;
+      min-height: 0;
+      align-items: stretch;
+    }
+    .chat-pane { display: flex; flex-direction: column; min-height: 420px; }
+    .chat-body { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; background: var(--ground); }
+    .side-stack { display: grid; gap: 0.75rem; }
+    .mini {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+      position: relative;
+    }
+    .mini strong { display: block; font-size: 0.95rem; margin-top: 0.15rem; }
+    .label-tag {
+      position: absolute; top: -0.45rem; right: 0.7rem;
+      background: var(--yellow);
+      color: var(--ink);
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+    }
+
+    /* SLIDE 3 */
+    .s3 { grid-template-rows: auto 1fr; }
+    .s3-stage {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .steps {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin: 0.85rem 0 1rem;
+    }
+    .step {
+      border: 1px solid var(--rule);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--mute);
+    }
+    .step.on {
+      border-color: var(--pink);
+      background: var(--tint);
+      color: var(--pink-dark);
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.35rem;
+      padding: 0.9rem;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      color: var(--mute);
+      background: var(--ground);
+    }
+    .cal-cell.event {
+      background: var(--tint);
+      border-color: var(--pink);
+      color: var(--ink);
+      font-weight: 700;
+      position: relative;
+    }
+    .cal-cell.event::after {
+      content: "2 PM";
+      position: absolute;
+      bottom: 2px;
+      font-size: 0.5rem;
+      color: var(--pink-dark);
+      font-weight: 700;
+    }
+    .auto-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+      border: 1px solid var(--gold);
+      background: #fff8e6;
+      color: #8a6a00;
+      border-radius: 4px;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      animation: chipIn 600ms 300ms both cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes chipIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* SLIDE 4 */
+    .s4 { grid-template-rows: auto 1fr auto; }
+    .pipeline {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+    .pipe {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 1.1rem 1rem;
+      position: relative;
+      min-height: 150px;
+    }
+    .pipe::after {
+      content: "→";
+      position: absolute;
+      right: -0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--pink);
+      font-size: 1.4rem;
+      font-weight: 700;
+      z-index: 2;
+    }
+    .pipe:last-child::after { content: none; }
+    .pipe h3 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.15rem;
+      margin: 0.4rem 0 0.55rem;
+      line-height: 1.2;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .chip {
+      border: 1px solid var(--rule);
+      background: var(--ground);
+      border-radius: 999px;
+      padding: 0.22rem 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--mute);
+    }
+    .baseline-banner {
+      margin-top: 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      border: 1px solid var(--rule);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 0.55rem 1rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .baseline-banner em {
+      font-style: normal;
+      color: var(--pink-dark);
+    }
+    .footer-note {
+      margin-top: auto;
+      padding-top: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--mute);
+    }
+
+    /* SLIDE 5 */
+    .s5 { grid-template-rows: auto 1fr; }
+    .s5-stage {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: 1.25fr 0.85fr;
+      gap: 1.1rem;
+      min-height: 0;
+    }
+    .hcp {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 430px;
+      position: relative;
+    }
+    .hcp-top {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .badge {
+      border-radius: 4px;
+      border: 1px solid #f5c2c7;
+      background: #fff1f2;
+      color: #9f1239;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.55rem;
+      padding: 0.9rem 1rem;
+    }
+    .metric {
+      border: 1px solid var(--rule);
+      background: var(--ground);
+      border-radius: 8px;
+      padding: 0.65rem 0.7rem;
+    }
+    .metric b {
+      display: block;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.35rem;
+      margin-top: 0.15rem;
+    }
+    .metric .delta { color: #9f1239; font-size: 0.68rem; font-weight: 700; }
+    .changed {
+      padding: 0 1rem 1rem;
+      display: grid; gap: 0.45rem;
+    }
+    .flag {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.78rem;
+    }
+    .flag strong { display: block; margin-bottom: 0.15rem; }
+    .flag span { color: var(--mute); font-size: 0.72rem; }
+    .report {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 16px 40px rgba(18,18,18,0.08);
+      transform: rotate(1.2deg);
+      position: relative;
+    }
+    .report h3 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.2rem;
+      margin: 0.4rem 0 0.7rem;
+    }
+    .report p { font-size: 0.78rem; color: var(--mute); line-height: 1.45; }
+    .dl {
+      margin-top: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--ink);
+      color: white;
+      border-radius: 4px;
+      padding: 0.55rem 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .flowline {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+      margin-top: 0.85rem;
+    }
+
+    /* SLIDE 6 */
+    .s6 {
+      place-items: center;
+      text-align: center;
+      background:
+        radial-gradient(900px 500px at 50% 20%, rgba(255,102,196,0.18), transparent 55%),
+        radial-gradient(700px 400px at 50% 80%, rgba(255,222,89,0.2), transparent 50%),
+        var(--ground);
+    }
+    .s6 .mark {
+      width: 4.5rem; height: 4.5rem; border-radius: 999px;
+      display: grid; place-items: center;
+      background: linear-gradient(90deg, var(--pink), var(--yellow));
+      color: white;
+      font-family: "Architects Daughter", cursive;
+      font-size: 2.4rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 12px 40px rgba(255,102,196,0.25);
+    }
+    .s6 .name {
+      font-family: "Architects Daughter", cursive;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      margin-bottom: 1rem;
+    }
+    .s6 .line {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+      max-width: 22ch;
+      line-height: 1.2;
+      margin: 0 auto;
+    }
+    .stack {
+      margin-top: 2.5rem;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.55rem 1rem;
+      color: var(--mute);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .stack span::after { content: "·"; margin-left: 1rem; color: var(--rule); }
+    .stack span:last-child::after { content: none; }
+
+    .speaker {
+      display: none;
+      position: fixed;
+      left: 1rem; right: 1rem; bottom: 2.2rem;
+      z-index: 60;
+      background: rgba(18,18,18,0.92);
+      color: #f3f0ea;
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    body.notes .speaker { display: block; }
+
+    @media (max-width: 980px) {
+      .s1-grid, .s2-stage, .s3-stage, .s5-stage, .pipeline { grid-template-columns: 1fr; }
+      .pipe::after { content: "↓"; right: 50%; top: auto; bottom: -0.9rem; transform: translateX(50%); }
+      h1 { max-width: none; font-size: 2.2rem; }
+      .slide { padding: 1.5rem; overflow: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+
+    <!-- 1 HOOK -->
+    <section class="slide s1 active" data-notes="Your family already creates health signals every day — in messages we usually notice too late.">
+      <div class="brand"><span class="dot">F</span>Familyr</div>
+      <div class="s1-grid">
+        <div>
+          <h1>Your family already creates health signals every day.</h1>
+          <p class="sub">Messages, voice notes, routines and everyday conversations contain changes we usually notice too late.</p>
+        </div>
+        <div class="flow" aria-hidden="true">
+          <div class="flow-card">
+            <div class="ico">💬</div>
+            <div>
+              <div class="tiny">Messages</div>
+              <strong style="font-size:1rem">“Hard day. I forgot again.”</strong>
+            </div>
+            <span class="signal-pulse"></span>
+          </div>
+          <div class="flow-card">
+            <div class="ico">🎙</div>
+            <div>
+              <div class="tiny">Voice notes</div>
+              <strong style="font-size:1rem">Pace · pauses · hesitation</strong>
+            </div>
+            <span class="signal-pulse"></span>
+          </div>
+          <div class="flow-card">
+            <div class="ico">📅</div>
+            <div>
+              <div class="tiny">Calendar &amp; routines</div>
+              <strong style="font-size:1rem">Appointments · check-ins</strong>
+            </div>
+            <span class="signal-pulse"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 MEET -->
+    <section class="slide s2" data-notes="Familyr brings family communication, plans and reminders into one shared space.">
+      <div>
+        <div class="brand"><span class="dot">F</span>Familyr</div>
+        <h2 style="margin-top:0.8rem">One place for family life.</h2>
+      </div>
+      <div class="s2-stage">
+        <div class="device chat-pane">
+          <div class="device-bar">
+            <span class="avatar" style="background:#c99500">EO</span>
+            <strong style="font-size:0.9rem">Okonkwo family</strong>
+            <span class="pill" style="margin-left:auto">Group chat</span>
+          </div>
+          <div class="chat-body">
+            <div class="msg in"><span class="avatar" style="background:#ff66c4;display:inline-grid;margin-right:0.35rem;width:1.2rem;height:1.2rem;font-size:0.55rem">R</span>Sent garden photos from this morning 🌿</div>
+            <div class="msg out">I’ll bring stew on Sunday.</div>
+            <div class="msg in" style="border-color:var(--pink)">
+              <span class="tiny">Voice · 0:19</span><br />
+              “The list. The stew. I am feeling low today…”
+            </div>
+            <div class="msg out">Love you, Mama. Checking in after lunch.</div>
+          </div>
+        </div>
+        <div class="side-stack">
+          <div class="mini"><span class="label-tag">Calendar</span><div class="tiny">Shared plans</div><strong>Tue · Cardiology 2 PM</strong></div>
+          <div class="mini"><span class="label-tag">Reminders</span><div class="tiny">Gentle nudges</div><strong>Call Grandma · 4 PM</strong></div>
+          <div class="mini"><span class="label-tag">Hestia</span><div class="tiny">Weekly story</div><strong>This week’s porch light</strong></div>
+          <div class="mini"><span class="label-tag">Assistant</span><div class="tiny">Does the chores</div><strong>Drafts events · confirms</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 AGENT -->
+    <section class="slide s3" data-notes="Familyr isn’t just a chatbot. It can understand what your family is talking about and actually get things done.">
+      <div>
+        <div class="brand"><span class="dot">F</span>Familyr</div>
+        <h2 style="margin-top:0.7rem">The AI actually takes action.</h2>
+      </div>
+      <div class="s3-stage">
+        <div class="device">
+          <div class="device-bar">
+            <span class="dot" style="width:1.3rem;height:1.3rem;border-radius:999px;display:inline-grid;place-items:center;background:linear-gradient(90deg,var(--pink),var(--yellow));color:#fff;font-family:Architects Daughter,cursive;font-size:0.8rem">F</span>
+            <strong style="font-size:0.9rem">Familyr Assistant</strong>
+          </div>
+          <div style="padding:1rem;display:grid;gap:0.7rem;background:var(--ground)">
+            <div class="msg out">Add Grandma’s cardiology appointment next Tuesday at 2 PM.</div>
+            <div class="steps">
+              <span class="step on">Understands</span>
+              <span class="step on">Drafts event</span>
+              <span class="step on">Confirms</span>
+              <span class="step on">Adds to calendar</span>
+            </div>
+            <div class="msg in" style="max-width:100%;border-color:var(--pink)">
+              <strong>Draft event</strong><br />
+              Cardiology · Tue 2:00 PM · Grandma<br />
+              <span class="auto-chip" style="margin-top:0.55rem">Confirm and create</span>
+            </div>
+            <div style="margin-top:0.3rem;padding-top:0.7rem;border-top:1px dashed var(--rule)">
+              <div class="tiny" style="margin-bottom:0.4rem">From family chat</div>
+              <div class="msg in" style="max-width:100%">Mom’s appointment is Friday at 3 PM.</div>
+              <span class="auto-chip">+ Add to Family Calendar</span>
+            </div>
+          </div>
+        </div>
+        <div class="device" style="position:relative">
+          <div class="device-bar">
+            <strong style="font-size:0.9rem">Family Calendar</strong>
+            <span class="pill" style="margin-left:auto">Week</span>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-cell">S</div><div class="cal-cell">M</div><div class="cal-cell">T</div><div class="cal-cell">W</div><div class="cal-cell">T</div><div class="cal-cell">F</div><div class="cal-cell">S</div>
+            <div class="cal-cell">12</div><div class="cal-cell">13</div><div class="cal-cell event">14</div><div class="cal-cell">15</div><div class="cal-cell">16</div><div class="cal-cell" style="background:#fff8e6;border-color:var(--gold);font-weight:700">17</div><div class="cal-cell">18</div>
+          </div>
+          <div style="padding:0 1rem 1rem;display:grid;gap:0.45rem">
+            <div class="mini" style="padding:0.65rem 0.75rem;border-color:var(--pink);background:var(--tint)">
+              <div class="tiny">Tue · added</div>
+              <strong>Cardiology · 2:00 PM</strong>
+            </div>
+            <div class="mini" style="padding:0.65rem 0.75rem;border-color:var(--gold);background:#fff8e6">
+              <div class="tiny">Fri · suggested</div>
+              <strong>Mom’s appointment · 3:00 PM</strong>
+            </div>
+          </div>
+          <div class="arrow" style="left: -0.2rem; top: 42%; transform: translateX(-100%);">appears →</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 CLINICAL SIGNAL -->
+    <section class="slide s4" data-notes="With consent, everyday communication becomes a longitudinal signal — always vs their own baseline.">
+      <div>
+        <div class="brand"><span class="dot">F</span>Familyr</div>
+        <h2 style="margin-top:0.7rem;max-width:18ch">With consent, everyday communication becomes a longitudinal signal.</h2>
+      </div>
+      <div>
+        <div class="pipeline">
+          <div class="pipe">
+            <div class="tiny">In</div>
+            <h3>Messages + voice + WhatsApp</h3>
+            <div class="chips">
+              <span class="chip">chat</span>
+              <span class="chip">voice notes</span>
+              <span class="chip">ambient</span>
+            </div>
+          </div>
+          <div class="pipe">
+            <div class="tiny">Patterns</div>
+            <h3>Communication features</h3>
+            <div class="chips">
+              <span class="chip">lexical diversity</span>
+              <span class="chip">reply time</span>
+              <span class="chip">engagement</span>
+              <span class="chip">speech pace</span>
+            </div>
+          </div>
+          <div class="pipe">
+            <div class="tiny">Compare</div>
+            <h3>Personal baseline</h3>
+            <div class="chips">
+              <span class="chip">14 days</span>
+              <span class="chip">vs prior 30</span>
+            </div>
+          </div>
+          <div class="pipe">
+            <div class="tiny">Out</div>
+            <h3>Explainable review</h3>
+            <div class="chips">
+              <span class="chip">evidence</span>
+              <span class="chip">brief</span>
+              <span class="chip">report</span>
+            </div>
+          </div>
+        </div>
+        <div class="baseline-banner">Compared to <em>their own history</em> — never a population average</div>
+      </div>
+      <p class="footer-note">Decision support only. Familyr does not diagnose.</p>
+    </section>
+
+    <!-- 5 CLINICIAN -->
+    <section class="slide s5" data-notes="Clinicians can review why something changed, inspect the evidence, generate a brief, and download the report before seeing the patient.">
+      <div>
+        <div class="brand"><span class="dot">F</span>Familyr</div>
+        <h2 style="margin-top:0.7rem">The doctor gets context, not another alert.</h2>
+        <div class="flowline">
+          <span class="step on">Signal detected</span>
+          <span class="step on">Reviews evidence</span>
+          <span class="step on">Opens brief</span>
+          <span class="step on">Downloads report</span>
+        </div>
+      </div>
+      <div class="s5-stage">
+        <div class="hcp">
+          <div class="hcp-top">
+            <div>
+              <div class="tiny">Patient review</div>
+              <strong style="font-size:1.15rem">Elena Rivera</strong>
+            </div>
+            <span class="badge">Priority review</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="tiny">Speech pace</div>
+              <b>58 wpm</b>
+              <div class="delta">−42% vs baseline</div>
+            </div>
+            <div class="metric">
+              <div class="tiny">Pause share</div>
+              <b>36%</b>
+              <div class="delta">+18 pts</div>
+            </div>
+            <div class="metric">
+              <div class="tiny">Hesitation</div>
+              <b>13%</b>
+              <div class="delta">↑ vs usual</div>
+            </div>
+          </div>
+          <div class="changed">
+            <div class="tiny">What changed</div>
+            <div class="flag">
+              <strong>Voice fluency pattern changed</strong>
+              <span>58 wpm · 36% pauses · 13% hesitation &nbsp;vs&nbsp; 103 wpm · 10% · 4%</span>
+            </div>
+            <div class="flag">
+              <strong>Late-night activity shifted</strong>
+              <span>Now 41% · usual 12%</span>
+            </div>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.2rem">
+              <span class="pill">Evidence · voice</span>
+              <span class="pill">WhatsApp</span>
+              <span class="pill">Trend 42d</span>
+            </div>
+          </div>
+        </div>
+        <div class="report">
+          <div class="tiny">Weekly screening brief</div>
+          <h3>Pre-visit context</h3>
+          <p>Personal-baseline shifts in voice pace and late-night activity. Message text withheld. Decision support for clinician judgment only.</p>
+          <div style="margin-top:0.8rem;display:grid;gap:0.35rem">
+            <div class="pill" style="justify-content:space-between">Lexical diversity <strong style="color:var(--ink)">−18%</strong></div>
+            <div class="pill" style="justify-content:space-between">Night posts <strong style="color:var(--ink)">12% → 41%</strong></div>
+            <div class="pill" style="justify-content:space-between">Hesitation <strong style="color:var(--ink)">↑</strong></div>
+          </div>
+          <div class="dl">↓ Download Report</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 CLOSE -->
+    <section class="slide s6" data-notes="Bring family life and healthcare closer, one everyday signal at a time.">
+      <div>
+        <div class="mark">F</div>
+        <div class="name">Familyr</div>
+        <p class="line">Bring family life and healthcare closer, one everyday signal at a time.</p>
+        <div class="stack">
+          <span>Meta</span>
+          <span>Backboard</span>
+          <span>TigerData</span>
+          <span>Groq</span>
+          <span>ElevenLabs</span>
+          <span>Supabase</span>
+          <span>Vercel</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="progress"><i id="bar"></i></div>
+  <div class="chrome">
+    <span id="counter">1 / 6</span>
+    <span><kbd>←</kbd> <kbd>→</kbd> · <kbd>N</kbd> notes · <kbd>F</kbd> fullscreen</span>
+  </div>
+  <div class="speaker" id="notes"></div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const bar = document.getElementById("bar");
+    const counter = document.getElementById("counter");
+    const notes = document.getElementById("notes");
+    let i = 0;
+
+    function show(next) {
+      i = Math.max(0, Math.min(slides.length - 1, next));
+      slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
+      bar.style.width = ((i + 1) / slides.length * 100) + "%";
+      counter.textContent = (i + 1) + " / " + slides.length;
+      notes.textContent = slides[i].dataset.notes || "";
+      history.replaceState(null, "", "#" + (i + 1));
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); show(i + 1); }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(i - 1); }
+      if (e.key === "Home") show(0);
+      if (e.key === "End") show(slides.length - 1);
+      if (e.key.toLowerCase() === "n") document.body.classList.toggle("notes");
+      if (e.key.toLowerCase() === "f") {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+    });
+
+    let touchX = null;
+    document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].screenX; }, { passive: true });
+    document.addEventListener("touchend", (e) => {
+      if (touchX == null) return;
+      const dx = e.changedTouches[0].screenX - touchX;
+      if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+      touchX = null;
+    }, { passive: true });
+
+    const start = Math.max(1, parseInt(location.hash.replace("#", ""), 10) || 1) - 1;
+    show(start);
+  </script>
+</body>
+</html>
