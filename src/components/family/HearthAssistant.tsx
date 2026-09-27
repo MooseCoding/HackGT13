@@ -1,11 +1,16 @@
 "use client";
 
 import { HearthMark } from "@/components/HearthMark";
+<<<<<<< HEAD
 import {
   answerFamilyAssistant,
   type AssistantContext,
   type PendingAssistantAction,
 } from "@/lib/ai/assistant-local";
+=======
+import { answerFamilyAssistant, type AssistantContext } from "@/lib/ai/assistant-local";
+import type { PendingAssistantAction } from "@/lib/ai/family-tools";
+>>>>>>> ebb91a8 (askdjhf)
 import { META_MUSE_ATTRIBUTION } from "@/lib/ai/attribution";
 import { DIGEST_NAME } from "@/lib/digest-constants";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,7 +19,7 @@ import { useEffect, useRef, useState } from "react";
 type Turn = {
   role: "user" | "assistant";
   content: string;
-  source?: "muse" | "groq" | "local";
+  source?: "muse" | "grok" | "local";
   pending?: PendingAssistantAction | null;
 };
 
@@ -136,7 +141,7 @@ export function HearthAssistantChat({
     });
     const result = (await response.json()) as {
       reply?: string;
-      source?: "muse" | "groq" | "local";
+      source?: "muse" | "grok" | "local";
       pending?: PendingAssistantAction | null;
       error?: string;
     };
@@ -240,8 +245,8 @@ export function HearthAssistantChat({
                   <span className="mt-1 block text-[10px] font-medium uppercase tracking-wide text-mute">
                     {t.source === "muse"
                       ? META_MUSE_ATTRIBUTION
-                      : t.source === "groq"
-                        ? "Groq AI"
+                      : t.source === "grok"
+                        ? "Grok fallback"
                         : "Local tools"}
                   </span>
                 ) : null}

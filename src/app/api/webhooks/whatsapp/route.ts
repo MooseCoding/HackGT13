@@ -1,4 +1,5 @@
 import { addPostRow, allMembers } from "@/lib/data";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   acknowledgeWhatsAppMessage,
   extractWhatsAppMessages,
@@ -11,6 +12,51 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+type IntakeMember = { id: string; familyId: string; clinicalOptIn: boolean };
+
+/**
+ * The webhook has no user session, so in production it reads and writes with the
+ * service role after the Meta signature check. Without a service key (local dev)
+ * it falls back to the session-scoped data layer.
+ */
+const hasServiceRole = () => Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+async function intakeMember(memberId: string | null): Promise<IntakeMember | null> {
+  if (!memberId) return null;
+  if (!hasServiceRole()) {
+    return (await allMembers()).find((candidate) => candidate.id === memberId) ?? null;
+  }
+  const { data, error } = await createSupabaseAdmin()
+    .from("members")
+    .select("id, family_id, clinical_opt_in")
+    .eq("id", memberId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? { id: data.id, familyId: data.family_id, clinicalOptIn: data.clinical_opt_in } : null;
+}
+
+async function saveIntakePost(post: Post) {
+  if (!hasServiceRole()) {
+    await addPostRow(post);
+    return;
+  }
+  const { error } = await createSupabaseAdmin().from("posts").insert({
+    id: post.id,
+    family_id: post.familyId,
+    author_id: post.authorId,
+    kind: post.kind,
+    body: post.body,
+    created_at: post.createdAt,
+    voice_seconds: post.voiceSeconds ?? null,
+    transcript: post.transcript ?? null,
+    source_channel: post.channel ?? "whatsapp",
+    external_message_id: post.externalMessageId ?? null,
+    audio_metrics: post.audioMetrics ?? null,
+    raw_retained: post.rawRetained ?? false,
+  });
+  if (error) throw new Error(error.message);
+}
 
 export function GET(request: NextRequest) {
   const mode = request.nextUrl.searchParams.get("hub.mode");
@@ -36,7 +82,6 @@ export async function POST(request: NextRequest) {
   }
 
   const messages = extractWhatsAppMessages(payload);
-  const members = await allMembers();
   const results: Array<{ messageId?: string; status: string }> = [];
   for (const message of messages) {
     try {
@@ -46,7 +91,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
       const memberId = patientForWhatsAppNumber(normalized.from);
-      const member = members.find((candidate) => candidate.id === memberId);
+      const member = await intakeMember(memberId);
       if (!member?.clinicalOptIn) {
         results.push({ messageId: normalized.externalId, status: "not_opted_in" });
         continue;
@@ -64,7 +109,7 @@ export async function POST(request: NextRequest) {
         audioMetrics: normalized.audioMetrics,
         rawRetained: false,
       };
-      await addPostRow(post);
+      await saveIntakePost(post);
       await acknowledgeWhatsAppMessage(normalized.from);
       results.push({ messageId: normalized.externalId, status: "analyzed" });
     } catch (error) {

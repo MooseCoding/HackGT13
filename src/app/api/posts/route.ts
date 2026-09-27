@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   try {
     const identity = await postingIdentity(body.familyId, body.authorId);
     const post: Post = {
-      id: `p-${Date.now()}`,
+      id: `p-${crypto.randomUUID()}`,
       familyId: identity.familyId,
       authorId: identity.memberId,
       kind: (body.kind as PostKind) || "text",
@@ -42,23 +42,23 @@ export async function POST(req: NextRequest) {
       voiceSeconds: body.voiceSeconds,
       transcript: body.transcript,
       threadId: body.threadId,
-      channel: body.channel ?? "hearth",
-      audioMetrics: body.audioMetrics,
-      rawRetained: body.rawRetained ?? true,
+      channel: "hearth",
+      rawRetained: true,
     };
     const saved = await addPostRow(post);
-    recordActivity(
-      identity.familyId,
-      identity.memberId,
-      post.kind === "voice" ? "voice" : "post",
-      saved.createdAt,
-    );
-    const demo = await isDemoMode();
-    const anchor = calendarAnchor(demo);
-    const [members, events] = await Promise.all([
-      membersOf(identity.familyId),
-      mergedEventsOf(identity.familyId, { anchor }),
-    ]);
+    try {
+      recordActivity(
+        identity.familyId,
+        identity.memberId,
+        post.kind === "voice" ? "voice" : "post",
+        saved.createdAt,
+      );
+      const demo = await isDemoMode();
+      const anchor = calendarAnchor(demo);
+      const [members, events] = await Promise.all([
+        membersOf(identity.familyId),
+        mergedEventsOf(identity.familyId, { anchor }),
+      ]);
     const postText = post.transcript || post.body;
     const scheduleSuggestion = suggestScheduleFromText(postText, members, events, {
       familyId: identity.familyId,
@@ -158,17 +158,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
-    return NextResponse.json({
-      ...saved,
-      scheduleSuggestion,
-      reminderSuggestion,
-      mutualAidSuggestion,
-      commerceSuggestion,
-      calendarEvent,
-      calendarEvents,
-      checkInSuggestion,
-    });
+      const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
+      return NextResponse.json({
+        ...saved,
+        scheduleSuggestion,
+        reminderSuggestion,
+        mutualAidSuggestion,
+        commerceSuggestion,
+        calendarEvent,
+        calendarEvents,
+        checkInSuggestion,
+      });
+    } catch (enrichmentError) {
+      // The message is already committed. Optional calendar/AI enrichment must
+      // never turn a successful send into a failed chat request.
+      console.error("Post-send enrichment failed; returning the saved message.", enrichmentError);
+      return NextResponse.json({ ...saved, enrichmentWarning: "Message sent; suggestions are temporarily unavailable." });
+    }
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

@@ -156,6 +156,8 @@ export async function runPersistedClinicalAnalysis() {
     );
 
     let queuedCount = 0;
+    const memberById = new Map(members.map((member) => [member.id, member]));
+    const persistedPatients: Array<{ snapshotId: string; member: Member; snapshot: PatientSnapshot }> = [];
     for (const snapshot of snapshots) {
       const inserted = await admin
         .from("clinical_snapshots")
@@ -171,6 +173,8 @@ export async function runPersistedClinicalAnalysis() {
         .select("id")
         .single();
       if (inserted.error || !inserted.data) throw new Error(inserted.error?.message || "Could not save clinical snapshot.");
+      const member = memberById.get(snapshot.memberId);
+      if (member) persistedPatients.push({ snapshotId: inserted.data.id, member, snapshot });
       if (snapshot.riskLevel === "stable") continue;
 
       queuedCount += 1;
@@ -209,7 +213,7 @@ export async function runPersistedClinicalAnalysis() {
       .update({ status: "completed", completed_at: completedAt, patient_count: snapshots.length, queued_count: queuedCount })
       .eq("id", runId);
     if (completed.error) throw new Error(completed.error.message);
-    return { runId, analyzedAt: completedAt, patients: snapshots, queuedCount };
+    return { runId, analyzedAt: completedAt, patients: snapshots, persistedPatients, queuedCount };
   } catch (error) {
     await admin
       .from("clinical_analysis_runs")
@@ -284,7 +288,10 @@ export async function clinicalDashboardData(view: ClinicalRosterView = "mine"): 
     return [row.snapshot as unknown as PatientSnapshot];
   });
   const members = (memberResult.data ?? []).map((row) => mapMember(row));
-  const scopedPatients = filterPatientsByRoster(patients, assignments, members, clinicianId, view);
+  // Snapshots outlive consent; only show people who are opted in right now.
+  const optedInIds = new Set(members.map((member) => member.id));
+  const consentingPatients = patients.filter((patient) => optedInIds.has(patient.memberId));
+  const scopedPatients = filterPatientsByRoster(consentingPatients, assignments, members, clinicianId, view);
   const memberIds = new Set(scopedPatients.map((patient) => patient.memberId));
   return {
     patients: scopedPatients,
@@ -292,7 +299,7 @@ export async function clinicalDashboardData(view: ClinicalRosterView = "mine"): 
     alerts: (alertResult.data ?? []).map((row) => mapAlert(row)).filter((alert) => memberIds.has(alert.memberId)),
     assignments,
     clinicianId,
-    rosterCounts: rosterCounts(patients, assignments, members, clinicianId),
+    rosterCounts: rosterCounts(consentingPatients, assignments, members, clinicianId),
     autoAcceptPatients,
     lastRunAt: runResult.data?.completed_at ?? null,
   };
@@ -354,7 +361,10 @@ export async function clinicalPatientById(id: string) {
   const access = await canClinicianAccessPatient(id);
   if (!access.allowed) return null;
 
-  if (await isDemoMode()) return demoPatientById(id);
+  if (await isDemoMode()) {
+    const patient = demoPatientById(id);
+    return patient ? { ...patient, snapshotId: `demo-${id}-${patient.snapshot.assessedAt}` } : null;
+  }
   if (!(await isClinicianUser())) throw new Error("Clinician access required.");
   const admin = createSupabaseAdmin();
   const snapshotResult = await admin
@@ -376,6 +386,7 @@ export async function clinicalPatientById(id: string) {
     if (error) throw new Error(error.message);
   }
   if (!memberResult.data || !familyResult.data) return null;
+  if (!memberResult.data.clinical_opt_in) return null;
   const family: Family = {
     id: familyResult.data.id,
     name: familyResult.data.name,
@@ -383,6 +394,7 @@ export async function clinicalPatientById(id: string) {
     inviteCode: familyResult.data.join_code,
   };
   return {
+    snapshotId: snapshotResult.data.id,
     member: mapMember(memberResult.data),
     family,
     snapshot: snapshotResult.data.snapshot as unknown as PatientSnapshot,

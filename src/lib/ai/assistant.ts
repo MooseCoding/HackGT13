@@ -1,11 +1,16 @@
 import { aiConfigured } from "./config";
 import { aiChat } from "./chat";
+<<<<<<< HEAD
 import {
   answerFamilyAssistant,
   type AssistantContext,
   type PendingAssistantAction,
 } from "./assistant-local";
 import { executeFamilyTool, FAMILY_ASSISTANT_TOOLS, type FamilyToolRuntime } from "./family-tools";
+=======
+import { answerFamilyAssistant, type AssistantContext } from "./assistant-local";
+import { executeFamilyTool, FAMILY_ASSISTANT_TOOLS, type FamilyToolRuntime, type PendingAssistantAction } from "./family-tools";
+>>>>>>> ebb91a8 (askdjhf)
 import { ASSISTANT_SYSTEM_PROMPT } from "./prompts";
 import { aiChatWithTools, type ChatMessage } from "./tool-chat";
 
@@ -17,9 +22,15 @@ export type AssistantTurn = {
   content: string;
 };
 
+<<<<<<< HEAD
+=======
+export { answerFamilyAssistant };
+export type { AssistantContext };
+
+>>>>>>> ebb91a8 (askdjhf)
 export type AssistantRunResult = {
   reply: string;
-  source: "muse" | "groq" | "local";
+  source: "muse" | "grok" | "local";
   pending?: PendingAssistantAction | null;
   toolsUsed?: string[];
 };
@@ -215,7 +226,7 @@ export async function runFamilyAssistant(input: {
 
       let pending: PendingAssistantAction | null = null;
       const toolsUsed: string[] = [];
-      let source: "muse" | "groq" = "muse";
+      let source: "muse" | "grok" = "muse";
 
       for (let step = 0; step < 4; step += 1) {
         const turn = await aiChatWithTools({

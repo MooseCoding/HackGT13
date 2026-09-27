@@ -315,7 +315,9 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
       baseline: `${engagementBaseline.toFixed(1)}/week`,
     });
   }
-  if (ready && (morningDelta <= -0.15 || night - nightBaseline >= 0.2)) {
+  // Require a material timing change. A 15-point boundary was too sensitive to
+  // ordinary weekly variation (and floating-point rounding around exactly 15%).
+  if (ready && (morningDelta <= -0.2 || night - nightBaseline >= 0.2)) {
     flags.push({
       code: "sleep_shift",
       domain: "social",

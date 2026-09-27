@@ -1,4 +1,4 @@
-import { groqApiBase, groqConfigured, groqModel, museApiBase, museApiKey, museConfigured, museModel } from "./config";
+import { aiProviderMode, grokApiBase, grokApiKey, grokConfigured, grokModel, museApiBase, museApiKey, museConfigured, museModel } from "./config";
 import type { AiSource } from "./chat";
 
 export type ToolDef = {
@@ -80,7 +80,7 @@ export async function aiChatWithTools(options: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<ToolChatResult> {
-  if (museConfigured()) {
+  if (aiProviderMode() !== "grok" && museConfigured()) {
     try {
       const message = await postChat({
         base: museApiBase(),
@@ -100,24 +100,24 @@ export async function aiChatWithTools(options: {
           : { role: "assistant", content: message.content ?? "" },
       };
     } catch (error) {
-      console.error("Muse tool chat failed; trying Groq.", error);
-      if (!groqConfigured()) throw error;
+      console.error("Muse tool chat failed; trying Grok.", error);
+      if (!grokConfigured()) throw error;
     }
   }
 
-  if (!groqConfigured()) throw new Error("No AI provider configured for tools.");
+  if (!grokConfigured()) throw new Error("No AI provider configured for tools.");
 
   const message = await postChat({
-    base: groqApiBase(),
-    key: process.env.GROQ_API_KEY!,
-    model: groqModel(),
+    base: grokApiBase(),
+    key: grokApiKey(),
+    model: grokModel(),
     messages: options.messages,
     tools: options.tools,
     temperature: options.temperature,
     maxTokens: options.maxTokens,
   });
   return {
-    source: "groq",
+    source: "grok",
     content: message.content,
     toolCalls: message.tool_calls ?? [],
     rawAssistant: message.tool_calls?.length

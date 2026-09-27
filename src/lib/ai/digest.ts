@@ -1,6 +1,6 @@
 import { aiChat } from "./chat";
 import { aiConfigured } from "./config";
-import { parseModelJson } from "./groq";
+import { parseModelJson } from "./json";
 import { DIGEST_SYSTEM_PROMPT } from "./prompts";
 import type { AiSource } from "./chat";
 import type { CalendarEvent, Member, Post } from "../types";
@@ -50,7 +50,7 @@ function buildUserPayload(
   ].join("\n");
 }
 
-/** Generate a weekly digest with Meta Muse (preferred) or Groq. Returns null if unconfigured or on failure. */
+/** Generate a weekly digest with Meta Muse (preferred) or Grok. Returns null if unconfigured or on failure. */
 export async function aiDigestStory(input: {
   posts: Post[];
   members: Member[];

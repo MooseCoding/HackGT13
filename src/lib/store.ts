@@ -2,7 +2,7 @@ import { analyzeMember } from "./analysis";
 import { seedDemoPatientAssignments } from "./clinical/assignments";
 import { atDay } from "./clock";
 import { GROUP_THREAD, postThreadId, threadForDm } from "./chat";
-import { aiConfigured, groqConfigured, museConfigured } from "./ai/config";
+import { aiConfigured, grokConfigured, museConfigured } from "./ai/config";
 import { buildDigest } from "./digest";
 import { enrichDigestTimeMachine } from "./digest-time-machine";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
@@ -159,7 +159,7 @@ function digestMatchesPreference(digest: Digest, preferLocal: boolean) {
   const source = digest.source ?? "local";
   if (preferLocal) return source === "local";
   if (museConfigured()) return source === "muse";
-  if (groqConfigured()) return source === "groq";
+  if (grokConfigured()) return source === "grok";
   if (aiConfigured()) return source !== "local";
   return source === "local";
 }

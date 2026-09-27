@@ -1,5 +1,9 @@
 import { DIGEST_NAME } from "../digest-constants";
 
+<<<<<<< HEAD
+=======
+/** Serializable context shared with the client-side fallback responder. */
+>>>>>>> ebb91a8 (askdjhf)
 export type AssistantContext = {
   familyName?: string;
   inviteCode?: string;
@@ -10,6 +14,7 @@ export type AssistantContext = {
   path?: string;
 };
 
+<<<<<<< HEAD
 /** Client-safe pending action shape (no server imports). */
 export type PendingAssistantAction =
   | {
@@ -34,6 +39,9 @@ export type PendingAssistantAction =
     };
 
 /** Keyword helper — no vendor models, no network, safe for client components. */
+=======
+/** Client-safe fallback — no provider calls, server APIs, or database imports. */
+>>>>>>> ebb91a8 (askdjhf)
 export function answerFamilyAssistant(message: string, ctx?: AssistantContext): string {
   const q = message.toLowerCase().trim();
   if (!q) return `Ask about Chats, Calendar, ${DIGEST_NAME}, invites, switching circles, or Settings.`;
@@ -62,7 +70,11 @@ export function answerFamilyAssistant(message: string, ctx?: AssistantContext): 
     q.includes("what's on")
   ) {
     const list = events.length
+<<<<<<< HEAD
       ? `Coming up:\n${events.slice(0, 6).map((e) => `• ${e}`).join("\n")}`
+=======
+      ? `Coming up:\n${events.slice(0, 6).map((event) => `• ${event}`).join("\n")}`
+>>>>>>> ebb91a8 (askdjhf)
       : "No upcoming events are loaded right now.";
     return `${list}\n\nI can draft a calendar event for you here — tell me the title, day, and time.`;
   }
