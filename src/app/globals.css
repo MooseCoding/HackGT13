@@ -294,6 +294,8 @@ html.easy {
 .chat-surface .border-t button,
 .chat-surface .border-t label {
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
 .landing-rise-delay-3 {
   animation-delay: 0.24s;
 }
@@ -312,7 +314,7 @@ html.easy {
 
   .message-enter,
   .notification-enter,
-  .voice-listening {
+  .voice-listening,
   .landing-rise-delay-3,
   .landing-rise-delay-4 {
     animation: none;
