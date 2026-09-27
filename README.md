@@ -1,14 +1,53 @@
 # Hearth
 
-HackGT 13 — a digital living room for families, with an Impiricus clinician channel for opted-in members.
+**A digital living room for families, with an opt-in clinician channel.** Built at HackGT 13.
 
-## What it is
+Families share messages, photos, voice notes and plans in one calm place. Each week, **Hestia** turns the week into a short story, so nobody has to scroll the whole group thread. If a family member chooses to share, a clinician can see gentle, explainable signs that the way that person communicates has changed. Each person is compared only with their own past, never with a population average.
 
-**Hearth** is the consumer “porch”: async family chat, photos, voice notes, a natural-language calendar, and a weekly story digest so nobody has to live in the group thread.
+> Hearth provides clinical decision support. It does not diagnose, it is not a medical device, and a clinician must confirm every signal.
 
-**Impiricus portal** (`/hcp`) is the clinician view. It never sees family members who did not opt in. Markers (lexical diversity, sentence length, repetition, sentiment, posting hours) are compared to **that person’s own baseline**, then turned into a structured pre-visit note. This is decision support, not a diagnosis, and not a medical device.
+---
 
-## Run
+## Contents
+
+- [What's inside](#whats-inside)
+- [Quick start](#quick-start)
+- [Demo mode vs live mode](#demo-mode-vs-live-mode)
+- [Environment variables](#environment-variables)
+- [Supabase setup](#supabase-setup)
+- [Deploying](#deploying)
+- [Security and privacy model](#security-and-privacy-model)
+- [How the clinical engine works](#how-the-clinical-engine-works)
+- [Project structure](#project-structure)
+- [Scripts](#scripts)
+- [More docs](#more-docs)
+
+---
+
+## What's inside
+
+| Surface | Route | What it does |
+| --- | --- | --- |
+| Landing | `/` | Google sign-in, or **Preview the demo family** |
+| Onboarding | `/onboarding` | Create a Circle or join one with an invite code |
+| Family chat | `/family` | Group chat and DMs, photos, voice notes, **Add member** invites, Hearth Assistant |
+| Calendar | `/family/calendar` | Create events in plain English ("Sofia's game Saturday 10am at Piedmont"), RSVPs, bring-lists, Google Calendar sync |
+| Reminders | `/family/reminders` | Reminders pulled from chat and the calendar |
+| Hestia | `/family/digest` | The weekly story for the Circle, with listen-aloud |
+| Circle and settings | `/family/circle`, `/family/settings/*` | Members, clinician sharing, insurance, Larger text |
+| Invite link | `/invite/[token]` | Accept an emailed invite and join a Circle |
+| Clinician portal | `/hcp`, `/hcp/patients/[id]` | Review queue, patient roster, pre-visit brief with evidence |
+| Live signal demo | `/hcp/live` | Deterministic walkthrough of WhatsApp intake, for use when venue Wi-Fi fails |
+
+**Words we use:** *Hearth* is the product. *Hestia* is the weekly story. A *Circle* is one household, and *Family* is the people in it. *Larger text* is the accessibility mode. *Hearth Assistant* is the in-app helper; it is not Hestia.
+
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase (Auth, Postgres, row-level security, Realtime) · Meta Muse with a Grok fallback for generation · Groq Whisper for voice transcription · deployed on Vercel.
+
+---
+
+## Quick start
+
+Requires Node 20 or newer.
 
 ```bash
 npm install
@@ -16,61 +55,179 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open <http://localhost:3000> and click **Preview the demo family**. You need no accounts and no API keys to try the full app.
 
-1. **Homepage** — Continue with Google (or preview the demo family).
-2. **Onboarding** — name the circle and add family members.
-3. **App** — chats, calendar, weekly story, clinician view.
+---
 
-### Google sign-in
+## Demo mode vs live mode
 
-In the [Supabase dashboard](https://supabase.com/dashboard) → Authentication → Providers → Google, add a Google Cloud OAuth client. Redirect URLs:
+| | Demo mode | Live mode |
+| --- | --- | --- |
+| Data | In memory, seeded from `src/lib/seed.ts` (the Alvarez and Okonkwo Circles) | Your Supabase project |
+| Sign-in | None | Google through Supabase Auth |
+| When it's on | Supabase keys are missing, you clicked **Preview the demo family**, or `NEXT_PUBLIC_DEMO_MODE=true` | Supabase keys are set and you signed in with Google (signing in clears demo mode) |
+| Resets | On server restart | Never. Data persists. |
 
-- `https://nkksroiojqcwwbptplmo.supabase.co/auth/v1/callback`
-- `http://localhost:3000/auth/callback`
+Demo mode never reads or writes the database, so it is safe to show in public.
 
-Site URL: `http://localhost:3000`.
+---
 
-- Family app: `/family`
-- Calendar: `/family/calendar`
-- Weekly story: `/family/digest`
-- Clinician panel: `/hcp`
+## Environment variables
 
-## Stack
+Copy `.env.example` to `.env.local`. Only the first group is needed for live mode.
 
-Next.js (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres) · on-device NLP for Phase 2 metrics.
+**Core (live mode)**
 
-## Phase 2 clinical engine
+| Variable | Where it's used | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Browser and server | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser and server | Public key. Row-level security protects the data. |
+| `NEXT_PUBLIC_SITE_URL` | Server | Base URL for OAuth redirects and invite links |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server only** | Used by the clinical workers, the clinician portal and the WhatsApp webhook. **Never prefix it with `NEXT_PUBLIC_`.** |
+| `CRON_SECRET` | Server only | Protects `/api/clinical/*` cron endpoints. Required in production. |
+| `HCP_CLINICIAN_EMAILS` | Server only | Comma-separated emails that get clinician access |
 
-- The collector derives interaction metadata from opted-in members only: lexical diversity, sentence length, repetition, sentiment range, engagement cadence, response latency, and time-of-day shifts.
-- The triage engine compares the latest 14 days with that member's prior 30-day baseline and emits explainable cognitive-communication, social-engagement, and affect signals.
-- `/hcp` is the Impiricus review queue; `/hcp/patients/[id]` shows the generated pre-visit brief, trend evidence, confidence, and suggested next step.
-- Analysis runs, snapshots, and deduplicated alerts are persisted in Supabase. Clinicians can move alerts through `new`, `reviewing`, `contacted`, and `dismissed` states.
-- `/api/clinical/analyze` is the protected autonomous worker endpoint. `vercel.json` schedules it daily at 12:00 UTC; set `CRON_SECRET` and the server-only `SUPABASE_SERVICE_ROLE_KEY` in deployed environments.
-- Live clinician access requires either `profiles.account_role = 'clinician'` (or `admin`) or an email listed in `HCP_CLINICIAN_EMAILS`. Never expose the service-role key through a `NEXT_PUBLIC_*` variable.
-- A single concerning family message can prompt a gentle check-in, but does not create a clinical alert; longitudinal baseline shifts drive the review queue.
+**AI (optional; local fallbacks run without these)**
 
-The output is clinical decision support, not a diagnosis or treatment recommendation. Changes can reflect language, device access, travel, illness, or family communication patterns and require clinician confirmation.
+| Variable | Purpose |
+| --- | --- |
+| `MODEL_API_KEY`, `AI_MODEL`, `AI_API_BASE` | Meta Muse, the main model for Hestia, Hearth Assistant and clinician briefs |
+| `GROK_API_KEY`, `GROK_MODEL`, `GROK_API_BASE` | Grok, used when Muse is unavailable. `AI_PROVIDER_MODE=grok` forces it. |
+| `GROQ_API_KEY`, `GROQ_TRANSCRIPTION_MODEL` | Voice-note transcription (Whisper) |
+
+**Integrations (optional)**
+
+| Variable | Purpose |
+| --- | --- |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | The **Connect Google Calendar** button |
+| `RESEND_API_KEY`, `CLINICAL_EMAIL_FROM` | Sending clinician report emails. Without these, the app opens a labeled `mailto:` preview instead. |
+| `WHATSAPP_*` | WhatsApp Business intake. See [Ambient WhatsApp intake](#ambient-whatsapp-and-voice-intake). |
+
+---
+
+## Supabase setup
+
+The schema lives in [`supabase/migrations/`](./supabase/migrations). Apply migrations in order and never edit one that has already been applied.
+
+**1. Link the project and apply migrations**
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
+```
+
+**2. Turn on Google sign-in.** In the Supabase dashboard, go to **Authentication → Providers → Google** and add a Google Cloud OAuth client. Then, under **Authentication → URL Configuration**:
+
+- Site URL: your deployed URL (use `http://localhost:3000` for local development)
+- Redirect URLs: `http://localhost:3000/auth/callback` and `https://<your-domain>/auth/callback`
+
+In Google Cloud, set the OAuth client's redirect URI to `https://<project-ref>.supabase.co/auth/v1/callback`.
+
+**3. Give someone clinician access.** Either add their email to `HCP_CLINICIAN_EMAILS` (the database role is set automatically the next time they sign in), or run this in the SQL editor:
+
+```sql
+update public.profiles set account_role = 'clinician'
+where id = (select id from auth.users where email = 'doctor@example.com');
+```
+
+**4. Optional: test data.** [`supabase/test_signal.sql`](./supabase/test_signal.sql) creates a realistic baseline and a recent change for one member, so you can exercise the clinician queue. Use it only in a test project.
+
+---
+
+## Deploying
+
+1. Import the repo into Vercel and add the environment variables above. Put `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` in the **Production** environment.
+2. Run `npx supabase db push` against the production project **before** deploying code that depends on a new migration.
+3. `vercel.json` schedules `/api/clinical/analyze` daily at 12:00 UTC. Vercel sends `CRON_SECRET` automatically.
+4. The weekly clinician brief job (`/api/clinical/reports/weekly`) is **not scheduled yet**. Add it to `vercel.json` if you want it to run automatically.
+5. After deploying, open `/api/health/supabase`. It should report `configured: true`.
+
+**Production checklist**
+
+- [ ] All migrations applied (`npx supabase migration list` shows no pending ones)
+- [ ] Google redirect URLs include the production domain
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` are set and are not `NEXT_PUBLIC_`
+- [ ] `WHATSAPP_APP_SECRET` is set if the webhook is live (unsigned requests are rejected in production)
+- [ ] Point-in-time recovery or daily backups are on in Supabase
+
+---
+
+## Security and privacy model
+
+Every table has row-level security, and **signed-out visitors can read and write nothing**. The rules are enforced in Postgres, not only in the app:
+
+- **Circles.** You can see a Circle only if you are a member of it. Any member can change Circle settings, but only the owner can rename it, and ownership can't be transferred through the API.
+- **Members.** You can't move your member profile into another Circle or link it to another account. New member placeholders created for invites start unclaimed.
+- **Posts.** You post as yourself. A Circle owner can also post for a member who has no account yet, such as a grandparent. Only the signature-checked webhook can write WhatsApp or phone posts, so voice signals can't be faked from a browser.
+- **Invites.** An invite can point only at an unclaimed member of the same Circle. Invites expire after 14 days and can be revoked, but not edited.
+- **Profiles.** Users can change only their display name. Roles such as `clinician` are assigned by the server.
+- **Clinical sharing is the member's own choice.** Nobody else can opt a person in once they have claimed their profile, except that the Circle owner can set it for a member with no account yet. A clinician sees a patient only while that patient is opted in, and only if another clinician hasn't already claimed them. **Opting out takes effect immediately**: the clinician assignment is released and open alerts are closed.
+- **Clinical records.** Clinicians can mark alerts as reviewed and sign reports as themselves, but they can't edit what was generated. Analysis runs are written only by the server.
+
+The hardening rules are in [`20260927010000_production_hardening.sql`](./supabase/migrations/20260927010000_production_hardening.sql).
+
+---
+
+## How the clinical engine works
+
+1. **Collect.** The engine reads messages only from opted-in members. It derives metrics such as lexical diversity, sentence length, repetition, sentiment range, posting-hour shifts, response latency and engagement cadence, plus speech pace and pauses for voice notes.
+2. **Compare.** It compares the latest 14 days with that person's own previous 30-day baseline.
+3. **Triage.** A daily worker saves a snapshot for each patient and opens a deduplicated alert when there is a sustained shift (`monitor` or `priority`). A single worrying message can prompt a gentle family check-in, but it never creates an alert on its own.
+4. **Review.** Clinicians move alerts through `new → reviewing → contacted / dismissed`. They can generate an evidence-linked brief that stays a draft until someone reviews it.
+
+Changes can reflect language, device access, travel, illness or a family's normal habits. That is why every output is decision support that a clinician must confirm.
 
 ### Ambient WhatsApp and voice intake
 
-Hearth is designed as a signal layer for communication families already use, not as a replacement messenger.
+- Set Meta's WhatsApp Business webhook callback to `https://<your-domain>/api/webhooks/whatsapp` and fill in the `WHATSAPP_*` variables.
+- Map senders to members explicitly with `WHATSAPP_PATIENT_MAP` (`{"14045550123":"member-id"}`). Senders who aren't mapped, or haven't opted in, are ignored.
+- Voice notes are transcribed and reduced to timing features. Hearth does not store the original audio.
 
-- Configure Meta's WhatsApp Business webhook callback as `/api/webhooks/whatsapp` and copy the `WHATSAPP_*` values from `.env.example`.
-- Incoming opted-in text messages and voice notes are normalized into the existing longitudinal timeline.
-- Voice notes are transcribed with Groq Whisper and reduced to speech pace, pause share, average pause, and hesitation markers. Original media is not stored by Hearth.
-- Sender-to-patient mapping is explicit through `WHATSAPP_PATIENT_MAP`; unrecognized or non-consented senders are ignored.
-- `/hcp/live` provides a deterministic judge demo of the complete flow when external credentials or venue Wi-Fi are unavailable.
+---
 
-For a real Meta test-number setup, expose the local app through an HTTPS tunnel, register the callback URL and verify token in Meta's developer dashboard, subscribe the app to WhatsApp message webhooks, and map the sender's E.164 phone number to an opted-in demo patient.
+## Project structure
 
-## Backend and demo mode
+```
+src/
+  app/                 Routes (App Router)
+    api/               Route handlers: posts, events, digest, invitations, clinical/*, webhooks/*
+    family/            Family app pages
+    hcp/               Clinician portal
+  components/          UI by area (family/, hcp/, home/, onboarding/, settings/)
+  lib/
+    data.ts            Data layer: switches between the demo store and Supabase
+    store.ts, seed.ts  In-memory demo store and seed Circles
+    auth.ts            Session, profile and clinician checks
+    supabase/          Browser, server and service-role clients, plus generated types
+    ai/                Muse and Grok clients, prompts, Hestia and Hearth Assistant
+    clinical/          Analysis, operations, reports, WhatsApp intake
+  proxy.ts             Session refresh and route gating (Next.js 16 middleware)
+supabase/migrations/   Database schema and policies
+eval/hcp-brief/        Evaluation set for clinician briefs (synthetic data)
+```
 
-- **Demo mode** (default when Supabase keys are missing, or when you toggle **Demo** in the header) keeps the original in-memory mock Alvarez / Okonkwo families from `src/lib/seed.ts`.
-- **Live mode** reads and writes the same shapes from the Supabase project. Copy `.env.example` to `.env.local`, then uncheck Demo.
+---
 
-Schema lives in `supabase/migrations/`.
+## Scripts
 
-Live families now support multiple authenticated accounts through a short invite code. Each account claims one pre-created member profile, and the server verifies that identity for posts, calendar events, and clinician-sharing consent. Family chat refreshes every four seconds so posts appear across devices and remain in Supabase after reload.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server on port 3000 |
+| `npm run build` / `npm start` | Production build and serve |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest unit tests |
+| `npm run eval:hcp` | Generate synthetic cases and score clinician briefs |
 
-For the two-profile rehearsal, consent demo, explainable-insight path, and backup recording shot list, see [`DEMO_RUNBOOK.md`](./DEMO_RUNBOOK.md).
+---
+
+## More docs
+
+- [`DEMO_RUNBOOK.md`](./DEMO_RUNBOOK.md): the 90-second judging path, two-profile rehearsal and backup recording
+- [`HACKATHON_REPORT.md`](./HACKATHON_REPORT.md): what's built and what's still fragile
+- [`eval/hcp-brief/README.md`](./eval/hcp-brief/README.md): brief evaluation sources and method
+- [`AGENTS.md`](./AGENTS.md): notes for coding agents, including the copy rules
+
+## License
+
+MIT. See [`LICENSE`](./LICENSE).
