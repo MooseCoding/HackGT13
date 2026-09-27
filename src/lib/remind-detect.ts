@@ -89,9 +89,16 @@ function firstName(member: Member) {
 function findAssignee(raw: string, members: Member[], authorId: string): string | null {
   const lower = raw.toLowerCase();
 
+  // "Remind me / myself to …" → the person asking.
+  if (/\bremind\s+(me|myself)\s+to\b/.test(lower) || /\breminder\s+for\s+me\b/.test(lower)) {
+    return authorId;
+  }
+
   const remindTo = lower.match(/\bremind\s+(\w+)\s+to\b/);
   if (remindTo) {
-    const m = members.find((x) => firstName(x).toLowerCase() === remindTo[1].toLowerCase());
+    const who = remindTo[1].toLowerCase();
+    if (who === "me" || who === "myself") return authorId;
+    const m = members.find((x) => firstName(x).toLowerCase() === who);
     if (m) return m.id;
   }
 
@@ -114,6 +121,11 @@ function findAssignee(raw: string, members: Member[], authorId: string): string 
   }
 
   if (/\bI(?:'ll| will)\b/i.test(raw)) {
+    return authorId;
+  }
+
+  // Bare "reminder: …" / "don't forget …" with a day → assign to the author.
+  if (/\b(reminder:|don'?t forget)\b/.test(lower) && DAY_RE.test(lower)) {
     return authorId;
   }
 
@@ -141,7 +153,15 @@ function extractReminderText(raw: string): string {
   }
   if (/\bcall\b/i.test(text)) {
     const call = text.match(/call\s+([^?.!,]+)/i);
-    if (call) return `Call ${call[1].trim()}`;
+    if (call) {
+      const target = call[1]
+        .replace(DAY_RE, "")
+        .replace(TIME_RE, "")
+        .replace(/\b(this weekend|morning|afternoon|evening|night)\b/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (target) return `Call ${target}`;
+    }
   }
   if (/\bwear the\b/i.test(text)) {
     const scarf = text.match(/wear the\s+([^?.!,]+)/i);
