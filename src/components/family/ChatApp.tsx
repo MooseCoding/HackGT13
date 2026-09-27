@@ -16,18 +16,14 @@ import {
 } from "@/lib/event-supplies";
 import { useFamily } from "@/components/family/FamilyChrome";
 import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
-<<<<<<< HEAD
 import {
   assistantPreviewText,
   defaultAssistantGreeting,
   HearthAssistantChat,
 } from "@/components/family/HearthAssistant";
 import type { AssistantContext } from "@/lib/ai/assistant-local";
+import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import { ImagePlus, Loader2, Mic, SendHorizontal } from "lucide-react";
-=======
-import { assistantPreviewText, HearthAssistantChat } from "@/components/family/HearthAssistant";
-import type { AssistantContext } from "@/lib/ai/assistant-local";
->>>>>>> ebb91a8 (askdjhf)
 import {
   ASSISTANT_LABEL,
   ASSISTANT_THREAD,
@@ -65,7 +61,6 @@ import {
 } from "@/lib/clinical/check-in";
 import { looksLikeMutualAidText } from "@/lib/mutual-aid-detect";
 import { isWeeklyFamilyCall } from "@/lib/family-call-schedule";
-import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import type {
   CalendarEvent,
   CommerceSuggestion,
@@ -75,7 +70,6 @@ import type {
   PostReaction,
 } from "@/lib/types";
 import Link from "next/link";
-import { ImagePlus, LoaderCircle, Mic, Send } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
@@ -475,8 +469,6 @@ export function ChatApp({
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [listening, setListening] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(
     () => !initialWith || initialWith === GROUP_THREAD || initialWith === ASSISTANT_THREAD,
   );
@@ -503,17 +495,12 @@ export function ChatApp({
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() => events.map(ensureEventSupplies));
   const [localPosts, setLocalPosts] = useState<Post[]>(posts);
   const [reactions, setReactions] = useState<PostReaction[]>([]);
-<<<<<<< HEAD
   const [sendError, setSendError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   /** Optimistic + polled posts for both demo and live. */
   const chatPosts = localPosts;
   // Stable SSR/client first paint — sessionStorage preview is applied after hydrate.
   const [assistantPreview, setAssistantPreview] = useState(defaultAssistantGreeting);
-=======
-  const chatPosts = localPosts;
-  const [assistantPreview, setAssistantPreview] = useState(() => assistantPreviewText());
->>>>>>> ebb91a8 (askdjhf)
   const hasWeeklyCalls = localEvents.some(isWeeklyFamilyCall);
   const messagesRef = useRef<HTMLDivElement>(null);
   const composingRef = useRef(false);
@@ -526,16 +513,12 @@ export function ChatApp({
   }, [events]);
 
   useEffect(() => {
-<<<<<<< HEAD
     setLocalPosts((prev) => {
       const byIdMap = new Map(posts.map((post) => [post.id, post]));
       // Keep optimistic posts that the server has not echoed yet.
       const extras = prev.filter((post) => post.id.startsWith("p-local-") && !byIdMap.has(post.id));
       return [...posts, ...extras];
     });
-=======
-    setLocalPosts(posts);
->>>>>>> ebb91a8 (askdjhf)
   }, [posts]);
 
   useEffect(() => {
@@ -568,28 +551,30 @@ export function ChatApp({
 
   useEffect(() => {
     if (demo) return;
-    const supabase = createSupabaseBrowser();
-    const channel = supabase
-      .channel(`family-posts-${me.familyId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "posts", filter: `family_id=eq.${me.familyId}` },
-        () => router.refresh(),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [demo, me.familyId, router]);
-
-  useEffect(() => {
-    if (demo) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible" || composingRef.current) return;
       router.refresh();
     }, 10000);
     return () => window.clearInterval(timer);
   }, [demo, router]);
+
+  useEffect(() => {
+    if (demo) return;
+    const supabase = createSupabaseBrowser();
+    const channel = supabase
+      .channel(`family-posts-${me.familyId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "posts", filter: `family_id=eq.${me.familyId}` },
+        () => {
+          if (!composingRef.current) router.refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [demo, me.familyId, router]);
 
   useEffect(() => {
     if (demo) return;
@@ -989,7 +974,6 @@ export function ChatApp({
       applyDemoPost(text || (kind === "photo" ? "Photo" : "Voice note"));
       return;
     }
-<<<<<<< HEAD
 
     const optimisticId = `p-local-${Date.now()}`;
     const optimistic: Post = {
@@ -1000,23 +984,10 @@ export function ChatApp({
       body: text || (kind === "photo" ? "Photo" : "Voice note"),
       createdAt: new Date().toISOString(),
       threadId,
-=======
-    const outgoingBody = text || (kind === "photo" ? "Photo" : "Voice note");
-    const tempId = `sending-${crypto.randomUUID()}`;
-    const optimisticPost: Post = {
-      id: tempId,
-      familyId: me.familyId,
-      authorId: me.id,
-      threadId,
-      kind,
-      body: outgoingBody,
-      createdAt: new Date().toISOString(),
->>>>>>> ebb91a8 (askdjhf)
       photoUrl,
       transcript: kind === "voice" ? text : undefined,
       voiceSeconds: kind === "voice" ? Math.max(4, Math.round(text.split(" ").length / 2)) : undefined,
       channel: "hearth",
-<<<<<<< HEAD
     };
     setLocalPosts((prev) => [optimistic, ...prev]);
     setBody("");
@@ -1027,6 +998,7 @@ export function ChatApp({
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           familyId: me.familyId,
@@ -1105,62 +1077,6 @@ export function ChatApp({
       setPhotoUrl(optimistic.photoUrl);
       setKind(optimistic.kind === "photo" || optimistic.kind === "voice" ? optimistic.kind : "text");
       setSendError("Network error — message not sent.");
-=======
-    };
-    setSending(true);
-    setLocalPosts((previous) => [optimisticPost, ...previous]);
-    try {
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          familyId: me.familyId,
-          authorId: me.id,
-          threadId,
-          kind,
-          body: outgoingBody,
-          photoUrl,
-          transcript: kind === "voice" ? text : undefined,
-          voiceSeconds: optimisticPost.voiceSeconds,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as Post & {
-      scheduleSuggestion?: { title: string; suggestedText: string; reason: string; weeklyFamilyCall?: boolean };
-      reminderSuggestion?: ReminderSuggestion;
-      mutualAidSuggestion?: MutualAidSuggestion;
-      commerceSuggestion?: CommerceSuggestion;
-      calendarEvent?: CalendarEvent;
-      calendarEvents?: CalendarEvent[];
-      error?: string;
-    };
-      if (!res.ok || !data.id) throw new Error(data.error ?? "Message could not be sent.");
-      setLocalPosts((previous) => previous.map((post) => (post.id === tempId ? data : post)));
-    setScheduleHint(data.scheduleSuggestion ?? null);
-    setReminderHint(data.reminderSuggestion ?? null);
-    if (data.mutualAidSuggestion) {
-      setMutualAidHint({ ...data.mutualAidSuggestion, sourcePostId: data.id });
-    }
-    if (data.commerceSuggestion) {
-      setCommerceHint({ ...data.commerceSuggestion, sourcePostId: data.id });
-    }
-    if (data.calendarEvent) {
-      setCalendarAdded({
-        title: data.calendarEvent.title,
-        when: formatWhen(data.calendarEvent.startsAt, { timeZone: chatTimeZone, hour12 }),
-        count: data.calendarEvents?.length,
-      });
-    } else {
-      setCalendarAdded(null);
-    }
-    setBody("");
-    setPhotoUrl(undefined);
-    setKind("text");
-    router.refresh();
-    } catch (error) {
-      setLocalPosts((previous) => previous.filter((post) => post.id !== tempId));
-      setSendError(error instanceof Error ? error.message : "Message could not be sent.");
->>>>>>> ebb91a8 (askdjhf)
     } finally {
       setSending(false);
     }
@@ -1361,11 +1277,7 @@ export function ChatApp({
 
             if (mine) {
               return (
-<<<<<<< HEAD
-                <div key={p.id} className="chat-msg-enter flex items-end justify-end gap-2">
-=======
-                <div key={p.id} className="message-enter flex items-end justify-end gap-2">
->>>>>>> ebb91a8 (askdjhf)
+                <div key={p.id} className="chat-msg-enter message-enter flex items-end justify-end gap-2">
                   <div className="flex max-w-[75%] flex-col items-end">
                     <p className="mb-0.5 text-xs text-mute">
                       {author?.name} · {formatChatTime(p.createdAt, chatTimeZone, hour12)}
@@ -1443,11 +1355,7 @@ export function ChatApp({
             }
 
             return (
-<<<<<<< HEAD
-              <div key={p.id} className="chat-msg-enter flex justify-start gap-2">
-=======
-              <div key={p.id} className="message-enter flex justify-start gap-2">
->>>>>>> ebb91a8 (askdjhf)
+              <div key={p.id} className="chat-msg-enter message-enter flex justify-start gap-2">
                 <Avatar member={author} size={32} />
                 <div className="max-w-[85%]">
                   <p className="mb-0.5 text-xs text-mute">
@@ -1682,7 +1590,6 @@ export function ChatApp({
             <p className="mb-2 text-sm text-red-700" role="alert">{voiceError}</p>
           ) : null}
           {sendError ? (
-<<<<<<< HEAD
             <p className="mb-2 text-sm text-red-700" role="alert">{sendError}</p>
           ) : null}
           <div className="flex items-end gap-1.5">
@@ -1692,40 +1599,20 @@ export function ChatApp({
             >
               <ImagePlus className="h-5 w-5" aria-hidden />
               <span className="sr-only">Attach photo</span>
-=======
-            <p className="mb-2 rounded-sm bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{sendError}</p>
-          ) : null}
-          <div className="flex items-end gap-2">
-            <label
-              className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full text-mute transition hover:-translate-y-0.5 hover:bg-accent-tint hover:text-ink active:translate-y-0"
-              title="Add photo"
-              aria-label="Add photo"
-            >
-              <ImagePlus className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-              <span className="sr-only">Add photo</span>
->>>>>>> ebb91a8 (askdjhf)
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             </label>
             <button
               type="button"
               onClick={startVoice}
-<<<<<<< HEAD
               title="Dictate a message"
               className={`grid h-10 w-10 place-items-center rounded-sm transition-colors duration-150 ${
                 listening
-                  ? "bg-accent-tint text-accent animate-pulse"
+                  ? "bg-accent-tint text-accent voice-listening"
                   : "text-mute hover:bg-accent-tint hover:text-ink"
               }`}
             >
               <Mic className="h-5 w-5" aria-hidden />
               <span className="sr-only">{listening ? "Listening…" : "Voice input"}</span>
-=======
-              className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:-translate-y-0.5 hover:bg-accent-tint active:translate-y-0 ${listening ? "voice-listening bg-accent-tint text-accent" : "text-mute hover:text-ink"}`}
-              title={listening ? "Listening" : "Start voice message"}
-              aria-label={listening ? "Listening for voice message" : "Start voice message"}
-            >
-              <Mic className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
->>>>>>> ebb91a8 (askdjhf)
             </button>
             <textarea
               value={body}
@@ -1744,7 +1631,6 @@ export function ChatApp({
             />
             <button
               type="button"
-<<<<<<< HEAD
               onClick={() => void send()}
               disabled={sending || (!body.trim() && !photoUrl)}
               className={`inline-flex items-center gap-1.5 rounded-sm bg-ember font-medium text-white transition-[background-color,transform,opacity] duration-150 hover:bg-ember-dark active:scale-[0.98] disabled:opacity-50 ${
@@ -1753,19 +1639,6 @@ export function ChatApp({
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <SendHorizontal className="h-4 w-4" aria-hidden />}
               Send
-=======
-              onClick={send}
-              disabled={sending || (!body.trim() && !photoUrl)}
-              className={`grid shrink-0 place-items-center rounded-full bg-ember text-white transition hover:-translate-y-0.5 hover:bg-ember-dark active:translate-y-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 ${easy ? "h-12 w-12" : "h-10 w-10"}`}
-              title="Send message"
-              aria-label={sending ? "Sending message" : "Send message"}
-            >
-              {sending ? (
-                <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
-              ) : (
-                <Send className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
-              )}
->>>>>>> ebb91a8 (askdjhf)
             </button>
           </div>
         </div>
