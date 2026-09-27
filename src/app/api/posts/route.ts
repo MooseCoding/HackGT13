@@ -1,3 +1,4 @@
+import { recordActivity } from "@/lib/activity";
 import { mergedEventsOf } from "@/lib/calendar-data";
 import { parseEvent } from "@/lib/calendar-parse";
 import { inCalendarWindow } from "@/lib/calendar-window";
@@ -5,12 +6,17 @@ import { eventsMatch } from "@/lib/calendar-merge";
 import { postThreadId } from "@/lib/chat";
 import { calendarAnchor, now } from "@/lib/clock";
 import { addEventRow, addPostRow, membersOf, postingIdentity, postsForThread, postsOf, resolveFamilyId } from "@/lib/data";
+import { broadcastEventPin } from "@/lib/event-pin";
 import { proposeWeeklyFamilyCalls } from "@/lib/family-call-schedule";
 import { googleAccessToken, syncEventsToGoogle, syncEventToGoogle } from "@/lib/google-calendar";
 import { isDemoMode } from "@/lib/mode-server";
+import { detectCheckInSuggestion } from "@/lib/clinical/check-in";
 import { suggestReminderFromText } from "@/lib/remind-detect";
 import { findScheduleProposalForConfirmation, suggestScheduleFromText } from "@/lib/schedule-detect";
-import type { CalendarEvent, Post, PostKind } from "@/lib/types";
+import { suggestMutualAidFromText } from "@/lib/mutual-aid-detect";
+import { suggestCommerceFromText } from "@/lib/commerce-detect";
+import { groqMutualAidTask } from "@/lib/ai/social";
+import type { CalendarEvent, CommerceSuggestion, MutualAidSuggestion, Post, PostKind } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -41,6 +47,12 @@ export async function POST(req: NextRequest) {
       rawRetained: body.rawRetained ?? true,
     };
     const saved = await addPostRow(post);
+    recordActivity(
+      identity.familyId,
+      identity.memberId,
+      post.kind === "voice" ? "voice" : "post",
+      saved.createdAt,
+    );
     const demo = await isDemoMode();
     const anchor = calendarAnchor(demo);
     const [members, events] = await Promise.all([
@@ -54,10 +66,29 @@ export async function POST(req: NextRequest) {
       anchor,
     });
     const reminderSuggestion = suggestReminderFromText(postText, members, identity.memberId, anchor);
+    let mutualAidSuggestion: MutualAidSuggestion | null = suggestMutualAidFromText(
+      postText,
+      members,
+      identity.memberId,
+    );
+    if (mutualAidSuggestion) {
+      const refined = await groqMutualAidTask(postText);
+      if (refined) {
+        mutualAidSuggestion = { ...mutualAidSuggestion, task: refined.task };
+      }
+    }
+    const threadPosts = await postsForThread(identity.familyId, postThreadId(saved));
+    const priorPost = threadPosts.length > 1 ? threadPosts[threadPosts.length - 2] : undefined;
+    const priorMessage = priorPost ? priorPost.transcript || priorPost.body : undefined;
+    const commerceSuggestion: CommerceSuggestion | null = suggestCommerceFromText(
+      postText,
+      members,
+      identity.memberId,
+      { events, priorMessage },
+    );
 
     let calendarEvent: CalendarEvent | null = null;
     let calendarEvents: CalendarEvent[] | undefined;
-    const threadPosts = await postsForThread(identity.familyId, postThreadId(saved));
     const confirmedProposal = findScheduleProposalForConfirmation(
       post.transcript || post.body,
       threadPosts,
@@ -120,11 +151,24 @@ export async function POST(req: NextRequest) {
             }
           }
           calendarEvent = row;
+          await broadcastEventPin(row, identity.memberId).catch((err) => {
+            console.error("Event pin broadcast failed:", err);
+          });
         }
       }
     }
 
-    return NextResponse.json({ ...saved, scheduleSuggestion, reminderSuggestion, calendarEvent, calendarEvents });
+    const checkInSuggestion = detectCheckInSuggestion(post.transcript || post.body);
+    return NextResponse.json({
+      ...saved,
+      scheduleSuggestion,
+      reminderSuggestion,
+      mutualAidSuggestion,
+      commerceSuggestion,
+      calendarEvent,
+      calendarEvents,
+      checkInSuggestion,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create post." },

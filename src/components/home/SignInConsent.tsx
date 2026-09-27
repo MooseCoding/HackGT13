@@ -31,7 +31,7 @@ export function SignInConsent({
           required
         />
         <span>
-          I agree to Hearth&apos;s terms for family messaging, calendar suggestions, and storing the
+          I agree to Familyr&apos;s terms for family messaging, calendar suggestions, and storing the
           account details needed to run my circle.
         </span>
       </label>

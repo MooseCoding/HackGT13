@@ -2,8 +2,12 @@ import { cookies } from "next/headers";
 import { formatAddress, type Address } from "./address";
 import { getAuthUser, getProfile } from "./auth";
 import { analyzeMember } from "./analysis";
+import { mergedEventsOf } from "./calendar-data";
+import { calendarAnchor, now } from "./clock";
 import { postThreadId } from "./chat";
 import { buildDigest } from "./digest";
+import { hestiaPreferLocal } from "./settings-server";
+import { remindersFromCalendar } from "./remind-from-calendar";
 import { DEFAULT_FAMILY_ID, initialsFrom, MEMBER_COLORS, slugId } from "./ids";
 import { FAMILY_COOKIE } from "./mode";
 import { isDemoMode } from "./mode-server";
@@ -27,8 +31,8 @@ import {
   postsOf as postsOfDemo,
 } from "./store";
 import { createSupabaseServer } from "./supabase/server";
-import type { Database } from "./supabase/types";
-import type { AudioMetrics, CalendarEvent, Digest, Family, IntakeChannel, Member, PatientSnapshot, Post, PostKind, Reminder } from "./types";
+import type { Database, Json } from "./supabase/types";
+import type { AudioMetrics, CalendarEvent, Digest, EventSupplyItem, Family, IntakeChannel, Member, MemberId, MemberInsurance, PatientSnapshot, Post, PostKind, Reminder, RsvpStatus } from "./types";
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
@@ -41,11 +45,17 @@ function iso(value: string) {
 }
 
 function mapFamily(row: FamilyRow): Family {
-  return { id: row.id, name: row.name, tagline: row.tagline, inviteCode: row.join_code };
+  return {
+    id: row.id,
+    name: row.name,
+    tagline: row.tagline,
+    inviteCode: row.join_code,
+    autoAddFamilyCalls: row.auto_add_family_calls ?? true,
+  };
 }
 
 function mapMember(row: MemberRow): Member {
-  return {
+  return applyInsuranceOverlay({
     id: row.id,
     familyId: row.family_id,
     name: row.name,
@@ -62,6 +72,21 @@ function mapMember(row: MemberRow): Member {
     country: row.country || undefined,
     clinicalOptIn: row.clinical_opt_in,
     easyModeDefault: row.easy_mode_default,
+    insurance: parseMemberInsurance(row),
+  });
+}
+
+function parseMemberInsurance(row: MemberRow): MemberInsurance | undefined {
+  const raw = (row as MemberRow & { insurance?: unknown }).insurance;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const carrierId = (raw as { carrierId?: unknown }).carrierId;
+  if (typeof carrierId !== "string" || !carrierId) return undefined;
+  const policyMemberId = (raw as { policyMemberId?: unknown }).policyMemberId;
+  const groupId = (raw as { groupId?: unknown }).groupId;
+  return {
+    carrierId,
+    policyMemberId: typeof policyMemberId === "string" ? policyMemberId : undefined,
+    groupId: typeof groupId === "string" ? groupId : undefined,
   };
 }
 
@@ -82,7 +107,36 @@ function mapPost(row: PostRow): Post {
     externalMessageId: row.external_message_id ?? undefined,
     audioMetrics: (row.audio_metrics as AudioMetrics | null) ?? undefined,
     rawRetained: row.raw_retained,
+    linkedEventId: row.linked_event_id ?? undefined,
   };
+}
+
+function parseAttending(value: EventRow["attending"]): Partial<Record<MemberId, RsvpStatus>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const attending: Partial<Record<MemberId, RsvpStatus>> = {};
+  for (const [memberId, status] of Object.entries(value)) {
+    if (status === "yes" || status === "maybe" || status === "no") {
+      attending[memberId] = status;
+    }
+  }
+  return attending;
+}
+
+function parseSupplies(value: Json | null | undefined): EventSupplyItem[] {
+  if (!Array.isArray(value)) return [];
+  const out: EventSupplyItem[] = [];
+  for (const row of value) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const id = typeof row.id === "string" ? row.id : null;
+    const item = typeof row.item === "string" ? row.item : null;
+    if (!id || !item) continue;
+    out.push({
+      id,
+      item,
+      claimedBy: typeof row.claimedBy === "string" ? row.claimedBy : undefined,
+    });
+  }
+  return out;
 }
 
 function mapEvent(row: EventRow): CalendarEvent {
@@ -96,6 +150,8 @@ function mapEvent(row: EventRow): CalendarEvent {
     attendees: row.attendees ?? [],
     sourceText: row.source_text,
     createdBy: row.created_by,
+    attending: parseAttending(row.attending),
+    supplies: parseSupplies((row as EventRow & { supplies?: Json }).supplies),
     calendarScope: row.id.startsWith("evt-m-") ? "mine" : row.id.startsWith("evt-f-") ? "family" : undefined,
   };
 }
@@ -189,6 +245,39 @@ export async function patchReminderRow(
   return patchReminder(id, familyId, patch);
 }
 
+/** Auto-create open reminders from upcoming calendar events (local rules only). */
+export async function syncRemindersFromCalendar(
+  familyId: string,
+  opts?: { anchor?: Date; clientToken?: string | null },
+): Promise<Reminder[]> {
+  const demo = await isDemoMode();
+  const anchor = opts?.anchor ?? calendarAnchor(demo);
+  const [events, members, existing] = await Promise.all([
+    mergedEventsOf(familyId, { anchor, clientToken: opts?.clientToken, googlePull: "window" }),
+    membersOf(familyId),
+    remindersOf(familyId),
+  ]);
+
+  const drafts = remindersFromCalendar(events, members, existing, anchor);
+  for (const draft of drafts) {
+    await addReminderRow({
+      id: `rem-cal-${draft.sourceEventId}-${draft.assigneeId}`,
+      familyId,
+      assigneeId: draft.assigneeId,
+      text: draft.text,
+      dueAt: draft.dueAt,
+      dueHint: draft.dueHint,
+      sourceText: draft.sourceText,
+      sourceEventId: draft.sourceEventId,
+      createdBy: draft.createdBy,
+      createdAt: demo ? now() : new Date().toISOString(),
+      status: "open",
+    });
+  }
+
+  return remindersOf(familyId);
+}
+
 export async function eventsOf(familyId: string): Promise<CalendarEvent[]> {
   if (await isDemoMode()) return eventsOfDemo(familyId);
   const supabase = await createSupabaseServer();
@@ -222,6 +311,7 @@ export async function addPostRow(post: Post): Promise<Post> {
       external_message_id: post.externalMessageId ?? null,
       audio_metrics: post.audioMetrics ?? null,
       raw_retained: post.rawRetained ?? true,
+      linked_event_id: post.linkedEventId ?? null,
     })
     .select("*")
     .single();
@@ -259,6 +349,8 @@ export async function addEventRow(event: CalendarEvent): Promise<CalendarEvent> 
       attendees: event.attendees,
       source_text: event.sourceText,
       created_by: event.createdBy,
+      attending: event.attending ?? {},
+      supplies: event.supplies ?? [],
     })
     .select("*")
     .single();
@@ -275,12 +367,44 @@ export async function patchEventRow(
   patch: Partial<CalendarEvent>,
 ): Promise<CalendarEvent | null> {
   if (await isDemoMode()) return patchEvent(id, familyId, patch);
+
+  if (patch.attending !== undefined) {
+    const supabase = await createSupabaseServer();
+    const { data, error } = await supabase
+      .from("calendar_events")
+      .update({ attending: patch.attending })
+      .eq("id", id)
+      .eq("family_id", familyId)
+      .select("*")
+      .maybeSingle();
+    throwIfError(error);
+    if (!data) return null;
+    const { attending: _attending, ...rest } = patch;
+    return { ...mapEvent(data), ...rest };
+  }
+
+  if (patch.supplies !== undefined) {
+    const supabase = await createSupabaseServer();
+    const { data, error } = await supabase
+      .from("calendar_events")
+      .update({ supplies: patch.supplies as Json })
+      .eq("id", id)
+      .eq("family_id", familyId)
+      .select("*")
+      .maybeSingle();
+    throwIfError(error);
+    if (!data) return null;
+    const { supplies: _supplies, ...rest } = patch;
+    return { ...mapEvent(data), ...rest };
+  }
+
   // Google metadata is kept in-memory for the session; DB schema has no google columns yet.
   return null;
 }
 
 export async function digestFor(familyId: string, refresh = false): Promise<Digest> {
-  if (await isDemoMode()) return await digestForDemo(familyId, refresh);
+  const preferLocal = await hestiaPreferLocal();
+  if (await isDemoMode()) return await digestForDemo(familyId, refresh, preferLocal);
   const supabase = await createSupabaseServer();
   if (!refresh) {
     const existing = await supabase.from("digests").select("*").eq("family_id", familyId).maybeSingle();
@@ -292,7 +416,7 @@ export async function digestFor(familyId: string, refresh = false): Promise<Dige
     postsOf(familyId),
     eventsOf(familyId),
   ]);
-  const digest = await buildDigest(familyId, members, posts, events);
+  const digest = await buildDigest(familyId, members, posts, events, { demo: false, preferLocal });
   const { error } = await supabase.from("digests").delete().eq("family_id", familyId);
   throwIfError(error);
   const inserted = await supabase
@@ -418,6 +542,42 @@ export async function setClinicalConsent(requestedMemberId: string, enabled: boo
   await syncHealthcareConsentMetadata(enabled);
 
   return member;
+}
+
+const insuranceOverlayGlobal = globalThis as typeof globalThis & {
+  __hearthInsuranceOverlay?: Record<string, MemberInsurance | undefined>;
+};
+
+function setInsuranceOverlay(memberId: string, insurance: MemberInsurance | undefined) {
+  if (!insuranceOverlayGlobal.__hearthInsuranceOverlay) {
+    insuranceOverlayGlobal.__hearthInsuranceOverlay = {};
+  }
+  insuranceOverlayGlobal.__hearthInsuranceOverlay[memberId] = insurance;
+}
+
+function applyInsuranceOverlay(member: Member): Member {
+  const overlay = insuranceOverlayGlobal.__hearthInsuranceOverlay?.[member.id];
+  if (overlay === undefined) return member;
+  return { ...member, insurance: overlay };
+}
+
+export async function setMemberInsurance(requestedMemberId: string, insurance: MemberInsurance | null) {
+  const nextInsurance = insurance ?? undefined;
+  if (await isDemoMode()) {
+    const member = db().members.find((candidate) => candidate.id === requestedMemberId);
+    if (!member) throw new Error("Member not found.");
+    member.insurance = nextInsurance;
+    return member;
+  }
+
+  const user = await getAuthUser();
+  if (!user) throw new Error("Sign in to update insurance.");
+  const familyId = await resolveFamilyId();
+  const members = await membersOf(familyId);
+  const member = members.find((candidate) => candidate.id === requestedMemberId);
+  if (!member) throw new Error("Member not found.");
+  setInsuranceOverlay(requestedMemberId, nextInsurance);
+  return { ...member, insurance: nextInsurance };
 }
 
 export async function joinFamily(input: { inviteCode: string; memberName: string }) {
@@ -572,5 +732,31 @@ export async function createFamilyWithMembers(input: {
   ]);
   const family = requireData(familyResult.data, familyResult.error);
   throwIfError(memberResult.error);
-  return { family: mapFamily(family), members: (memberResult.data ?? []).map(mapMember) };
+  const mappedFamily = mapFamily(family);
+  const mappedMembers = (memberResult.data ?? []).map(mapMember);
+
+  if (mappedFamily.autoAddFamilyCalls) {
+    try {
+      const { scheduleFamilyCallsForCircle } = await import("./auto-family-calls");
+      await scheduleFamilyCallsForCircle(mappedFamily.id, you.id);
+    } catch (err) {
+      console.error("Auto family calls on circle creation:", err);
+    }
+  }
+
+  return { family: mappedFamily, members: mappedMembers };
+}
+
+export async function updateFamilyAutoAddFamilyCalls(familyId: string, enabled: boolean) {
+  if (await isDemoMode()) {
+    throw new Error("Sign in to update circle settings.");
+  }
+  await requireFamilyAccess(familyId);
+  const supabase = await createSupabaseServer();
+  const { error } = await supabase
+    .from("families")
+    .update({ auto_add_family_calls: enabled })
+    .eq("id", familyId);
+  throwIfError(error);
+  return { autoAddFamilyCalls: enabled };
 }

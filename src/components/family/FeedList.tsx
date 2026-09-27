@@ -1,12 +1,13 @@
 "use client";
 
-import { useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
+import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { formatWhen } from "@/lib/clock";
 import type { Member, Post } from "@/lib/types";
 
 export function FeedList({ posts, members }: { posts: Post[]; members: Member[] }) {
   const easy = useLargerText();
   const timeZone = useTimezone();
+  const hour12 = useHour12();
   const byId = Object.fromEntries(members.map((m) => [m.id, m]));
 
   function speak(text: string) {
@@ -30,7 +31,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
                 {" — "}
                 {text}
               </p>
-              <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt, { timeZone })}</p>
+              <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt, { timeZone, hour12 })}</p>
             </li>
           );
         }
@@ -46,7 +47,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
               />
               <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
               <p className="mt-1 text-sm text-mute">
-                {m?.name} · {formatWhen(p.createdAt, { timeZone })}
+                {m?.name} · {formatWhen(p.createdAt, { timeZone, hour12 })}
               </p>
               <button
                 type="button"
@@ -92,7 +93,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
           <li key={p.id} className="border border-line px-4 py-3">
             <div className="flex flex-wrap items-baseline gap-2">
               <p className="font-semibold">{m?.name}</p>
-              <p className="ml-auto text-xs text-mute">{formatWhen(p.createdAt, { timeZone })}</p>
+              <p className="ml-auto text-xs text-mute">{formatWhen(p.createdAt, { timeZone, hour12 })}</p>
             </div>
             <p className={`mt-2 leading-7 ${easy ? "text-xl leading-9" : "text-[17px]"}`}>{text}</p>
             <button

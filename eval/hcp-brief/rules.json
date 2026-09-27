@@ -1,0 +1,79 @@
+{
+  "product": "Hearth",
+  "format_name": "Hearth Weekly HCP Brief",
+  "format_note": "This is Hearth's proposed one-screen clinician brief. It is not an Impiricus-preferred vendor format; Impiricus format was not available to the team.",
+  "sources_file": "sources.json",
+  "sources": [
+    {
+      "id": "nia-talking-older-patients",
+      "title": "Talking With Your Older Patients — National Institute on Aging",
+      "url": "https://www.nia.nih.gov/health/health-care-professionals-information/talking-your-older-patients"
+    },
+    {
+      "id": "talkbank-dementiabank",
+      "title": "DementiaBank access index — TalkBank",
+      "url": "https://talkbank.org/dementia/access/"
+    }
+  ],
+  "one_screen_layout": {
+    "row_1": "patient_id · status chip (stable | review_suggested) · windows",
+    "row_2": "headline (≤2 sentences)",
+    "row_3": "changes (0–5 bullets with current vs baseline)",
+    "row_4": "evidence_ids as expandable quotes",
+    "row_5": "suggested_clinician_actions (enum chips)",
+    "footer": "limitations + decision-support disclaimer"
+  },
+  "status_values": ["stable", "review_suggested"],
+  "allowed_recommendations": [
+    {
+      "id": "review_evidence",
+      "label": "Review evidence",
+      "meaning": "Open cited messages and confirm the pattern before acting."
+    },
+    {
+      "id": "contact_patient_or_caregiver",
+      "label": "Contact patient or caregiver",
+      "meaning": "A short, non-diagnostic check-in may clarify context."
+    },
+    {
+      "id": "consider_clinical_screening",
+      "label": "Consider clinical screening",
+      "meaning": "If the pattern persists, clinician may consider validated screening at the next visit. Not an order."
+    },
+    {
+      "id": "document_and_monitor",
+      "label": "Document and monitor",
+      "meaning": "Record the observation and continue passive monitoring."
+    }
+  ],
+  "forbidden_claims": [
+    "Any diagnosis (e.g., dementia, MCI, depression, anxiety disorder)",
+    "Disease stage or severity grading presented as clinical fact",
+    "Probability or likelihood of dementia or depression",
+    "Medication changes or dosing advice",
+    "Treatment plans or prescriptions",
+    "Claims that silence or absence of chat means a symptom is absent",
+    "Statements that Hearth replaces clinical judgment or validated tools"
+  ],
+  "forbidden_phrase_patterns": [
+    "(?<!not a )\\bdiagnos(?:e|is|ed)\\b",
+    "\\bdementia\\b",
+    "\\bAlzheimer",
+    "\\bMCI\\b",
+    "\\bdepression\\b",
+    "\\banxiety disorder\\b",
+    "\\bprobability\\b",
+    "\\blikelihood\\b",
+    "\\bprescribe\\b",
+    "\\bmedication change\\b",
+    "\\btreatment plan\\b",
+    "\\bno symptoms? (because|since) (they|she|he) (did not|didn't) (post|message|text)",
+    "\\bsilence (means|proves|shows) (no|absence)"
+  ],
+  "label_policy": {
+    "stable": "P01–P05 — team expected review labels; rename to clinician labels only after a clinician annotates.",
+    "review_suggested": "P06–P10 — team expected review labels for patterns that warrant human review without diagnosing."
+  },
+  "reference_datetime": "2026-09-25T20:16:00-04:00",
+  "timezone": "America/New_York"
+}

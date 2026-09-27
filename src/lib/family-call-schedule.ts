@@ -1,7 +1,9 @@
 import { inCalendarWindow } from "./calendar-window";
 import {
   DEFAULT_FAMILY_CALL_FREQUENCY,
+  familyCallReminderSource,
   familyCallTitle,
+  parseFamilyCallFrequency,
   type FamilyCallFrequency,
 } from "./family-call-frequency";
 import type { CalendarEvent, Member } from "./types";
@@ -20,6 +22,14 @@ export function familyCallSource(frequency: FamilyCallFrequency) {
 export function isFamilyCall(event: CalendarEvent) {
   if (event.sourceText?.startsWith("hearth:family-call:")) return true;
   return event.sourceText === FAMILY_CALL_SOURCE || /family call/i.test(event.title);
+}
+
+export function familyCallSourceLabel(sourceText: string) {
+  if (sourceText === FAMILY_CALL_SOURCE) return familyCallReminderSource("weekly");
+  if (sourceText.startsWith("hearth:family-call:")) {
+    return familyCallReminderSource(parseFamilyCallFrequency(sourceText.slice("hearth:family-call:".length)));
+  }
+  return null;
 }
 
 /** @deprecated use isFamilyCall */

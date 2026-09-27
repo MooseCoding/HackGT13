@@ -1,177 +1,123 @@
 "use client";
 
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-
-export type ThemeChoice = "light" | "dark" | "system";
-
-const THEME_KEY = "hearth-theme";
-const TEXT_KEY = "hearth-larger-text";
-const TZ_KEY = "hearth-timezone";
+  defaultSettings,
+  hour12FromTimeFormat,
+  isDarkTheme,
+  type HearthSettings,
+  type SettingKey,
+  loadSettings,
+  saveSettings,
+  syncSettingsCookies,
+} from "@/lib/settings";
+import { DEMO_TIMEZONE } from "@/lib/clock";
+import { resolveTimezone } from "@/lib/timezone";
+import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type SettingsContextValue = {
-  theme: ThemeChoice;
-  setTheme: (theme: ThemeChoice) => void;
-  largerText: boolean;
-  setLargerText: (value: boolean) => void;
-  applyLargerTextDefault: (value: boolean) => void;
-  timezone: string | undefined;
-  setTimezone: (tz: string) => void;
+  settings: HearthSettings;
+  setSetting: <K extends SettingKey>(key: K, value: HearthSettings[K]) => void;
+  effectiveTimezone: string;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 
-const SettingsContext = createContext<SettingsContextValue | null>(null);
+const SettingsCtx = createContext<SettingsContextValue | null>(null);
 
-function readTheme(): ThemeChoice {
-  if (typeof window === "undefined") return "system";
-  try {
-    const v = window.localStorage.getItem(THEME_KEY);
-    if (v === "light" || v === "dark" || v === "system") return v;
-  } catch {
-    // ignore
-  }
-  return "system";
+export function useSettings() {
+  const value = useContext(SettingsCtx);
+  if (!value) throw new Error("SettingsProvider missing");
+  return value;
 }
 
-function applyThemeClass(theme: ThemeChoice) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const prefersDark =
-    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const dark = theme === "dark" || (theme === "system" && prefersDark);
-  root.classList.toggle("dark", dark);
+function applyTheme(theme: HearthSettings["theme"]) {
+  document.documentElement.classList.toggle("dark", isDarkTheme(theme));
 }
 
-function applyEasyClass(on: boolean) {
-  if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("easy", on);
-}
-
-export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeChoice>("system");
-  const [largerText, setLargerTextState] = useState(false);
-  const [timezone, setTimezoneState] = useState<string | undefined>(undefined);
-  const [textLocked, setTextLocked] = useState(false);
+export function SettingsProvider({
+  children,
+  fallback,
+}: {
+  children: React.ReactNode;
+  fallback?: Partial<HearthSettings>;
+}) {
+  const router = useRouter();
+  const [settings, setSettings] = useState<HearthSettings>(() => defaultSettings(fallback));
+  const [open, setOpen] = useState(false);
+  /** Pin SSR + first client paint to demo zone so chat timestamps match. */
+  const [effectiveTimezone, setEffectiveTimezone] = useState(DEMO_TIMEZONE);
+  const [hydrated, setHydrated] = useState(false);
+  const prevHestiaGeneration = useRef<HearthSettings["hestiaGeneration"] | null>(null);
 
   useEffect(() => {
-    const initialTheme = readTheme();
-    setThemeState(initialTheme);
-    applyThemeClass(initialTheme);
+    const loaded = loadSettings(fallback);
+    setSettings(loaded);
+    setEffectiveTimezone(resolveTimezone(loaded.timezone));
+    document.documentElement.classList.toggle("easy", loaded.largerText);
+    applyTheme(loaded.theme);
+    syncSettingsCookies(loaded);
+    prevHestiaGeneration.current = loaded.hestiaGeneration;
+    setHydrated(true);
+  }, [fallback]);
 
-    try {
-      const savedText = window.localStorage.getItem(TEXT_KEY);
-      if (savedText === "1" || savedText === "0") {
-        const on = savedText === "1";
-        setLargerTextState(on);
-        applyEasyClass(on);
-        setTextLocked(true);
+  useEffect(() => {
+    if (!hydrated) return;
+    saveSettings(settings);
+    syncSettingsCookies(settings);
+    document.documentElement.classList.toggle("easy", settings.largerText);
+    applyTheme(settings.theme);
+    setEffectiveTimezone(resolveTimezone(settings.timezone));
+    if (
+      prevHestiaGeneration.current !== null &&
+      prevHestiaGeneration.current !== settings.hestiaGeneration
+    ) {
+      prevHestiaGeneration.current = settings.hestiaGeneration;
+      router.refresh();
+    }
+  }, [settings, hydrated, router]);
+
+  useEffect(() => {
+    if (!hydrated || settings.theme !== "system") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    function onChange() {
+      applyTheme("system");
+    }
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [settings.theme, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    function onGeoTimezone() {
+      if (settings.timezone === "auto") {
+        setEffectiveTimezone(resolveTimezone("auto"));
       }
-      const savedTz = window.localStorage.getItem(TZ_KEY);
-      if (savedTz && savedTz !== "auto") setTimezoneState(savedTz);
-    } catch {
-      // ignore
     }
+    window.addEventListener("hearth-geo-timezone", onGeoTimezone);
+    return () => window.removeEventListener("hearth-geo-timezone", onGeoTimezone);
+  }, [settings.timezone, hydrated]);
 
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => {
-      if (readTheme() === "system") applyThemeClass("system");
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  const setSetting = <K extends SettingKey>(key: K, value: HearthSettings[K]) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const setTheme = useCallback((next: ThemeChoice) => {
-    setThemeState(next);
-    applyThemeClass(next);
-    try {
-      window.localStorage.setItem(THEME_KEY, next);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const setLargerText = useCallback((value: boolean) => {
-    setLargerTextState(value);
-    applyEasyClass(value);
-    setTextLocked(true);
-    try {
-      window.localStorage.setItem(TEXT_KEY, value ? "1" : "0");
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const applyLargerTextDefault = useCallback(
-    (value: boolean) => {
-      if (textLocked) return;
-      setLargerTextState(value);
-      applyEasyClass(value);
-    },
-    [textLocked],
+  const value = useMemo(
+    () => ({ settings, setSetting, effectiveTimezone, open, setOpen }),
+    [settings, effectiveTimezone, open],
   );
 
-  const setTimezone = useCallback((tz: string) => {
-    if (tz === "auto") {
-      setTimezoneState(undefined);
-      try {
-        window.localStorage.setItem(TZ_KEY, "auto");
-      } catch {
-        // ignore
-      }
-      return;
-    }
-    setTimezoneState(tz);
-    try {
-      window.localStorage.setItem(TZ_KEY, tz);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  return (
-    <SettingsContext.Provider
-      value={{
-        theme,
-        setTheme,
-        largerText,
-        setLargerText,
-        applyLargerTextDefault,
-        timezone,
-        setTimezone,
-      }}
-    >
-      {children}
-    </SettingsContext.Provider>
-  );
-}
-
-function useSettings() {
-  const ctx = useContext(SettingsContext);
-  if (!ctx) {
-    throw new Error("Settings hooks must be used within SettingsProvider");
-  }
-  return ctx;
+  return <SettingsCtx.Provider value={value}>{children}</SettingsCtx.Provider>;
 }
 
 export function useLargerText() {
-  return useSettings().largerText;
+  return useSettings().settings.largerText;
 }
 
 export function useTimezone() {
-  return useSettings().timezone;
+  return useSettings().effectiveTimezone;
 }
 
-export function useTheme() {
-  return useSettings().theme;
-}
-
-export function useSettingsActions() {
-  const { setTheme, setLargerText, setTimezone, applyLargerTextDefault, theme, largerText, timezone } =
-    useSettings();
-  return { setTheme, setLargerText, setTimezone, applyLargerTextDefault, theme, largerText, timezone };
+export function useHour12() {
+  return hour12FromTimeFormat(useSettings().settings.timeFormat);
 }

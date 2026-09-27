@@ -91,6 +91,18 @@ export function extractScheduleTitle(raw: string, members: Member[]): string {
   return cleanEventTitle(chunk.slice(0, 72), hint);
 }
 
+/** Cheap first pass — skip calendar parsing unless the text looks like scheduling. */
+export function looksLikeScheduleText(text: string) {
+  const raw = text.trim();
+  if (raw.length < 8) return false;
+  return (
+    WEEKLY_CALL_RE.test(raw) ||
+    SCHEDULE_CUE_RE.test(raw) ||
+    (DAY_RE.test(raw) && TIME_RE.test(raw)) ||
+    (PROPOSAL_RE.test(raw) && DAY_RE.test(raw))
+  );
+}
+
 /** Lightweight text → calendar suggestion (no external AI). */
 export function suggestScheduleFromText(
   text: string,
@@ -99,7 +111,7 @@ export function suggestScheduleFromText(
   opts?: { familyId?: string; createdBy?: string; anchor?: Date },
 ): ScheduleSuggestion | null {
   const raw = text.trim();
-  if (raw.length < 8) return null;
+  if (!looksLikeScheduleText(raw)) return null;
 
   const mentionsCall = WEEKLY_CALL_RE.test(raw);
   const proposed =

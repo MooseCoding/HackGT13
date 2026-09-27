@@ -1,0 +1,377 @@
+{
+  "package": "hearth-hcp-excellent-reports",
+  "format": "Hearth Weekly HCP Brief",
+  "note": "Synthetic excellent examples authored to the Hearth schema; not Impiricus templates. Tone guided by NIA older-patient communication guidance; timelines are synthetic and independent of DementiaBank (see sources.json).",
+  "reports": [
+    {
+      "patient_id": "P01",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "No material personal-baseline shift detected for P01 in the recent 14-day window versus the prior 30 days.",
+      "status": "stable",
+      "changes": [
+        {
+          "code": "none_material",
+          "summary": "Lexical variety, engagement cadence, and timing remain within this person's recent baseline range."
+        }
+      ],
+      "evidence_ids": [
+        "P01-m25",
+        "P01-m27",
+        "P01-m28"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Family travel weekend produced a few quieter days without other pattern change."
+      ],
+      "suggested_clinician_actions": [
+        "document_and_monitor"
+      ]
+    },
+    {
+      "patient_id": "P02",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "No material personal-baseline shift detected for P02 in the recent 14-day window versus the prior 30 days.",
+      "status": "stable",
+      "changes": [
+        {
+          "code": "none_material",
+          "summary": "Lexical variety, engagement cadence, and timing remain within this person's recent baseline range."
+        }
+      ],
+      "evidence_ids": [
+        "P02-m35",
+        "P02-m36",
+        "P02-m38",
+        "P02-m39"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Hearing-aid battery changes briefly delayed replies but content stayed specific and varied."
+      ],
+      "suggested_clinician_actions": [
+        "document_and_monitor"
+      ]
+    },
+    {
+      "patient_id": "P03",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "No material personal-baseline shift detected for P03 in the recent 14-day window versus the prior 30 days.",
+      "status": "stable",
+      "changes": [
+        {
+          "code": "none_material",
+          "summary": "Lexical variety, engagement cadence, and timing remain within this person's recent baseline range."
+        }
+      ],
+      "evidence_ids": [
+        "P03-m29",
+        "P03-m31",
+        "P03-m32"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Grandchild visit increased photo chatter from others; patient messages stayed typical."
+      ],
+      "suggested_clinician_actions": [
+        "document_and_monitor"
+      ]
+    },
+    {
+      "patient_id": "P04",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "No material personal-baseline shift detected for P04 in the recent 14-day window versus the prior 30 days.",
+      "status": "stable",
+      "changes": [
+        {
+          "code": "none_material",
+          "summary": "Lexical variety, engagement cadence, and timing remain within this person's recent baseline range."
+        }
+      ],
+      "evidence_ids": [
+        "P04-m21",
+        "P04-m23",
+        "P04-m24"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Mild cold mentioned once; no sustained change in timing or repetition."
+      ],
+      "suggested_clinician_actions": [
+        "document_and_monitor"
+      ]
+    },
+    {
+      "patient_id": "P05",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "No material personal-baseline shift detected for P05 in the recent 14-day window versus the prior 30 days.",
+      "status": "stable",
+      "changes": [
+        {
+          "code": "none_material",
+          "summary": "Lexical variety, engagement cadence, and timing remain within this person's recent baseline range."
+        }
+      ],
+      "evidence_ids": [
+        "P05-m11",
+        "P05-m36"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Hackathon weekend meant late family messages from others, not from the patient."
+      ],
+      "suggested_clinician_actions": [
+        "document_and_monitor"
+      ]
+    },
+    {
+      "patient_id": "P06",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "Review suggested for P06: consented chat shows a change versus personal baseline that warrants clinician attention.",
+      "status": "review_suggested",
+      "changes": [
+        {
+          "code": "repetition_change",
+          "summary": "Current window shows repeated near-identical questions about the medication list versus a varied baseline."
+        }
+      ],
+      "evidence_ids": [
+        "P06-m23",
+        "P06-m24",
+        "P06-m25",
+        "P06-m26",
+        "P06-m27",
+        "P06-m28"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "New pharmacy packaging could explain confusion; still warrants human review of the pattern."
+      ],
+      "suggested_clinician_actions": [
+        "review_evidence",
+        "contact_patient_or_caregiver",
+        "consider_clinical_screening"
+      ]
+    },
+    {
+      "patient_id": "P07",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "Review suggested for P07: consented chat shows a change versus personal baseline that warrants clinician attention.",
+      "status": "review_suggested",
+      "changes": [
+        {
+          "code": "affect_change",
+          "summary": "Current chat repeatedly references missed clinic appointments and confusion about dates."
+        }
+      ],
+      "evidence_ids": [
+        "P07-m21",
+        "P07-m24",
+        "P07-m25",
+        "P07-m27",
+        "P07-m28",
+        "P07-m29"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Transportation cancellation is mentioned once; pattern of missed visits still needs review."
+      ],
+      "suggested_clinician_actions": [
+        "review_evidence",
+        "contact_patient_or_caregiver"
+      ]
+    },
+    {
+      "patient_id": "P08",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "Review suggested for P08: consented chat shows a change versus personal baseline that warrants clinician attention.",
+      "status": "review_suggested",
+      "changes": [
+        {
+          "code": "sleep_shift",
+          "summary": "Posting shifted into late-night hours with shorter, more restless messages versus daytime baseline."
+        }
+      ],
+      "evidence_ids": [
+        "P08-m23",
+        "P08-m24",
+        "P08-m25",
+        "P08-m26",
+        "P08-m27",
+        "P08-m28"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Noisy construction next door could disturb sleep; timing shift still merits review."
+      ],
+      "suggested_clinician_actions": [
+        "review_evidence",
+        "contact_patient_or_caregiver"
+      ]
+    },
+    {
+      "patient_id": "P09",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "Review suggested for P09: consented chat shows a change versus personal baseline that warrants clinician attention.",
+      "status": "review_suggested",
+      "changes": [
+        {
+          "code": "engagement_change",
+          "summary": "Marked drop in patient-authored messages and shorter affect-flattened replies versus an active baseline."
+        }
+      ],
+      "evidence_ids": [
+        "P09-m29",
+        "P09-m31",
+        "P09-m33",
+        "P09-m35"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Visiting relatives may have reduced typing time; withdrawal pattern still flagged for review."
+      ],
+      "suggested_clinician_actions": [
+        "review_evidence",
+        "contact_patient_or_caregiver"
+      ]
+    },
+    {
+      "patient_id": "P10",
+      "reporting_period": {
+        "baseline_window": {
+          "start": "2026-08-13",
+          "end": "2026-09-12"
+        },
+        "current_window": {
+          "start": "2026-09-12",
+          "end": "2026-09-26"
+        }
+      },
+      "headline": "Review suggested for P10: consented chat shows a change versus personal baseline that warrants clinician attention.",
+      "status": "review_suggested",
+      "changes": [
+        {
+          "code": "repetition_change",
+          "summary": "Combined signals: increased phrase repetition, late-night activity, and reduced lexical variety versus baseline."
+        }
+      ],
+      "evidence_ids": [
+        "P10-m25",
+        "P10-m26",
+        "P10-m27",
+        "P10-m28",
+        "P10-m29",
+        "P10-m30"
+      ],
+      "limitations": [
+        "Signals reflect consented family communication patterns, not a clinical examination.",
+        "Changes may reflect travel, device access, illness, housing moves, or family dynamics.",
+        "Absence of chat does not prove absence of symptoms.",
+        "Recent move disrupted routines; multiple concurrent changes still justify clinician review."
+      ],
+      "suggested_clinician_actions": [
+        "review_evidence",
+        "contact_patient_or_caregiver",
+        "consider_clinical_screening"
+      ]
+    }
+  ]
+}

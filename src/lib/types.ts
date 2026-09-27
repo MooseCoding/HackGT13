@@ -1,7 +1,7 @@
 export type MemberId = string;
 export type FamilyId = string;
 
-export type PostKind = "text" | "voice" | "photo" | "status";
+export type PostKind = "text" | "voice" | "photo" | "status" | "event_pin";
 
 export type IntakeChannel = "hearth" | "whatsapp" | "phone" | "demo";
 
@@ -11,6 +11,13 @@ export type AudioMetrics = {
   pauseRatio: number;
   averagePauseSeconds: number;
   hesitationRate: number;
+};
+
+export type MemberInsurance = {
+  /** Demo carrier id — see INSURANCE_CARRIERS in clinical/insurance.ts */
+  carrierId: string;
+  policyMemberId?: string;
+  groupId?: string;
 };
 
 export type Member = {
@@ -31,6 +38,7 @@ export type Member = {
   country?: string;
   clinicalOptIn: boolean;
   easyModeDefault?: boolean;
+  insurance?: MemberInsurance;
 };
 
 export type Post = {
@@ -51,6 +59,125 @@ export type Post = {
   audioMetrics?: AudioMetrics;
   /** Raw content is never required by the clinician surface. */
   rawRetained?: boolean;
+  /** Calendar event id for kind === "event_pin" system messages. */
+  linkedEventId?: string;
+};
+
+export type PostReaction = {
+  id: string;
+  familyId: FamilyId;
+  postId: string;
+  memberId: MemberId;
+  emoji: string;
+  createdAt: string;
+};
+
+export type StorybookMood = "warm" | "joyful" | "calm" | "celebration";
+
+export type StorybookPage = {
+  id: string;
+  title: string;
+  caption: string;
+  /** Short scene description for illustrated pages without photos. */
+  scene?: string;
+  illustration?: string;
+  photoUrl?: string;
+  photoAlt?: string;
+  mood: StorybookMood;
+};
+
+export type PodcastChapter = {
+  id: string;
+  title: string;
+  narration: string;
+};
+
+/** Interactive "On This Day" memory card from past family photos or stories. */
+export type OnThisDayMemory = {
+  id: string;
+  yearsAgo: number;
+  headline: string;
+  story: string;
+  authorName: string;
+  originalDate: string;
+  photoUrl?: string;
+  photoAlt?: string;
+  /** Short prompt to spark a reply in chat, e.g. "Ask Abuela about the lake trip." */
+  sparkPrompt?: string;
+  relatedPostId?: string;
+};
+
+/** Metadata for the weekly Family Radio audio digest. */
+export type FamilyRadioMeta = {
+  /** Approximate listen time, e.g. "~2 min". */
+  durationLabel: string;
+  tagline: string;
+};
+
+export type VolunteerGroup = {
+  id: string;
+  name: string;
+  blurb: string;
+};
+
+export type MutualAidSuggestion = {
+  task: string;
+  requesterId: string;
+  requesterName: string;
+  sourceText: string;
+  sourcePostId?: string;
+  groups: VolunteerGroup[];
+};
+
+export type CommerceKind = "supply" | "care_package";
+
+export type CommerceItem = {
+  name: string;
+  quantity?: number;
+};
+
+export type CommerceSuggestion = {
+  kind: CommerceKind;
+  title: string;
+  items: CommerceItem[];
+  recipientId: string;
+  recipientName: string;
+  estimatedTotal: number;
+  deliveryAddress: string;
+  sourceText: string;
+  sourcePostId?: string;
+  orderLabel: string;
+  /** When ordering an unclaimed bring-list item for an event. */
+  eventId?: string;
+  supplyId?: string;
+};
+
+export type EventSupplyItem = {
+  id: string;
+  item: string;
+  claimedBy?: MemberId;
+};
+
+export type LifeStoryPrompt = {
+  id: string;
+  forMemberId: string;
+  forMemberName: string;
+  aboutMemberId?: string;
+  aboutMemberName?: string;
+  prompt: string;
+  reason?: string;
+};
+
+export type SafeCheckInStage = "none" | "prompt" | "alert";
+
+export type SafeCheckInStatus = {
+  memberId: string;
+  memberName: string;
+  hoursSinceActivity: number;
+  stage: SafeCheckInStage;
+  pingMessage: string;
+  primaryContactId?: string;
+  primaryContactName?: string;
 };
 
 export type ReminderStatus = "open" | "done" | "snoozed";
@@ -66,11 +193,15 @@ export type Reminder = {
   dueHint: string;
   sourceText: string;
   sourcePostId?: string;
+  /** Calendar event this reminder was auto-created from. */
+  sourceEventId?: string;
   createdBy: MemberId;
   createdAt: string;
   status: ReminderStatus;
   snoozedUntil?: string;
 };
+
+export type RsvpStatus = "yes" | "maybe" | "no";
 
 export type CalendarEvent = {
   id: string;
@@ -82,6 +213,10 @@ export type CalendarEvent = {
   attendees: MemberId[];
   sourceText: string;
   createdBy: MemberId;
+  /** Per-member RSVP for family events. */
+  attending?: Partial<Record<MemberId, RsvpStatus>>;
+  /** Shared bring list for gatherings — family members claim items. */
+  supplies?: EventSupplyItem[];
   /** Which board this event belongs on. Google events and new local events set this explicitly. */
   calendarScope?: "family" | "mine";
   isGoogleSynced?: boolean;
@@ -94,6 +229,8 @@ export type Family = {
   name: string;
   tagline: string;
   inviteCode?: string;
+  /** When true, Hearth schedules family calls without a manual "Add to calendar" step. */
+  autoAddFamilyCalls?: boolean;
 };
 
 export type Digest = {
@@ -105,8 +242,18 @@ export type Digest = {
   highlights: string[];
   theme?: string;
   generatedAt: string;
-  /** How the story was written — Groq when key present, else local templates. */
-  source?: "groq" | "local";
+  /** How the story was written — Muse/Groq when configured, else local templates. */
+  source?: "muse" | "groq" | "local";
+  /** Full narration script for podcast / listen mode. */
+  audioScript?: string;
+  /** Chaptered audio for family news broadcast. */
+  podcast?: PodcastChapter[];
+  /** Stylized digital storybook pages for kids and visual browsing. */
+  storybook?: StorybookPage[];
+  /** Interactive nostalgia throwbacks — "On This Day" memory cards. */
+  onThisDay?: OnThisDayMemory[];
+  /** Family Radio broadcast metadata (browser TTS, no server audio). */
+  familyRadio?: FamilyRadioMeta;
 };
 
 export type DailyPoint = {

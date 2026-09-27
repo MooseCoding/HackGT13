@@ -1,7 +1,7 @@
 import { SettingsShell } from "@/components/settings/SettingsShell";
 import { ThemeScript } from "@/components/settings/ThemeScript";
 import type { Metadata } from "next";
-import { Fraunces } from "next/font/google";
+import { Architects_Daughter, Fraunces } from "next/font/google";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -9,15 +9,26 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
+const architectsDaughter = Architects_Daughter({
+  variable: "--font-brand",
+  weight: "400",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Hearth",
+  title: "Familyr",
   description:
     "Async family chat, weekly Hestia story, and opt-in clinician view without the group chat burnout.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${fraunces.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${fraunces.variable} ${architectsDaughter.variable} h-full`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/instagram-sans-2" />
         <ThemeScript />

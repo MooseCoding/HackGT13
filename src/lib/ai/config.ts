@@ -5,9 +5,34 @@ export function groqConfigured() {
 }
 
 export function groqModel() {
-  return process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
+  return process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
 }
 
 export function groqApiBase() {
   return (process.env.GROQ_API_BASE?.trim() || "https://api.groq.com/openai/v1").replace(/\/$/, "");
+}
+
+/** Meta Model API (Muse Spark) — https://dev.meta.ai */
+
+export function museConfigured() {
+  return Boolean(
+    process.env.MODEL_API_KEY?.trim() || process.env.MUSE_API_KEY?.trim(),
+  );
+}
+
+export function museModel() {
+  return process.env.AI_MODEL?.trim() || "muse-spark-1.3";
+}
+
+export function museApiBase() {
+  return (process.env.AI_API_BASE?.trim() || "https://api.meta.ai/v1").replace(/\/$/, "");
+}
+
+export function museApiKey() {
+  return process.env.MODEL_API_KEY?.trim() || process.env.MUSE_API_KEY?.trim() || "";
+}
+
+/** True when any cloud LLM is available for Hestia / assistant features. */
+export function aiConfigured() {
+  return museConfigured() || groqConfigured();
 }

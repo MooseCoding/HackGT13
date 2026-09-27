@@ -1,12 +1,17 @@
 "use client";
 
-import { useSettingsActions } from "@/components/settings/SettingsProvider";
-import { useEffect } from "react";
+import { useSettings } from "@/components/settings/SettingsProvider";
+import { useEffect, useRef } from "react";
 
 export function FamilySettingsDefaults({ largerTextDefault }: { largerTextDefault: boolean }) {
-  const { applyLargerTextDefault } = useSettingsActions();
+  const { setSetting, settings } = useSettings();
+  const applied = useRef(false);
+
   useEffect(() => {
-    applyLargerTextDefault(largerTextDefault);
-  }, [applyLargerTextDefault, largerTextDefault]);
+    if (applied.current || settings.largerText) return;
+    applied.current = true;
+    setSetting("largerText", largerTextDefault);
+  }, [largerTextDefault, setSetting, settings.largerText]);
+
   return null;
 }

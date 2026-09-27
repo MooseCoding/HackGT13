@@ -1,11 +1,13 @@
-import { groqDigestStory } from "./ai/digest";
-import { groqConfigured } from "./ai/config";
+import { aiDigestStory } from "./ai/digest";
+import { aiConfigured } from "./ai/config";
 import { now, startOfWeek } from "./clock";
+import { DIGEST_NAME } from "./digest-constants";
+import { enrichDigestMultimodal } from "./digest-multimodal";
+import { enrichDigestTimeMachine } from "./digest-time-machine";
 import { generateStory, pickWeekHighlights } from "./local-ml";
 import type { CalendarEvent, Digest, Member, Post } from "./types";
 
-/** Weekly digest — Hestia, Greek goddess of the hearth and home. */
-export const DIGEST_NAME = "Hestia";
+export { DIGEST_NAME };
 
 function weekKey(d = startOfWeek()) {
   return d.toISOString().slice(0, 10);
@@ -28,12 +30,24 @@ function localHighlights(weekPosts: Post[], members: Member[]) {
   return pickWeekHighlights(weekPosts, (id) => by(members, id), 5);
 }
 
+function finishDigest(
+  base: Digest,
+  members: Member[],
+  posts: Post[],
+  events: CalendarEvent[],
+  demo: boolean,
+): Digest {
+  const multimodal = enrichDigestMultimodal(base, members, posts, events);
+  return enrichDigestTimeMachine(multimodal, members, posts, demo);
+}
+
 /** Sync local fallback (Markov / templates). Prefer `buildDigest` when possible. */
 export function templateDigest(
   familyId: string,
   members: Member[],
   posts: Post[],
   events: CalendarEvent[],
+  demo = true,
 ): Digest {
   const start = startOfWeek();
   const end = new Date(start);
@@ -46,7 +60,7 @@ export function templateDigest(
   const { title, narrative, theme } = generateStory(weekPosts, members, (id) => by(members, id));
   const fullNarrative = narrative + upcomingSnippet(events, start);
 
-  return {
+  const base: Digest = {
     id: `digest-${familyId}-${weekKey()}`,
     familyId,
     weekOf: weekKey(),
@@ -57,15 +71,19 @@ export function templateDigest(
     generatedAt: now(),
     source: "local",
   };
+  return finishDigest(base, members, posts, events, demo);
 }
 
-/** Groq when `GROQ_API_KEY` is set; otherwise local storyteller. */
+/** Meta Muse (preferred) or Groq when configured and `preferLocal` is false; otherwise local storyteller. */
 export async function buildDigest(
   familyId: string,
   members: Member[],
   posts: Post[],
   events: CalendarEvent[],
+  options?: { demo?: boolean; preferLocal?: boolean },
 ): Promise<Digest> {
+  const demo = options?.demo ?? true;
+  const preferLocal = options?.preferLocal ?? false;
   const start = startOfWeek();
   const end = new Date(start);
   end.setDate(end.getDate() + 7);
@@ -75,27 +93,28 @@ export async function buildDigest(
   });
   const weekOf = weekKey();
 
-  if (groqConfigured()) {
-    const ai = await groqDigestStory({
+  if (!preferLocal && aiConfigured()) {
+    const ai = await aiDigestStory({
       posts: weekPosts,
       members,
       events,
       weekOf,
     });
     if (ai) {
-      return {
+      const base: Digest = {
         id: `digest-${familyId}-${weekOf}`,
         familyId,
         weekOf,
         title: ai.title,
         narrative: ai.narrative + upcomingSnippet(events, start),
-        highlights: localHighlights(weekPosts, members),
+        highlights: ai.highlights.length ? ai.highlights : localHighlights(weekPosts, members),
         theme: ai.theme,
         generatedAt: new Date().toISOString(),
-        source: "groq",
+        source: ai.source,
       };
+      return finishDigest(base, members, posts, events, demo);
     }
   }
 
-  return templateDigest(familyId, members, posts, events);
+  return templateDigest(familyId, members, posts, events, demo);
 }

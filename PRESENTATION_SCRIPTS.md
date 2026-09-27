@@ -28,9 +28,10 @@ Keep each under **90 seconds**. End every track on the **care loop**: family cha
 
 **Demo (60s)**  
 1. Easy mode + Talk button (voice → text) for Elena.  
-2. Weekly digest — “the story, not the scroll.”  
-3. + Add member invite — multi-generational circle in one tap.  
-4. Optional: Instagram Sans brand + frosted chat as craft, then pivot to *purpose*.
+2. Weekly digest — “the story, not the scroll.” Say: “Hestia reads the week’s connections and writes the story with **Meta Muse 1.3** — or Meta’s latest model.”  
+3. Social demo → conversation starters — Muse reads chat and creates prompts that bridge generations.  
+4. + Add member invite — multi-generational circle in one tap.  
+5. Optional: Instagram Sans brand + frosted chat as craft, then pivot to *purpose*.
 
 **Close (20s)**  
 “We used familiar social patterns so grandparents actually stay. Privacy-preserving signals help the people who love them — with consent.”

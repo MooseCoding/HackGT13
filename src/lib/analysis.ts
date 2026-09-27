@@ -406,7 +406,7 @@ export function analyzeMember(memberId: string, familyPosts: Post[], referenceDa
   const nextStep = riskLevel === "priority"
     ? "Review the longitudinal trend and consider a brief cognitive and mood screen at the next clinical touchpoint."
     : riskLevel === "monitor"
-      ? "Continue passive monitoring and confirm the change with the patient or caregiver if it persists."
+      ? "Continue passive monitoring and confirm the change with the patient directly if it persists."
       : ready
         ? "No outreach is suggested; continue routine passive monitoring."
         : "Wait for more consented interactions before interpreting the signal.";

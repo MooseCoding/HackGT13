@@ -1,5 +1,10 @@
-import { formatWhen } from "./clock";
+import { DEMO_TIMEZONE, addDays, calendarAnchor, dateKey, formatWhen, hourInTimezone, weekdayName } from "./clock";
 import type { CalendarEvent } from "./types";
+
+export type CalendarHintOpts = {
+  anchor?: Date;
+  timeZone?: string;
+};
 
 const STOP = new Set(
   "a an and at by for from has have her his in is of on our the this to with you your are we they that was were just like about".split(
@@ -71,6 +76,20 @@ const PROPOSAL_RE =
 const FOLLOW_UP =
   /^(when|where|what time|which day|is it still|are we still|still on|remind me|don't forget|dont forget)/i;
 
+const CALENDAR_HINT_CUE_RE =
+  /\b(today|tomorrow|tonight|weekend|sunday|monday|tuesday|wednesday|thursday|friday|saturday|soccer|game|tournament|practice|dinner|lunch|breakfast|brunch|appointment|doctor|dentist|birthday|party|school|flight|facetime|zoom|garden|tomato|tomatoes|bbq|cookout|pickup|visit|when|where|what time|still on|digest|piedmont|book club|bring|chairs|snacks|dessert|plates|jollof|drinks)\b/i;
+
+const keywordCache = new Map<string, { stamp: string; keys: Set<string> }>();
+
+/** Cheap first pass — skip scoring every calendar event for ordinary chat. */
+export function looksLikeCalendarHintText(text: string) {
+  const raw = text.trim();
+  if (raw.length < 3) return false;
+  if (FOLLOW_UP.test(raw)) return true;
+  if (TIME_RE.test(raw) || DAY_RE.test(raw)) return true;
+  return CALENDAR_HINT_CUE_RE.test(raw);
+}
+
 function tokenize(text: string) {
   return text
     .toLowerCase()
@@ -87,8 +106,8 @@ function possessiveNames(title: string) {
   return new Set([...(title.match(/\b[A-Za-z]+(?='s\b)/g) ?? [])].map((n) => n.toLowerCase()));
 }
 
-function weekdayToken(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+function weekdayToken(iso: string, timeZone = DEMO_TIMEZONE) {
+  return weekdayName(iso, timeZone);
 }
 
 function expand(token: string) {
@@ -135,10 +154,10 @@ export function shouldSuppressCalendarHints(text: string) {
   return isProposal && hasDay && (hasTime || hasPlace);
 }
 
-function scheduleConflictsWithEvent(text: string, event: CalendarEvent) {
+function scheduleConflictsWithEvent(text: string, event: CalendarEvent, timeZone = DEMO_TIMEZONE) {
   const msgPhrases = phrases(text);
   const msgWeekdays = msgPhrases.filter((p) => WEEKDAYS.includes(p));
-  const eventWeekday = weekdayToken(event.startsAt);
+  const eventWeekday = weekdayToken(event.startsAt, timeZone);
 
   if (msgWeekdays.length > 0 && !msgWeekdays.includes(eventWeekday)) {
     return true;
@@ -146,10 +165,14 @@ function scheduleConflictsWithEvent(text: string, event: CalendarEvent) {
 
   const explicit = parseExplicitTime(text);
   if (explicit) {
+    const eventMinutes = hourInTimezone(event.startsAt, timeZone) * 60;
     const eventDate = new Date(event.startsAt);
-    const eventMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
+    const eventMinPart = Number(
+      new Intl.DateTimeFormat("en-US", { minute: "numeric", timeZone }).format(eventDate),
+    );
+    const eventTotal = eventMinutes + eventMinPart;
     const msgMinutes = explicit.hour * 60 + explicit.minute;
-    if (Math.abs(eventMinutes - msgMinutes) > 75) return true;
+    if (Math.abs(eventTotal - msgMinutes) > 75) return true;
   }
 
   const msgLoc = mentionedLocation(text);
@@ -164,18 +187,22 @@ function phrases(text: string) {
   const lower = text.toLowerCase();
   const found: string[] = [];
   for (const day of WEEKDAYS) {
-    if (new RegExp(`\\b${day}\\b`).test(lower)) found.push(day);
+    if (lower.includes(day)) found.push(day);
   }
-  if (/\bthis weekend\b/.test(lower)) found.push("saturday", "sunday");
-  if (/\btomorrow\b/.test(lower)) found.push("tomorrow");
-  if (/\btoday\b/.test(lower)) found.push("today");
+  if (lower.includes("this weekend")) found.push("saturday", "sunday");
+  if (lower.includes("tomorrow")) found.push("tomorrow");
+  if (lower.includes("today")) found.push("today");
   for (const label of Object.keys(TIME_OF_DAY)) {
-    if (new RegExp(`\\b${label}\\b`).test(lower)) found.push(label);
+    if (lower.includes(label)) found.push(label);
   }
   return found;
 }
 
-function eventKeywordSet(event: CalendarEvent) {
+function eventKeywordSet(event: CalendarEvent, timeZone = DEMO_TIMEZONE) {
+  const stamp = `${event.title}\0${event.location ?? ""}\0${event.sourceText ?? ""}\0${event.startsAt}\0${timeZone}`;
+  const hit = keywordCache.get(event.id);
+  if (hit?.stamp === stamp) return hit.keys;
+
   const bag = new Set<string>();
   const skip = possessiveNames(event.title);
   const raw = [event.title, event.location, event.sourceText].filter(Boolean).join(" ");
@@ -183,7 +210,12 @@ function eventKeywordSet(event: CalendarEvent) {
     if (skip.has(token)) continue;
     for (const extra of expand(token)) bag.add(extra);
   }
-  bag.add(weekdayToken(event.startsAt));
+  bag.add(weekdayToken(event.startsAt, timeZone));
+  if (keywordCache.size > 250) {
+    const oldest = keywordCache.keys().next().value;
+    if (oldest) keywordCache.delete(oldest);
+  }
+  keywordCache.set(event.id, { stamp, keys: bag });
   return bag;
 }
 
@@ -199,20 +231,25 @@ export function scoreEventAgainstText(
   event: CalendarEvent,
   text: string,
   extraContext = "",
+  opts?: CalendarHintOpts,
 ): { score: number; clues: string[] } {
+  const anchor = opts?.anchor ?? calendarAnchor(true);
+  const timeZone = opts?.timeZone ?? DEMO_TIMEZONE;
   if (!text.trim() && !extraContext.trim()) return { score: 0, clues: [] };
   if (shouldSuppressCalendarHints(text)) return { score: 0, clues: [] };
-  if (scheduleConflictsWithEvent(text, event)) return { score: 0, clues: [] };
+  if (scheduleConflictsWithEvent(text, event, timeZone)) return { score: 0, clues: [] };
 
   const followUp = FOLLOW_UP.test(text.trim()) || tokenize(text).length <= 2;
   const msgTokens = new Set(tokenize(text).flatMap((t) => expand(t)));
   const ctxTokens = new Set(tokenize(extraContext).flatMap((t) => expand(t)));
   const msgPhrases = phrases(text);
   const ctxPhrases = phrases(extraContext);
-  const keys = eventKeywordSet(event);
-  const weekday = weekdayToken(event.startsAt);
-  const hour = new Date(event.startsAt).getHours();
-  const eventDay = localDay(event.startsAt);
+  const keys = eventKeywordSet(event, timeZone);
+  const weekday = weekdayToken(event.startsAt, timeZone);
+  const hour = hourInTimezone(event.startsAt, timeZone);
+  const eventDayKey = dateKey(event.startsAt, timeZone);
+  const anchorDayKey = dateKey(anchor.toISOString(), timeZone);
+  const tomorrowDayKey = dateKey(addDays(anchor, 1).toISOString(), timeZone);
 
   const clues: string[] = [];
   let content = 0;
@@ -236,16 +273,17 @@ export function scoreEventAgainstText(
     support += 2;
     clues.push(weekday);
   }
-  if (msgPhrases.includes("today") && isSameLocalDay(event.startsAt, new Date())) {
+  if (msgPhrases.includes("today") && eventDayKey === anchorDayKey) {
     support += 2;
     clues.push("today");
   }
-  if (msgPhrases.includes("tomorrow") && isSameLocalDay(event.startsAt, addDays(new Date(), 1))) {
+  if (msgPhrases.includes("tomorrow") && eventDayKey === tomorrowDayKey) {
     support += 2;
     clues.push("tomorrow");
   }
   if (msgPhrases.includes("saturday") || msgPhrases.includes("sunday")) {
-    if (eventDay === 0 || eventDay === 6) support += 1;
+    const dow = weekdayName(event.startsAt, timeZone);
+    if (dow === "saturday" || dow === "sunday") support += 1;
   }
 
   for (const [label, [lo, hi]] of Object.entries(TIME_OF_DAY)) {
@@ -267,34 +305,26 @@ export function scoreEventAgainstText(
   return { score: content * 2 + support, clues: uniqueClues };
 }
 
-function localDay(iso: string) {
-  return new Date(iso).getDay();
-}
-
-function isSameLocalDay(iso: string, d: Date) {
-  const a = new Date(iso);
-  return a.getFullYear() === d.getFullYear() && a.getMonth() === d.getMonth() && a.getDate() === d.getDate();
-}
-
-function addDays(d: Date, n: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-
 export function calendarHintsForText(
   text: string,
   events: CalendarEvent[],
   extraContext = "",
+  opts?: CalendarHintOpts,
 ): CalendarChatHint[] {
+  const timeZone = opts?.timeZone ?? DEMO_TIMEZONE;
   if (!text.trim() && !extraContext.trim()) return [];
+  if (!looksLikeCalendarHintText(text) && !looksLikeCalendarHintText(extraContext)) return [];
+  const origin = (opts?.anchor ?? new Date()).getTime();
+  const windowMs = 90 * 24 * 60 * 60 * 1000;
   const hits: CalendarChatHint[] = [];
   for (const event of events) {
-    const { score, clues } = scoreEventAgainstText(event, text, extraContext);
+    const starts = new Date(event.startsAt).getTime();
+    if (Number.isFinite(starts) && Math.abs(starts - origin) > windowMs) continue;
+    const { score, clues } = scoreEventAgainstText(event, text, extraContext, opts);
     if (score > 0) {
       hits.push({
         event,
-        when: formatWhen(event.startsAt),
+        when: formatWhen(event.startsAt, { timeZone }),
         label: event.title,
         score,
         clues,
