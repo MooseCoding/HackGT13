@@ -159,7 +159,7 @@ const NAV_MAP: Record<string, { href: string; label: string }> = {
   reminders: { href: "/family/reminders", label: "Reminders" },
   circle: { href: "/family/circle", label: "Circle" },
   settings: { href: "/family?settings=1", label: "Settings" },
-  assistant: { href: "/family?with=assistant", label: "Hearth Assistant" },
+  assistant: { href: "/family?with=assistant", label: "Familyr Assistant" },
 };
 
 function dayKey(iso: string, timeZone?: string) {
@@ -260,7 +260,7 @@ export async function executeFamilyTool(
         if (!inCalendarWindow(event.startsAt, runtime.anchor)) {
           return {
             ok: false,
-            summary: "That date is outside the calendar window Hearth can edit right now.",
+            summary: "That date is outside the calendar window Familyr can edit right now.",
             data: { draft_text: text },
           };
         }

@@ -4,7 +4,7 @@ import {
   defaultSettings,
   hour12FromTimeFormat,
   isDarkTheme,
-  type HearthSettings,
+  type FamilyrSettings,
   type SettingKey,
   loadSettings,
   saveSettings,
@@ -16,8 +16,8 @@ import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type SettingsContextValue = {
-  settings: HearthSettings;
-  setSetting: <K extends SettingKey>(key: K, value: HearthSettings[K]) => void;
+  settings: FamilyrSettings;
+  setSetting: <K extends SettingKey>(key: K, value: FamilyrSettings[K]) => void;
   effectiveTimezone: string;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -31,7 +31,7 @@ export function useSettings() {
   return value;
 }
 
-function applyTheme(theme: HearthSettings["theme"]) {
+function applyTheme(theme: FamilyrSettings["theme"]) {
   document.documentElement.classList.toggle("dark", isDarkTheme(theme));
 }
 
@@ -40,15 +40,15 @@ export function SettingsProvider({
   fallback,
 }: {
   children: React.ReactNode;
-  fallback?: Partial<HearthSettings>;
+  fallback?: Partial<FamilyrSettings>;
 }) {
   const router = useRouter();
-  const [settings, setSettings] = useState<HearthSettings>(() => defaultSettings(fallback));
+  const [settings, setSettings] = useState<FamilyrSettings>(() => defaultSettings(fallback));
   const [open, setOpen] = useState(false);
   /** Pin SSR + first client paint to demo zone so chat timestamps match. */
   const [effectiveTimezone, setEffectiveTimezone] = useState(DEMO_TIMEZONE);
   const [hydrated, setHydrated] = useState(false);
-  const prevHestiaGeneration = useRef<HearthSettings["hestiaGeneration"] | null>(null);
+  const prevHestiaGeneration = useRef<FamilyrSettings["hestiaGeneration"] | null>(null);
 
   useEffect(() => {
     const loaded = loadSettings(fallback);
@@ -98,7 +98,7 @@ export function SettingsProvider({
     return () => window.removeEventListener("hearth-geo-timezone", onGeoTimezone);
   }, [settings.timezone, hydrated]);
 
-  const setSetting = <K extends SettingKey>(key: K, value: HearthSettings[K]) => {
+  const setSetting = <K extends SettingKey>(key: K, value: FamilyrSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 

@@ -2,7 +2,7 @@
 
 import { useFamily } from "@/components/family/FamilyChrome";
 import { useLargerText } from "@/components/settings/SettingsProvider";
-import { formatReminderDue, formatReminderSource, isHearthReminderSource } from "@/lib/remind-detect";
+import { formatReminderDue, formatReminderSource, isFamilyrReminderSource } from "@/lib/remind-detect";
 import type { Member, Reminder } from "@/lib/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ function ReminderRow({
 }) {
   const due = formatReminderDue(reminder);
   const source = reminder.sourceText ? formatReminderSource(reminder.sourceText) : "";
-  const fromHearth = reminder.sourceText ? isHearthReminderSource(reminder.sourceText) : false;
+  const fromFamilyr = reminder.sourceText ? isFamilyrReminderSource(reminder.sourceText) : false;
   const isDone = reminder.status === "done";
 
   return (
@@ -55,8 +55,8 @@ function ReminderRow({
           {source ? (
             <blockquote className="mt-2 border-l-2 border-rule pl-3 text-sm italic text-mute">
               &ldquo;{source.length > 120 ? `${source.slice(0, 117)}…` : source}&rdquo;
-              {!fromHearth && creator ? (
-                <span className="not-italic"> — {creator.name.split(" ")[0]}</span>
+              {!fromFamilyr && creator ? (
+                <span className="not-italic"> - {creator.name.split(" ")[0]}</span>
               ) : null}
             </blockquote>
           ) : null}
@@ -179,7 +179,7 @@ export function RemindersView({
       <header className="border-b border-rule pb-4">
         <h1 className={`font-bold ${easy ? "text-2xl" : "text-xl"}`}>Reminders</h1>
         <p className="mt-1 text-sm leading-6 text-mute">
-          {familyName} — things people said they&apos;d do, or pulled from the calendar. Add your own too.
+          {familyName} - stuff people said they&apos;d do, or pulled off the calendar. You can add your own too.
         </p>
       </header>
 

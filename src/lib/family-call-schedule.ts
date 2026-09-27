@@ -233,5 +233,5 @@ export function consistentSlotLabel(events: CalendarEvent[]) {
     const d = new Date(e.startsAt);
     return d.getDay() === first.getDay() && d.getHours() === first.getHours();
   });
-  return same ? `Usually ${weekday}s at ${time}` : "Open times we found";
+  return same ? `Usually ${weekday}s at ${time}` : "Times that worked";
 }

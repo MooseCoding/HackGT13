@@ -132,69 +132,93 @@ export function CircleSettingsSection({
 
   return (
     <>
-      <section className="px-4 py-4" aria-labelledby="settings-circle-heading">
-        <label className="block" htmlFor="settings-circle">
-          <h3 id="settings-circle-heading" className="text-sm font-semibold text-ink">Circle</h3>
-          <p className="mt-1 text-sm text-mute">
-            Chats, calendar, and Hestia follow the circle you choose.
-          </p>
-          <select
-            id="settings-circle"
-            value={selectValue}
-            disabled={switching}
-            onChange={(e) => onSelectChange(e.target.value)}
-            className="mt-2 min-h-11 w-full border border-rule bg-paper px-3 py-2 text-sm text-ink disabled:opacity-60"
-            aria-describedby={switchError ? "settings-circle-error" : undefined}
-          >
-            {families.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-                {f.id === activeFamilyId ? " (current)" : ""}
-              </option>
-            ))}
-            <option disabled>──────────</option>
-            <option value={JOIN_VALUE}>Join with code</option>
-            <option value={CREATE_VALUE}>Create new circle</option>
-          </select>
-        </label>
+      <section className="px-4 py-5" aria-labelledby="settings-circle-heading">
+        <div className="mb-3">
+          <h3 id="settings-circle-heading" className="text-xs font-semibold uppercase tracking-[0.12em] text-mute">
+            Circle
+          </h3>
+          <p className="mt-1 text-sm text-mute">Messages, calendar, and Hestia follow whichever circle you pick.</p>
+        </div>
 
-        {switching ? (
-          <p className="mt-2 text-xs text-mute">Switching…</p>
-        ) : null}
+        <div className="space-y-2">
+          <div className="rounded-xl border border-rule bg-paper px-4 py-3.5 shadow-sm shadow-black/[0.03]">
+            <label className="block" htmlFor="settings-circle">
+              <span className="block text-sm font-medium text-ink">Active circle</span>
+              <span className="mt-0.5 block text-sm text-mute">{activeFamilyName}</span>
+              <select
+                id="settings-circle"
+                value={selectValue}
+                disabled={switching}
+                onChange={(e) => onSelectChange(e.target.value)}
+                className="mt-3 min-h-11 w-full rounded-lg border border-rule bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors hover:border-ink/25 focus:border-ember disabled:opacity-60"
+                aria-describedby={switchError ? "settings-circle-error" : undefined}
+              >
+                {families.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                    {f.id === activeFamilyId ? " (current)" : ""}
+                  </option>
+                ))}
+                <option disabled>──────────</option>
+                <option value={JOIN_VALUE}>Join with code</option>
+                <option value={CREATE_VALUE}>Create new circle</option>
+              </select>
+            </label>
 
-        {switchError ? (
-          <p id="settings-circle-error" className="mt-2 border border-rule px-3 py-2 text-xs text-red-700" role="alert">
-            {switchError}
-          </p>
-        ) : null}
+            {switching ? (
+              <p className="mt-2 text-xs text-mute">Switching…</p>
+            ) : null}
 
-        <label className="mt-4 flex min-h-11 cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={autoAddCalls}
-            disabled={autoAddBusy}
-            onChange={(e) => void updateAutoAddCalls(e.target.checked)}
-            className="mt-1"
-            aria-describedby="settings-auto-calls-desc"
-          />
-          <span className="min-w-0">
-            <span className="block text-sm font-medium text-ink">Auto-add family calls</span>
-            <span id="settings-auto-calls-desc" className="mt-0.5 block text-sm text-mute">
-              When on, Hearth places family calls on the calendar using your call rhythm — no extra step needed.
-            </span>
-          </span>
-        </label>
+            {switchError ? (
+              <p
+                id="settings-circle-error"
+                className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                role="alert"
+              >
+                {switchError}
+              </p>
+            ) : null}
+          </div>
 
-        {autoAddError ? (
-          <p className="mt-2 border border-rule px-3 py-2 text-xs text-red-700" role="alert">
-            {autoAddError}
-          </p>
-        ) : null}
+          <div className="rounded-xl border border-rule bg-paper px-4 py-3.5 shadow-sm shadow-black/[0.03]">
+            <div className="flex items-center justify-between gap-4">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-ink">Auto-add family calls</span>
+                <span id="settings-auto-calls-desc" className="mt-0.5 block text-sm text-mute">
+                  When this is on, Familyr puts family calls on the calendar based on your call rhythm. No extra click.
+                </span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoAddCalls}
+                aria-describedby="settings-auto-calls-desc"
+                disabled={autoAddBusy}
+                onClick={() => void updateAutoAddCalls(!autoAddCalls)}
+                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
+                  autoAddCalls ? "bg-ember" : "bg-rule"
+                } ${autoAddBusy ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    autoAddCalls ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {autoAddError ? (
+              <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+                {autoAddError}
+              </p>
+            ) : null}
+          </div>
+        </div>
       </section>
 
       {modal ? (
         <div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-[var(--overlay)] p-0 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="circle-settings-modal-title"
@@ -202,10 +226,10 @@ export function CircleSettingsSection({
             if (e.target === e.currentTarget) closeModal();
           }}
         >
-          <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto border border-rule bg-surface">
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-rule bg-surface px-4 py-3">
+          <div className="landing-rise flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-rule bg-surface shadow-2xl shadow-black/10 sm:max-h-[90dvh] sm:rounded-2xl">
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-rule px-5 py-4">
               <div>
-                <h2 id="circle-settings-modal-title" className="text-lg font-semibold text-ink">
+                <h2 id="circle-settings-modal-title" className="text-lg font-semibold tracking-tight text-ink">
                   {modal === "join" ? "Join a circle" : "Create a circle"}
                 </h2>
                 <p className="mt-0.5 text-sm text-mute">
@@ -217,12 +241,20 @@ export function CircleSettingsSection({
               <button
                 type="button"
                 onClick={closeModal}
-                className="min-h-10 shrink-0 px-2 text-sm text-mute hover:text-ink hover:underline"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-mute transition-colors hover:bg-accent-tint hover:text-ink"
+                aria-label="Close"
               >
-                Close
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <path
+                    d="M4.5 4.5l9 9M13.5 4.5l-9 9"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </button>
             </div>
-            <div className="p-4">
+            <div className="overflow-y-auto p-5">
               <FamilyCircleForm
                 defaultName={defaultName}
                 redirectOnSuccess={false}

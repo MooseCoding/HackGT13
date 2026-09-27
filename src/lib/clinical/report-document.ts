@@ -177,7 +177,7 @@ export function renderClinicalReportHtml(input: ReportDocumentInput) {
 <main class="page">
   <header>
     <div>
-      <div class="brand">Hearth · Clinician weekly screening brief</div>
+      <div class="brand">Familyr · Clinician weekly screening brief</div>
       <h1>${esc(patient.name)}</h1>
       <div class="sub">Age ${esc(patient.age)} · Member ID <span class="mono">${esc(report.memberId)}</span></div>
     </div>
@@ -222,7 +222,7 @@ export function renderClinicalReportHtml(input: ReportDocumentInput) {
     <thead><tr><th class="n">#</th><th>Observed</th><th>Tags</th><th>Evidence ID</th></tr></thead>
     <tbody>${evidence}</tbody>
   </table>
-  <p class="note">Message text is withheld from this document. Open the patient in Hearth to view the source messages.</p>
+  <p class="note">Message text is withheld from this document. Open the patient in Familyr to view the source messages.</p>
 
   <div class="sign">
     <div>Reviewing clinician</div>

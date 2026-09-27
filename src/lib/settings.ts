@@ -2,7 +2,7 @@ export type ThemeSetting = "light" | "dark" | "system";
 export type TimeFormat = "12h" | "24h";
 export type HestiaGeneration = "auto" | "local";
 
-export type HearthSettings = {
+export type FamilyrSettings = {
   largerText: boolean;
   theme: ThemeSetting;
   timezone: string;
@@ -10,7 +10,7 @@ export type HearthSettings = {
   hestiaGeneration: HestiaGeneration;
 };
 
-export type SettingKey = keyof HearthSettings;
+export type SettingKey = keyof FamilyrSettings;
 
 export type SettingControl =
   | { type: "boolean" }
@@ -23,7 +23,7 @@ export type SettingMeta = {
   control: SettingControl;
 };
 
-export const DEFAULT_SETTINGS: HearthSettings = {
+export const DEFAULT_SETTINGS: FamilyrSettings = {
   largerText: false,
   theme: "light",
   timezone: "auto",
@@ -52,13 +52,13 @@ export const HESTIA_GENERATION_COOKIE = "hearth-hestia-generation";
 export const SETTING_META: Record<SettingKey, SettingMeta> = {
   largerText: {
     label: "Larger text",
-    description: "Bigger type and buttons across the app.",
+    description: "Bigger type and buttons. Easier to tap.",
     group: "Accessibility",
     control: { type: "boolean" },
   },
   theme: {
     label: "Theme",
-    description: "Light, dark, or follow your device.",
+    description: "Light, dark, or just follow the phone.",
     group: "Display",
     control: {
       type: "select",
@@ -67,13 +67,13 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
   },
   timezone: {
     label: "Time zone",
-    description: "How dates and times are shown.",
+    description: "How dates and times show up.",
     group: "Regional",
     control: { type: "select", options: [] },
   },
   timeFormat: {
     label: "Time format",
-    description: "12-hour or 24-hour clock for times in chat and calendar.",
+    description: "12-hour or 24-hour clock in chat and calendar.",
     group: "Regional",
     control: {
       type: "select",
@@ -83,7 +83,7 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
   hestiaGeneration: {
     label: "Hestia generation",
     description:
-      "Built-in uses the on-device storyteller. AI mode uses Meta Muse 1.3 when configured. Real accounts default to AI; sample family preview uses built-in.",
+      "Built-in uses the on-device storyteller. AI mode uses Meta Muse 1.3 if its set up. Real accounts default to AI; the sample circle uses built-in.",
     group: "Hestia",
     control: {
       type: "select",
@@ -100,7 +100,7 @@ export function hasStoredSettings(): boolean {
   return localStorage.getItem(STORAGE_KEY) !== null;
 }
 
-function normalizeSettings(parsed: Partial<HearthSettings>, fallback?: Partial<HearthSettings>): HearthSettings {
+function normalizeSettings(parsed: Partial<FamilyrSettings>, fallback?: Partial<FamilyrSettings>): FamilyrSettings {
   const theme = parsed.theme;
   const validTheme =
     theme === "light" || theme === "dark" || theme === "system" ? theme : DEFAULT_SETTINGS.theme;
@@ -127,12 +127,12 @@ function normalizeSettings(parsed: Partial<HearthSettings>, fallback?: Partial<H
   };
 }
 
-/** Server-safe defaults — never reads localStorage (use after mount for stored prefs). */
-export function defaultSettings(fallback?: Partial<HearthSettings>): HearthSettings {
+/** Server-safe defaults - never reads localStorage (use after mount for stored prefs). */
+export function defaultSettings(fallback?: Partial<FamilyrSettings>): FamilyrSettings {
   return normalizeSettings({}, fallback);
 }
 
-export function loadSettings(fallback?: Partial<HearthSettings>): HearthSettings {
+export function loadSettings(fallback?: Partial<FamilyrSettings>): FamilyrSettings {
   if (typeof window === "undefined") {
     return defaultSettings(fallback);
   }
@@ -140,7 +140,7 @@ export function loadSettings(fallback?: Partial<HearthSettings>): HearthSettings
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
     try {
-      const parsed = JSON.parse(raw) as Partial<HearthSettings>;
+      const parsed = JSON.parse(raw) as Partial<FamilyrSettings>;
       return normalizeSettings(parsed, fallback);
     } catch {
       // fall through to legacy / defaults
@@ -158,7 +158,7 @@ export function loadSettings(fallback?: Partial<HearthSettings>): HearthSettings
   return normalizeSettings({}, fallback);
 }
 
-export function saveSettings(settings: HearthSettings): void {
+export function saveSettings(settings: FamilyrSettings): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
@@ -175,7 +175,7 @@ export function hour12FromTimeFormat(format: TimeFormat): boolean {
 }
 
 /** Sync server-readable prefs (Hestia generation) to cookies. */
-export function syncSettingsCookies(settings: HearthSettings): void {
+export function syncSettingsCookies(settings: FamilyrSettings): void {
   if (typeof document === "undefined") return;
   const maxAge = 60 * 60 * 24 * 365;
   document.cookie = `${HESTIA_GENERATION_COOKIE}=${settings.hestiaGeneration};path=/;max-age=${maxAge};samesite=lax`;

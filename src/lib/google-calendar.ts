@@ -162,7 +162,7 @@ function mapGoogleEvent(ge: GCalEvent, familyId: string, fallback: Date): Calend
   };
 }
 
-/** Fetch Google events within the same ±CAL_WEEKS window as the Hearth calendar. */
+/** Fetch Google events within the same ±CAL_WEEKS window as the Familyr calendar. */
 export async function fetchGoogleInWindow(
   familyId: string,
   token: string,
@@ -241,7 +241,7 @@ export async function fetchGoogleAroundNow(
   return merged.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 
-/** Keep the original offset from Hearth events — don't mix UTC ISO with a local timeZone. */
+/** Keep the original offset from Familyr events - don't mix UTC ISO with a local timeZone. */
 function googleDateTime(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;

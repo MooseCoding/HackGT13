@@ -18,12 +18,7 @@ const architectsDaughter = Architects_Daughter({
 export const metadata: Metadata = {
   title: "Familyr",
   description:
-    "Async family chat, weekly Hestia story, and opt-in clinician view without the group chat burnout.",
-  icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
-  },
+    "Family chat, a weekly Hestia story, and an optional clinician view. Without the group chat pile-up.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

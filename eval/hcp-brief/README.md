@@ -1,4 +1,4 @@
-# Hearth Weekly HCP Brief — evaluation package
+# Familyr Weekly HCP Brief — evaluation package
 
 This folder is a **team-authored data and evaluation package**, not Impiricus vendor content.
 
@@ -14,13 +14,13 @@ Background references (full detail in [`sources.json`](./sources.json)):
    https://talkbank.org/dementia/access/  
    Methodological inspiration for longitudinal language baselines. **We do not download or redistribute DementiaBank data**; `cases.json` is fully synthetic.
 
-Neither organization endorses Hearth. Briefs are decision support only.
+Neither organization endorses Familyr. Briefs are decision support only.
 
 ## What Impiricus asked for → what we store
 
 | Request | Artifact |
 |---|---|
-| Report format | `report.schema.json` + `rules.json` (`Hearth Weekly HCP Brief`) |
+| Report format | `report.schema.json` + `rules.json` (`Familyr Weekly HCP Brief`) |
 | 5–20 excellent reports | `excellent-reports.json` (10 synthetic examples) |
 | 10 timelines | `cases.json` (`P01`–`P10`) |
 | Clinician labels | `expected_label` + `label_reason` (team expected review labels) |

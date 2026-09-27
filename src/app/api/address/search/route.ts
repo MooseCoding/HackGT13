@@ -1,7 +1,7 @@
 import { addressFromNominatim, type Address } from "@/lib/address";
 import { NextRequest, NextResponse } from "next/server";
 
-const UA = "HearthFamilyApp/1.0 (hackgt; contact@hearth.local)";
+const UA = "FamilyrApp/1.0 (hackgt; contact@familyr.local)";
 
 type NominatimResult = {
   place_id: number;

@@ -70,7 +70,7 @@ function extractTask(raw: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Cheap first pass — skip volunteer matching unless this is a local help request. */
+/** Cheap first pass - skip volunteer matching unless this is a local help request. */
 export function looksLikeMutualAidText(text: string) {
   const raw = text.trim();
   if (raw.length < 8) return false;

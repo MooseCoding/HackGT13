@@ -55,6 +55,161 @@ function SparkIcon({ className }: { className?: string }) {
   );
 }
 
+function promptTeaser(prompt: LifeStoryPrompt): string {
+  if (prompt.reason) return prompt.reason;
+  if (prompt.aboutMemberName) return `Starter about ${prompt.aboutMemberName}`;
+  const text = prompt.prompt.replace(/^Ask /i, "").trim();
+  return text.length > 72 ? `${text.slice(0, 69)}…` : text;
+}
+
+export function ConversationStarters({
+  familyId,
+  meId,
+  postCount,
+  setBody,
+  demo = false,
+  easy = false,
+}: {
+  familyId: string;
+  meId: string;
+  postCount: number;
+  setBody: (v: string) => void;
+  demo?: boolean;
+  easy?: boolean;
+}) {
+  const [prompts, setPrompts] = useState<LifeStoryPrompt[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (demo) {
+      setPrompts(demoLifeStoryPrompts(familyId));
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/social-prompts?familyId=${encodeURIComponent(familyId)}&memberId=${encodeURIComponent(meId)}`)
+      .then((r) => r.json())
+      .then((data: { prompts?: LifeStoryPrompt[] }) => {
+        if (!cancelled) setPrompts(data.prompts ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [demo, familyId, meId, postCount]);
+
+  useEffect(() => {
+    if (selectedPromptId && !prompts.some((p) => p.id === selectedPromptId)) {
+      setSelectedPromptId(null);
+    }
+  }, [prompts, selectedPromptId]);
+
+  const myPrompts = prompts.filter((p) => p.forMemberId === meId);
+  if (!myPrompts.length) return null;
+
+  function closePanel() {
+    setPanelOpen(false);
+    setSelectedPromptId(null);
+  }
+
+  return (
+    <div className="px-3 pb-2">
+      {panelOpen ? (
+        <div className="mb-2 border border-rule bg-surface px-3 py-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className={`flex items-center gap-1.5 font-medium text-mute ${easy ? "text-sm" : "text-[11px]"}`}>
+              <SparkIcon className="text-clinic" />
+              Conversation starters
+              <span className="font-normal">· {META_MUSE_ATTRIBUTION}</span>
+            </p>
+            <button
+              type="button"
+              onClick={closePanel}
+              className={`text-mute hover:text-ink ${easy ? "text-sm" : "text-[11px]"}`}
+            >
+              Close
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {myPrompts.slice(0, 3).map((p) => {
+              const expanded = selectedPromptId === p.id;
+              return (
+                <div
+                  key={p.id}
+                  className={`rounded-sm border bg-accent-tint/40 ${expanded ? "border-clinic/30" : "border-rule"}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPromptId(expanded ? null : p.id)}
+                    aria-expanded={expanded}
+                    className={`flex w-full items-start gap-2 text-left ${easy ? "px-3 py-2.5" : "px-2.5 py-2"}`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`mt-0.5 shrink-0 text-mute transition-transform ${expanded ? "rotate-180" : ""}`}
+                    >
+                      ▾
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`text-ink ${easy ? "text-base" : "text-sm"}`}>{promptTeaser(p)}</span>
+                      {!expanded && p.aboutMemberName ? (
+                        <span className={`mt-0.5 block text-mute ${easy ? "text-sm" : "text-[11px]"}`}>
+                          About {p.aboutMemberName}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                  {expanded ? (
+                    <div className={`border-t border-rule ${easy ? "px-3 py-2.5 pl-9" : "px-2.5 py-2 pl-7"}`}>
+                      <p className={`text-ink ${easy ? "text-base" : "text-sm"}`}>{p.prompt}</p>
+                      {p.reason ? (
+                        <p className={`mt-1 text-mute ${easy ? "text-sm" : "text-[11px]"}`}>{p.reason}</p>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBody(p.prompt.replace(/^Ask /i, "").trim());
+                          closePanel();
+                        }}
+                        className={`mt-2 font-medium text-clinic hover:underline ${easy ? "text-sm" : "text-[11px]"}`}
+                      >
+                        Use in chat
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setPanelOpen((open) => !open)}
+        aria-expanded={panelOpen}
+        className={`flex w-full items-center justify-center gap-2 rounded-sm border border-clinic/35 bg-accent-tint font-medium text-clinic hover:bg-clinic/10 ${
+          easy ? "min-h-11 px-4 py-2.5 text-base" : "px-3 py-2 text-sm"
+        }`}
+      >
+        <SparkIcon className="shrink-0" />
+        <span>Conversation starters</span>
+        <span
+          className={`rounded-full bg-clinic/15 font-normal text-clinic ${easy ? "px-2 py-0.5 text-sm" : "px-1.5 text-[11px]"}`}
+        >
+          {myPrompts.length}
+        </span>
+        <span
+          aria-hidden
+          className={`text-mute transition-transform ${panelOpen ? "rotate-180" : ""}`}
+        >
+          ▴
+        </span>
+      </button>
+    </div>
+  );
+}
+
 function MutualAidChip({
   suggestion,
   onForward,
@@ -92,7 +247,6 @@ export function SocialExtensions({
   posts,
   messages,
   body,
-  setBody,
   setMeId,
   mutualAidHint,
   setMutualAidHint,
@@ -113,7 +267,6 @@ export function SocialExtensions({
   posts: Post[];
   messages: Post[];
   body: string;
-  setBody: (v: string) => void;
   setMeId: (id: string) => void;
   mutualAidHint: MutualAidSuggestion | null;
   setMutualAidHint: (v: MutualAidSuggestion | null) => void;
@@ -126,11 +279,9 @@ export function SocialExtensions({
   onDemoPost?: (body: string) => void;
   demo?: boolean;
 }) {
-  const [prompts, setPrompts] = useState<LifeStoryPrompt[]>([]);
   const [checkIns, setCheckIns] = useState<SafeCheckInStatus[]>([]);
   const [forwarding, setForwarding] = useState(false);
   const [forwarded, setForwarded] = useState<{ groupName: string; task: string } | null>(null);
-  const [dismissedPrompts, setDismissedPrompts] = useState(false);
   const [dismissedCheckIn, setDismissedCheckIn] = useState<string | null>(null);
   const [sendingPing, setSendingPing] = useState(false);
 
@@ -144,24 +295,6 @@ export function SocialExtensions({
     if (!deferredBody.trim() || !looksLikeCommerceText(deferredBody)) return null;
     return suggestCommerceFromText(deferredBody, members, meId);
   }, [deferredBody, members, meId]);
-
-  useEffect(() => {
-    if (!isGroup) return;
-    if (demo) {
-      setPrompts(demoLifeStoryPrompts(familyId));
-      return;
-    }
-    let cancelled = false;
-    fetch(`/api/social-prompts?familyId=${encodeURIComponent(familyId)}&memberId=${encodeURIComponent(meId)}`)
-      .then((r) => r.json())
-      .then((data: { prompts?: LifeStoryPrompt[] }) => {
-        if (!cancelled) setPrompts(data.prompts ?? []);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [demo, familyId, meId, isGroup, posts.length]);
 
   useEffect(() => {
     if (!isGroup) return;
@@ -221,7 +354,7 @@ export function SocialExtensions({
 
   async function sendCheckInPing(status: SafeCheckInStatus) {
     setSendingPing(true);
-    const emoji = status.stage === "alert" ? `☀️ Checking in on you, ${status.memberName}!` : `☀️ ${meName.split(" ")[0]} sent a sunny hello to the circle!`;
+    const emoji = status.stage === "alert" ? `❤️ Checking in on you, ${status.memberName}!` : `❤️ ${meName.split(" ")[0]} sent a hello to the circle!`;
     if (demo) {
       demoAcknowledgeCheckIn(familyId, status.memberId);
       onDemoPost?.(emoji);
@@ -256,41 +389,9 @@ export function SocialExtensions({
     onRefresh();
   }
 
-  const myPrompts = prompts.filter((p) => p.forMemberId === meId);
-
   return (
     <>
       {isGroup ? <SocialDemoGuide /> : null}
-
-      {isGroup && myPrompts.length && !dismissedPrompts ? (
-        <div className="mx-3 mb-2 border border-rule bg-surface px-3 py-2">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-[11px] font-medium text-mute">
-              <SparkIcon className="text-clinic" />
-              Conversation starters
-              <span className="font-normal">· {META_MUSE_ATTRIBUTION}</span>
-            </p>
-            <button type="button" onClick={() => setDismissedPrompts(true)} className="text-[11px] text-mute hover:text-ink">
-              Dismiss
-            </button>
-          </div>
-          <div className="space-y-2">
-            {myPrompts.slice(0, 3).map((p) => (
-              <div key={p.id} className="rounded-sm border border-rule bg-accent-tint/40 px-2.5 py-2">
-                <p className="text-sm text-ink">{p.prompt}</p>
-                {p.reason ? <p className="mt-0.5 text-[11px] text-mute">{p.reason}</p> : null}
-                <button
-                  type="button"
-                  onClick={() => setBody(p.prompt.replace(/^Ask /i, "").trim())}
-                  className="mt-1 text-[11px] font-medium text-clinic hover:underline"
-                >
-                  Use in chat
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {isGroup && visibleCheckIn ? (
         <div
@@ -302,7 +403,7 @@ export function SocialExtensions({
         >
           <p className="flex items-center gap-1.5 font-medium">
             <HeartIcon className={visibleCheckIn.stage === "alert" ? "text-amber-700" : "text-clinic"} />
-            {visibleCheckIn.stage === "alert" ? "Safe check-in" : "Hestia missed someone today"}
+            {visibleCheckIn.stage === "alert" ? "Safe check-in" : "Haven't heard from someone today"}
           </p>
           <p className="mt-1 text-xs opacity-90">{visibleCheckIn.pingMessage}</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -314,7 +415,7 @@ export function SocialExtensions({
                 visibleCheckIn.stage === "alert" ? "bg-amber-700 hover:bg-amber-800" : "bg-ember hover:bg-ember-dark"
               }`}
             >
-              {visibleCheckIn.stage === "alert" ? "Send a warm check-in" : "☀️ Send sunny emoji"}
+              {visibleCheckIn.stage === "alert" ? "Send a check-in" : "❤️ Send a hello"}
             </button>
             <button
               type="button"
@@ -344,7 +445,7 @@ export function SocialExtensions({
           </p>
           <p className="text-xs text-mute">{mutualAidHint.task}</p>
           <p className="mt-1 text-xs text-mute">
-            Tap to forward this request to her local community helper network.
+            Tap to forward this request to {mutualAidHint.requesterName}&apos;s local community helper network.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {mutualAidHint.groups.map((g) => (
@@ -367,7 +468,7 @@ export function SocialExtensions({
 
       {draftMutualAid && !mutualAidHint ? (
         <div className="mx-3 mb-2 border border-rule bg-surface px-3 py-2">
-          <p className="mb-1 text-[11px] font-medium text-mute">Local assistance detected</p>
+          <p className="mb-1 text-[11px] font-medium text-mute">Looks like someone nearby could help</p>
           <MutualAidChip
             suggestion={draftMutualAid}
             onForward={(groupId, groupName) => forwardMutualAid(draftMutualAid, groupId, groupName)}

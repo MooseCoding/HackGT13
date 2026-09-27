@@ -6,7 +6,7 @@ import { isDemoMode } from "@/lib/mode-server";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-const SUBJECT = "A Hearth report is ready for review";
+const SUBJECT = "A Familyr report is ready for review";
 
 function clinicianFallbackEmail() {
   return (process.env.HCP_CLINICIAN_EMAILS ?? "")
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     const origin = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || new URL(request.url).origin).replace(/\/$/, "");
     const reportUrl = `${origin}/hcp/patients/${encodeURIComponent(body.memberId)}`;
-    const text = `A Hearth report is ready for review. Sign in to review it securely: ${reportUrl}`;
+    const text = `A Familyr report is ready for review. Sign in to review it securely: ${reportUrl}`;
     const resendKey = process.env.RESEND_API_KEY?.trim() ?? "";
     const clinicalEmailFrom = process.env.CLINICAL_EMAIL_FROM?.trim() ?? "";
     const emailConfigured = !demo && Boolean(resendKey && clinicalEmailFrom);

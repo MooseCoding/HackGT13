@@ -6,7 +6,7 @@ import {
 } from "./event-supplies";
 import type { CalendarEvent, CommerceItem, CommerceSuggestion, Member } from "./types";
 
-/** Must mention buying, bringing, getting, or restocking — nothing else triggers shopping. */
+/** Must mention buying, bringing, getting, or restocking - nothing else triggers shopping. */
 const PURCHASE_INTENT_RE =
   /\b(?:buy(?:ing)?|purchase|order(?:ing)?|pick\s*up|get(?:ting)?\s+(?:some|a)|grab|shop\s+for|from\s+the\s+(?:store|market|grocery)|ran\s+out\s+of|running\s+out\s+of|need\s+more|almost\s+out\s+of|low\s+on|out\s+of|need\s+to\s+(?:buy|get|pick\s*up)|restock|i(?:'ll|\s+will)\s+bring|bringing|can\s+bring|who(?:'s|\s+is)\s+bringing|need\s+someone\s+to\s+bring|bring\s+(?:a|some|the)|we\s+need)\b/i;
 
@@ -429,7 +429,7 @@ function buildEventBringSuggestion(
   return null;
 }
 
-/** Cheap first pass — skip shopping matching unless someone mentions buying or bringing. */
+/** Cheap first pass - skip shopping matching unless someone mentions buying or bringing. */
 export function looksLikeCommerceText(text: string) {
   const raw = text.trim();
   if (raw.length < 8) return false;
@@ -437,7 +437,7 @@ export function looksLikeCommerceText(text: string) {
   return PURCHASE_INTENT_RE.test(raw);
 }
 
-/** Regex-based shopping detection — only when someone mentions buying or bringing. */
+/** Regex-based shopping detection - only when someone mentions buying or bringing. */
 export function suggestCommerceFromText(
   text: string,
   members: Member[],

@@ -64,7 +64,7 @@ export function DisorderCheckDemo({
           <h2 className="mt-1 text-lg font-bold text-ink">Mental health language check</h2>
           <p className="mt-2 text-sm leading-6 text-mute">
             Simulates messages from {patientFirstName}. Disorder-related language gets tagged for your
-            review — it never shows in family chat and it&apos;s not a diagnosis.
+            review. It never shows in family chat and it&apos;s not a diagnosis.
           </p>
         </div>
         <button
@@ -145,7 +145,7 @@ export function DisorderCheckDemo({
                       &ldquo;{hit.clinicianPreview}&rdquo;
                     </p>
                     <p className="mt-2 text-[11px] leading-5 text-mute">
-                      {hit.label}-related language tagged for your review. Withheld from family chat — not a diagnosis.
+                      {hit.label}-related language tagged for your review. Withheld from family chat - not a diagnosis.
                     </p>
                   </li>
                 );

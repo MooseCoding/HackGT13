@@ -1,7 +1,7 @@
 {
-  "product": "Hearth",
-  "format_name": "Hearth Weekly HCP Brief",
-  "format_note": "This is Hearth's proposed one-screen clinician brief. It is not an Impiricus-preferred vendor format; Impiricus format was not available to the team.",
+  "product": "Familyr",
+  "format_name": "Familyr Weekly HCP Brief",
+  "format_note": "This is Familyr's proposed one-screen clinician brief. It is not an Impiricus-preferred vendor format; Impiricus format was not available to the team.",
   "sources_file": "sources.json",
   "sources": [
     {
@@ -53,7 +53,7 @@
     "Medication changes or dosing advice",
     "Treatment plans or prescriptions",
     "Claims that silence or absence of chat means a symptom is absent",
-    "Statements that Hearth replaces clinical judgment or validated tools"
+    "Statements that Familyr replaces clinical judgment or validated tools"
   ],
   "forbidden_phrase_patterns": [
     "(?<!not a )\\bdiagnos(?:e|is|ed)\\b",

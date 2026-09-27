@@ -1,5 +1,5 @@
 {
-  "note": "Background references that informed Hearth's HCP brief tone and eval design. Our timelines and reports are synthetic team-authored data — we do not redistribute protected clinical corpora.",
+  "note": "Background references that informed Familyr's HCP brief tone and eval design. Our timelines and reports are synthetic team-authored data — we do not redistribute protected clinical corpora.",
   "sources": [
     {
       "id": "nia-talking-older-patients",
@@ -41,11 +41,11 @@
       ],
       "key_takeaways_applied": [
         "Separate control-like stable periods from changed periods when designing synthetic timelines.",
-        "Keep protocol vs naturalistic distinction in mind — Hearth uses consented family chat, not Cookie Theft tasks.",
+        "Keep protocol vs naturalistic distinction in mind — Familyr uses consented family chat, not Cookie Theft tasks.",
         "Access to DementiaBank requires contribution/agreement processes; cite the index, do not claim we trained on it."
       ],
-      "access_note": "DementiaBank corpora are listed for researchers with signed contribution forms. Hearth eval cases (P01–P10) are fully synthetic and independent of those files."
+      "access_note": "DementiaBank corpora are listed for researchers with signed contribution forms. Familyr eval cases (P01–P10) are fully synthetic and independent of those files."
     }
   ],
-  "disclaimer": "Citing NIA and TalkBank does not imply endorsement by NIH, NIA, or TalkBank. Hearth briefs remain decision support only and are not a medical device or diagnostic tool."
+  "disclaimer": "Citing NIA and TalkBank does not imply endorsement by NIH, NIA, or TalkBank. Familyr briefs remain decision support only and are not a medical device or diagnostic tool."
 }

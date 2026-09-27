@@ -6,7 +6,13 @@ import { aiConfigured, grokConfigured, museConfigured } from "./ai/config";
 import { buildDigest } from "./digest";
 import { enrichDigestTimeMachine } from "./digest-time-machine";
 import { alvarezPersonalEvents } from "./demo-personal-calendars";
-import { events as seedEvents, families, members, posts as seedPosts, reminders as seedReminders } from "./seed";
+import {
+  events as seedEvents,
+  families,
+  members,
+  posts as seedPosts,
+  reminders as seedReminders,
+} from "./seed";
 import type { CalendarEvent, Digest, Family, Member, PatientSnapshot, Post, Reminder } from "./types";
 
 /** In-memory mock backend used when demo mode is on. */

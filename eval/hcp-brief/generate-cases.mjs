@@ -419,8 +419,8 @@ const packageJson = {
 
 const reports = {
   package: "hearth-hcp-excellent-reports",
-  format: "Hearth Weekly HCP Brief",
-  note: "Synthetic excellent examples authored to the Hearth schema; not Impiricus templates.",
+  format: "Familyr Weekly HCP Brief",
+  note: "Synthetic excellent examples authored to the Familyr schema; not Impiricus templates.",
   reports: cases.map(excellentReport),
 };
 

@@ -15,7 +15,7 @@ export type ClinicianNetworkProfile = {
   acceptedCarrierIds: string[];
 };
 
-/** Demo payers — not a real eligibility check. */
+/** Demo payers - not a real eligibility check. */
 export const INSURANCE_CARRIERS: InsuranceCarrier[] = [
   { id: "bcbs", name: "Blue Cross Blue Shield", planTypes: ["PPO", "HMO"] },
   { id: "medicare", name: "Medicare", planTypes: ["Original", "Advantage"] },

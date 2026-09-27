@@ -7,7 +7,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
     <FamilyCircleForm
       defaultName={defaultName}
       redirectOnSuccess
-      submitLabel="Continue to Hearth"
+      submitLabel="Continue to Familyr"
     />
   );
 }

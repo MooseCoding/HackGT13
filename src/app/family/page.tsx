@@ -42,7 +42,7 @@ export default async function FamilyChatPage({
   });
 
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-mute">Loading chats…</div>}>
+    <Suspense fallback={<div className="p-4 text-sm text-mute">Loading messages…</div>}>
       <ChatApp
         posts={posts}
         members={members}

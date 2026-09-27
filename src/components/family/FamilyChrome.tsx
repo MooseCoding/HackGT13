@@ -1,5 +1,6 @@
 "use client";
 
+import { FamilyrLogo } from "@/components/FamilyrLogo";
 import { SettingsMenu } from "@/components/settings/SettingsPanel";
 import { DIGEST_NAME } from "@/lib/digest-constants";
 import type { Family, Member } from "@/lib/types";
@@ -157,15 +158,16 @@ export function FamilyChrome({
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-ground">
-      <header className="shrink-0 border-b border-white/50 bg-transparent px-3 pt-3 sm:px-4">
-        <div className="glass space-y-2 rounded-2xl px-3 py-2.5 text-ink sm:space-y-0 sm:px-4">
+      <header className="shrink-0 border-b border-chrome-border bg-ground px-3 pt-3 sm:px-4">
+        <div className="glass space-y-2 rounded-2xl px-3 py-2.5 text-chrome-fg sm:space-y-0 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/" className="font-brand shrink-0 text-base text-ink">
-              Hearth
-            </Link>
+            <FamilyrLogo
+              markClassName="h-5 w-5"
+              textClassName="font-brand text-sm"
+              className="shrink-0"
+            />
             {families.length > 0 ? (
               <>
-                <span className="hidden h-5 w-px shrink-0 bg-chrome-divider sm:block" aria-hidden />
                 <div
                   className="hidden min-w-0 items-center gap-2 sm:flex"
                   aria-label={`Current circle: ${activeFamilyName}`}
@@ -196,7 +198,14 @@ export function FamilyChrome({
                 compact
               />
               {showPostingSelect ? (
-                <>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold text-white"
+                    style={{ background: me?.color ?? "#8696a0" }}
+                    aria-hidden
+                  >
+                    {me?.initials}
+                  </span>
                   <label className="sr-only" htmlFor="posting-as">
                     Posting as
                   </label>
@@ -213,7 +222,7 @@ export function FamilyChrome({
                       </option>
                     ))}
                   </select>
-                </>
+                </div>
               ) : identityLocked && me?.name ? (
                 <span className="hidden max-w-[5.5rem] truncate text-sm text-mute sm:inline sm:max-w-none" title={me.name}>
                   {me.name}
@@ -222,9 +231,9 @@ export function FamilyChrome({
               {demo ? (
                 <span
                   className="hidden text-xs font-medium text-mute sm:inline"
-                  title="Started from Preview sample family on the homepage"
+                  title="Started from the sample circle on the homepage"
                 >
-                  Sample family
+                  Sample circle
                 </span>
               ) : null}
             </div>
@@ -256,7 +265,7 @@ export function FamilyChrome({
 
         <nav
           className="flex w-[4.25rem] shrink-0 flex-col gap-0.5 border-l border-nav-rail-border bg-nav-rail-bg px-1.5 py-2 sm:w-44 sm:px-2"
-          aria-label="Family"
+          aria-label="Circle"
         >
           {NAV_LINKS.map((l) => {
             const current = path === l.href || (l.href !== "/family" && path.startsWith(l.href));

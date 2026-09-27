@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://hearth.app/schemas/hcp-eval-case.schema.json",
-  "title": "HearthHcpEvalCase",
-  "description": "Synthetic consented family-chat timeline for Hearth HCP brief evaluation.",
+  "title": "FamilyrHcpEvalCase",
+  "description": "Synthetic consented family-chat timeline for Familyr HCP brief evaluation.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -20,7 +20,7 @@ export type CheckInSuggestion = {
   title: string;
   message: string;
   concern: MentalHealthConcern;
-  /** Plain-language concern area — not a diagnosis. */
+  /** Plain-language concern area - not a diagnosis. */
   label: string;
 };
 
@@ -46,7 +46,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\b(?:having|in)\s+a\s+psychosis\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `Schizophrenia-related language appeared here. Stay calm, listen, and offer steady support — this is not a diagnosis. ${ALERT_FOOTER}`,
+    message: `Schizophrenia-related language appeared here. Stay calm, listen, and offer steady support - this is not a diagnosis. ${ALERT_FOOTER}`,
   },
   {
     concern: "psychosis",
@@ -78,7 +78,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\bdepressive\s+episode\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `Bipolar-related mood or energy shifts may be showing up. Ask how they're sleeping and feeling — without labeling them. ${ALERT_FOOTER}`,
+    message: `Bipolar-related mood or energy shifts may be showing up. Ask how they're sleeping and feeling - without labeling them. ${ALERT_FOOTER}`,
   },
   {
     concern: "substance",
@@ -121,7 +121,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\b(?:my|the)\s+trauma\s+(?:is\s+)?(?:back|acting\s+up)\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `PTSD-related language showed up. Offer grounding and safety — not pressure to retell the story. ${ALERT_FOOTER}`,
+    message: `PTSD-related language showed up. Offer grounding and safety - not pressure to retell the story. ${ALERT_FOOTER}`,
   },
   {
     concern: "trauma",
@@ -137,7 +137,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\bstartl(?:e|ed)\s+by\s+(?:everything|every)\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `This may reflect a trauma or stress response. Offer grounding and safety — not pressure to explain. ${ALERT_FOOTER}`,
+    message: `This may reflect a trauma or stress response. Offer grounding and safety - not pressure to explain. ${ALERT_FOOTER}`,
   },
   {
     concern: "ocd",
@@ -152,7 +152,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\brituals?\s+(?:are\s+)?(?:taking\s+over|everywhere)\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `OCD-related routines or intrusive thoughts may be weighing on them. Be patient — don't minimize the distress. ${ALERT_FOOTER}`,
+    message: `OCD-related routines or intrusive thoughts may be weighing on them. Be patient - don't minimize the distress. ${ALERT_FOOTER}`,
   },
   {
     concern: "adhd",
@@ -214,7 +214,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\bfood\s+is\s+(?:the\s+)?enemy\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `Eating-disorder-related language may be weighing on them. Keep the tone warm and practical — not about appearance. ${ALERT_FOOTER}`,
+    message: `Eating-disorder-related language may be weighing on them. Keep the tone warm and practical - not about appearance. ${ALERT_FOOTER}`,
   },
   {
     concern: "mood",
@@ -249,7 +249,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\b(?:tossing|turning)\s+all\s+night\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `Sleep sounds disrupted for them. Ask how last night went — sometimes that opens the door. ${ALERT_FOOTER}`,
+    message: `Sleep sounds disrupted for them. Ask how last night went - sometimes that opens the door. ${ALERT_FOOTER}`,
   },
   {
     concern: "cognitive",
@@ -280,7 +280,7 @@ const CONCERN_RULES: ConcernRule[] = [
       /\b(?:nobody|no\s+one)\s+(?:cares|understands)\b/i,
     ],
     title: "A gentle check-in may help",
-    message: `They may be pulling back from the circle. A low-pressure note — no guilt — can still land. ${ALERT_FOOTER}`,
+    message: `They may be pulling back from the circle. A low-pressure note - no guilt - can still land. ${ALERT_FOOTER}`,
   },
 ];
 
@@ -294,7 +294,7 @@ export function looksLikeCheckInText(text: string) {
   return QUICK_CHECK_RE.test(normalized);
 }
 
-/** 0–100 language-match strength for a detected concern — not diagnostic probability. */
+/** 0–100 language-match strength for a detected concern - not diagnostic probability. */
 export function scoreDisorderConfidence(text: string, concern: MentalHealthConcern, contextScore = 0): number {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return 0;
@@ -339,39 +339,39 @@ export function detectCheckInSuggestion(text: string): CheckInSuggestion | null 
   return null;
 }
 
-/** Prefill text for a warm family reply — concern-aware but never diagnostic. */
+/** Prefill text for a warm family reply - concern-aware but never diagnostic. */
 export function checkInReplyDraft(authorFirstName: string, concern: MentalHealthConcern) {
   const name = authorFirstName.trim() || "you";
   switch (concern) {
     case "cognitive":
-      return `Hi ${name} — I'm here. Do you want help finding anything or just company for a bit?`;
+      return `Hi ${name}, I'm here. Want help finding anything, or just company for a bit?`;
     case "sleep":
       return `Hey ${name}, thinking of you. How did you sleep last night?`;
     case "anxiety":
-      return `Hi ${name} — no rush to reply. I'm here if you want to talk or just sit with someone.`;
+      return `Hi ${name}, no rush to reply. I'm here if you want to talk or just sit with someone.`;
     case "trauma":
     case "ptsd":
-      return `Hi ${name} — you're safe with us. I'm here whenever you want, no pressure.`;
+      return `Hi ${name}, you're safe with us. I'm here whenever you want, no pressure.`;
     case "psychosis":
     case "schizophrenia":
-      return `Hi ${name} — I'm on your side. Want me to call or come by?`;
+      return `Hi ${name}, I'm on your side. Want me to call or come by?`;
     case "mania":
     case "bipolar":
-      return `Hey ${name} — checking in. How have your energy and sleep been lately?`;
+      return `Hey ${name}, checking in. How have your energy and sleep been lately?`;
     case "depression":
     case "mood":
-      return `Hi ${name} — thinking of you today. How are you holding up?`;
+      return `Hi ${name}, thinking of you today. How are you holding up?`;
     case "ocd":
-      return `Hi ${name} — I'm here. No need to explain anything — just wanted you to know I care.`;
+      return `Hi ${name}, I'm here. No need to explain anything. Just wanted you to know I care.`;
     case "adhd":
-      return `Hey ${name} — want me to help you tackle one small thing together?`;
+      return `Hey ${name}, want me to help you tackle one small thing together?`;
     case "substance":
-      return `Hi ${name} — I'm glad you said something. I'm here, no judgment.`;
+      return `Hi ${name}, I'm glad you said something. I'm here, no judgment.`;
     case "eating":
-      return `Hey ${name} — thinking of you today. Want me to bring dinner or just chat?`;
+      return `Hey ${name}, thinking of you today. Want me to bring dinner or just chat?`;
     case "withdrawal":
-      return `Hi ${name} — no pressure to come out. Just wanted you to know we're thinking of you.`;
+      return `Hi ${name}, no pressure to come out. Just wanted you to know we're thinking of you.`;
     default:
-      return `Hi ${name} — thinking of you today. How are you holding up?`;
+      return `Hi ${name}, thinking of you today. How are you holding up?`;
   }
 }

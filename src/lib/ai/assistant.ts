@@ -273,7 +273,7 @@ export async function runFamilyAssistant(input: {
         toolsUsed,
       };
     } catch (error) {
-      console.error("Hearth Assistant tool loop failed; using fallback.", error);
+      console.error("Familyr Assistant tool loop failed; using fallback.", error);
       if (input.runtime) {
         const local = await localScheduleAssist(message, input.runtime, input.history);
         if (local) return local;
@@ -308,7 +308,7 @@ export async function runFamilyAssistant(input: {
       }
       return { reply: content, source, pending: null };
     } catch (error) {
-      console.error("Hearth Assistant AI request failed; using local fallback.", error);
+      console.error("Familyr Assistant AI request failed; using local fallback.", error);
     }
   }
 

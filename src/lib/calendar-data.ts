@@ -13,7 +13,7 @@ import type { CalendarEvent } from "./types";
 
 export type GooglePullMode = "sample" | "window";
 
-/** Local Hearth events merged with Google Calendar (when connected). */
+/** Local Familyr events merged with Google Calendar (when connected). */
 export async function mergedEventsOf(
   familyId: string,
   opts?: {
@@ -34,7 +34,7 @@ export async function mergedEventsOf(
       if (token) {
         const pull = opts?.googlePull ?? "window";
         if (pull === "sample") {
-          // Always sample from real wall-clock time — Google is the user's actual calendar.
+          // Always sample from real wall-clock time - Google is the user's actual calendar.
           google = await fetchGoogleAroundNow(familyId, token, new Date(), GOOGLE_EVENT_COUNT);
         } else {
           google = await fetchGoogleInWindow(familyId, token, anchor);

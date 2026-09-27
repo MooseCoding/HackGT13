@@ -1,4 +1,4 @@
-/** Passive activity signals for safe check-in — posts, reactions, voice, app use. */
+/** Passive activity signals for safe check-in - posts, reactions, voice, app use. */
 
 import type { Post, PostReaction } from "./types";
 

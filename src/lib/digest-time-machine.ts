@@ -11,7 +11,7 @@ import type {
   StorybookPage,
 } from "./types";
 
-/** Curated On This Day cards — pulled from the same stories/photos as seeded chat. */
+/** Curated On This Day cards - pulled from the same stories/photos as seeded chat. */
 const DEMO_ON_THIS_DAY: Record<FamilyId, OnThisDayMemory[]> = {
   alvarez: [
     {
@@ -73,16 +73,14 @@ const DEMO_MEMORY_STORYBOOK: Record<FamilyId, StorybookPage[]> = {
       id: "mem-garage",
       title: "Abuelo's Sunday ritual",
       caption:
-        "Elena told Miguel she still remembers his father polishing the Mustang every Sunday — engines more than coffee, boleros on the radio.",
-      illustration: "🚗",
+        "Elena told Miguel she still remembers his father polishing the Mustang every Sunday. Engines more than coffee, boleros on the radio.",
       mood: "warm",
     },
     {
       id: "mem-scarf",
       title: "The yellow scarf",
       caption:
-        "Abuela wore it to Sofia's game. Said she'd yell loud enough for coach to hear — and she did.",
-      illustration: "🧣",
+        "Abuela wore it to Sofia's game. Said she'd yell loud enough for coach to hear - and she did.",
       mood: "celebration",
     },
   ],
@@ -91,14 +89,12 @@ const DEMO_MEMORY_STORYBOOK: Record<FamilyId, StorybookPage[]> = {
       id: "mem-stew",
       title: "Sunday stew",
       caption: "Ruth labeled two freezer tubs and told Kojo to call when he lands.",
-      illustration: "🍲",
       mood: "warm",
     },
     {
       id: "mem-garden",
       title: "Garden club morning",
       caption: "Tea by the library, a list for next week, and Ruth's voice still holding.",
-      illustration: "🌿",
       mood: "calm",
     },
   ],
@@ -171,7 +167,6 @@ function mergeMemoriesIntoStorybook(
     id: "memories-divider",
     title: "From the album",
     caption: "Older posts that matched today's date.",
-    illustration: "🕰️",
     mood: "warm",
   };
 
@@ -217,7 +212,7 @@ function buildFamilyRadioMeta(podcast: PodcastChapter[] | undefined): FamilyRadi
   const minutes = words ? Math.max(1, Math.round(words / 140)) : 2;
   return {
     durationLabel: minutes <= 2 ? "~2 min" : `~${minutes} min`,
-    tagline: "Listen to the week without reading the screen.",
+    tagline: "Listen to the week if you don't want to read it.",
   };
 }
 

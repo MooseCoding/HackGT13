@@ -63,7 +63,7 @@ function formatTimeParts(p: DateParts, hour12 = true) {
   return `${p.hour}:${p.minute}`;
 }
 
-/** Join date + time with a fixed separator — stable across Node SSR and browsers. */
+/** Join date + time with a fixed separator - stable across Node SSR and browsers. */
 export function formatDateAtTime(
   d: Date,
   timeZone: string,
@@ -86,7 +86,7 @@ export function formatWhen(iso: string, opts?: FormatOpts) {
   return formatDateAtTime(new Date(iso), tz(opts), "short", hour12);
 }
 
-/** YYYY-MM-DD in a fixed zone — stable across SSR and client. */
+/** YYYY-MM-DD in a fixed zone - stable across SSR and client. */
 export function dateKey(iso: string, timeZone = DEMO_TIMEZONE) {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone });
 }

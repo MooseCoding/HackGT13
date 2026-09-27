@@ -4,7 +4,7 @@ import type { CalendarEvent, FamilyId, Member, MemberId } from "./types";
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-/** Demo draft — lands within 2h of Sofia's Saturday soccer in the Alvarez seed calendar. */
+/** Demo draft - lands within 2h of Sofia's Saturday soccer in the Alvarez seed calendar. */
 export const SCHEDULE_CONFLICT_DEMO_DRAFT = "Family brunch Saturday at 11 AM";
 
 const DAY_RE = /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
@@ -89,5 +89,5 @@ export function conflictWarningText(conflicts: ScheduleConflict[]): string | nul
   if (!conflicts.length) return null;
   const first = conflicts[0];
   const extra = conflicts.length > 1 ? ` (+${conflicts.length - 1} more)` : "";
-  return `Heads up: ${first.message}${extra}`;
+  return `${first.message}${extra}`;
 }

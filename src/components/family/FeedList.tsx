@@ -28,7 +28,7 @@ export function FeedList({ posts, members }: { posts: Post[]; members: Member[] 
             <li key={p.id} className="border-l-2 border-rule pl-4">
               <p className={`leading-7 text-mute ${easy ? "text-xl leading-9" : "text-[17px]"}`}>
                 <span className="font-semibold text-ink">{m?.name.split(" ")[0]}</span>
-                {" — "}
+                {" - "}
                 {text}
               </p>
               <p className="mt-1 text-xs text-mute">{formatWhen(p.createdAt, { timeZone, hour12 })}</p>

@@ -1,10 +1,8 @@
 import { AutoAcceptPatientsToggle } from "@/components/hcp/AutoAcceptPatientsToggle";
-import { Sparkline } from "@/components/hcp/Charts";
 import { ClinicalAlertActions } from "@/components/hcp/ClinicalAlertActions";
 import { PatientAssignmentActions } from "@/components/hcp/PatientAssignmentActions";
 import { carrierLabel, clinicianNetworkProfile } from "@/lib/clinical/insurance";
 import { clinicalDashboardData, type ClinicalRosterView } from "@/lib/clinical/operations";
-import { hcpReportingMode } from "@/lib/hcp-settings-server";
 import { isDemoMode } from "@/lib/mode-server";
 import type { Member, PatientSnapshot } from "@/lib/types";
 import Link from "next/link";
@@ -48,11 +46,7 @@ export default async function HcpHome({
 }) {
   const params = await searchParams;
   const view = rosterView(params.view);
-  const [reportingMode, dashboard, demo] = await Promise.all([
-    hcpReportingMode(),
-    clinicalDashboardData(view),
-    isDemoMode(),
-  ]);
+  const [dashboard, demo] = await Promise.all([clinicalDashboardData(view), isDemoMode()]);
   const {
     patients: snapshots,
     members,
@@ -63,7 +57,6 @@ export default async function HcpHome({
     autoAcceptPatients,
     lastRunAt,
   } = dashboard;
-  const advanced = reportingMode === "advanced";
   const query = params.q?.trim().toLowerCase() ?? "";
   const assignmentByMember = new Map(assignments.map((assignment) => [assignment.memberId, assignment]));
   const visibleSnapshots = query
@@ -87,9 +80,8 @@ export default async function HcpHome({
         <div>
           <h1 className="text-2xl font-semibold text-ink">Patient overview</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-mute">
-            Add patients who&apos;ve agreed to share, then see how their communication patterns compare to their
-            own history.
-            {!advanced ? " Simple view shows risk and what changed most. Switch to Advanced for trend charts." : null}
+            Add patients who agreed to share, then see how their communication looks compared to
+            their own history.
           </p>
         </div>
         {lastRunAt ? (
@@ -192,7 +184,7 @@ export default async function HcpHome({
             {patients.length
               ? `${patients.length} in-network patient${patients.length === 1 ? "" : "s"} available`
               : autoAcceptPatients
-                ? "Auto-accept is on — new in-network patients join your roster on their own"
+                ? "Auto-accept is on. New in-network patients join your roster on their own."
                 : "Only in-network patients show up here"}
           </p>
           <p className="mt-1 text-sm leading-6 text-mute">
@@ -213,7 +205,7 @@ export default async function HcpHome({
             <p className="mt-0.5 text-xs text-mute">
               {view === "mine"
                 ? "Sorted by how far each person has moved from their own baseline"
-                : "In-network patients you haven&apos;t added yet"}
+                : "In-network patients you haven't added yet"}
             </p>
           </div>
           <form
@@ -256,12 +248,10 @@ export default async function HcpHome({
           <div className="divide-y divide-line">
             {patients.map((patient) => {
               const member = members.find((candidate) => candidate.id === patient.memberId);
-              const leadDomain = patient.domains.slice().sort((a, b) => a.score - b.score)[0];
               const assigned = assignmentByMember.get(patient.memberId);
               const onMyRoster = assigned?.clinicianId === clinicianId;
-              const rowClass = advanced
-                ? "group grid gap-4 px-5 py-5 hover:bg-ground sm:grid-cols-[minmax(220px,1.2fr)_minmax(180px,0.8fr)_160px_minmax(130px,auto)] sm:items-center"
-                : "group grid gap-4 px-5 py-5 hover:bg-ground sm:grid-cols-[minmax(220px,1.2fr)_minmax(180px,0.8fr)_minmax(130px,auto)] sm:items-center";
+              const rowClass =
+                "group grid gap-4 px-5 py-5 hover:bg-ground sm:grid-cols-[minmax(220px,1.2fr)_minmax(180px,0.8fr)_minmax(130px,auto)] sm:items-center";
               const content = (
                 <>
                   <div className="flex items-center gap-3.5">
@@ -284,27 +274,10 @@ export default async function HcpHome({
                     </div>
                   </div>
                   <div>
-                    {advanced ? (
-                      <>
-                        <p className="text-xs font-medium text-ink">{leadDomain.label}</p>
-                        <p className="mt-1 line-clamp-1 text-xs text-mute">
-                          {patient.flags[0]?.title ?? "No major shift from baseline"}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="line-clamp-2 text-xs text-mute">
-                        {patient.flags[0]?.title ?? "No major shift from baseline"}
-                      </p>
-                    )}
+                    <p className="line-clamp-2 text-xs text-mute">
+                      {patient.flags[0]?.title ?? "No major shift from baseline"}
+                    </p>
                   </div>
-                  {advanced ? (
-                    <Sparkline
-                      points={patient.series.slice(-21)}
-                      accessor={(point) => point.lexicalDiversity}
-                      color={patient.riskLevel === "priority" ? "#e11d48" : patient.riskLevel === "monitor" ? "#d97706" : "#059669"}
-                      label={`${member?.name ?? "Patient"} lexical diversity over 21 days`}
-                    />
-                  ) : null}
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
                     <RiskBadge level={patient.riskLevel} />
                     {view === "available" ? (

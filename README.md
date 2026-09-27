@@ -1,10 +1,10 @@
-# Hearth
+# Familyr
 
 **A digital living room for families, with an opt-in clinician channel.** Built at HackGT 13.
 
 Families share messages, photos, voice notes and plans in one calm place. Each week, **Hestia** turns the week into a short story, so nobody has to scroll the whole group thread. If a family member chooses to share, a clinician can see gentle, explainable signs that the way that person communicates has changed. Each person is compared only with their own past, never with a population average.
 
-> Hearth provides clinical decision support. It does not diagnose, it is not a medical device, and a clinician must confirm every signal.
+> Familyr provides clinical decision support. It does not diagnose, it is not a medical device, and a clinician must confirm every signal.
 
 ---
 
@@ -30,7 +30,7 @@ Families share messages, photos, voice notes and plans in one calm place. Each w
 | --- | --- | --- |
 | Landing | `/` | Google sign-in, or **Preview the demo family** |
 | Onboarding | `/onboarding` | Create a Circle or join one with an invite code |
-| Family chat | `/family` | Group chat and DMs, photos, voice notes, **Add member** invites, Hearth Assistant |
+| Family chat | `/family` | Group chat and DMs, photos, voice notes, **Add member** invites, Familyr Assistant |
 | Calendar | `/family/calendar` | Create events in plain English ("Sofia's game Saturday 10am at Piedmont"), RSVPs, bring-lists, Google Calendar sync |
 | Reminders | `/family/reminders` | Reminders pulled from chat and the calendar |
 | Hestia | `/family/digest` | The weekly story for the Circle, with listen-aloud |
@@ -39,7 +39,7 @@ Families share messages, photos, voice notes and plans in one calm place. Each w
 | Clinician portal | `/hcp`, `/hcp/patients/[id]` | Review queue, patient roster, pre-visit brief with evidence |
 | Live signal demo | `/hcp/live` | Deterministic walkthrough of WhatsApp intake, for use when venue Wi-Fi fails |
 
-**Words we use:** *Hearth* is the product. *Hestia* is the weekly story. A *Circle* is one household, and *Family* is the people in it. *Larger text* is the accessibility mode. *Hearth Assistant* is the in-app helper; it is not Hestia.
+**Words we use:** *Familyr* is the product. *Hestia* is the weekly story. A *Circle* is one household, and *Family* is the people in it. *Larger text* is the accessibility mode. *Familyr Assistant* is the in-app helper; it is not Hestia.
 
 **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase (Auth, Postgres, row-level security, Realtime) · Meta Muse with a Grok fallback for generation · Groq Whisper for voice transcription · deployed on Vercel.
 
@@ -91,7 +91,7 @@ Copy `.env.example` to `.env.local`. Only the first group is needed for live mod
 
 | Variable | Purpose |
 | --- | --- |
-| `MODEL_API_KEY`, `AI_MODEL`, `AI_API_BASE` | Meta Muse, the main model for Hestia, Hearth Assistant and clinician briefs |
+| `MODEL_API_KEY`, `AI_MODEL`, `AI_API_BASE` | Meta Muse, the main model for Hestia, Familyr Assistant and clinician briefs |
 | `GROK_API_KEY`, `GROK_MODEL`, `GROK_API_BASE` | Grok, used when Muse is unavailable. `AI_PROVIDER_MODE=grok` forces it. |
 | `GROQ_API_KEY`, `GROQ_TRANSCRIPTION_MODEL` | Voice-note transcription (Whisper) |
 
@@ -182,7 +182,7 @@ Changes can reflect language, device access, travel, illness or a family's norma
 
 - Set Meta's WhatsApp Business webhook callback to `https://<your-domain>/api/webhooks/whatsapp` and fill in the `WHATSAPP_*` variables.
 - Map senders to members explicitly with `WHATSAPP_PATIENT_MAP` (`{"14045550123":"member-id"}`). Senders who aren't mapped, or haven't opted in, are ignored.
-- Voice notes are transcribed and reduced to timing features. Hearth does not store the original audio.
+- Voice notes are transcribed and reduced to timing features. Familyr does not store the original audio.
 
 ---
 
@@ -200,7 +200,7 @@ src/
     store.ts, seed.ts  In-memory demo store and seed Circles
     auth.ts            Session, profile and clinician checks
     supabase/          Browser, server and service-role clients, plus generated types
-    ai/                Muse and Grok clients, prompts, Hestia and Hearth Assistant
+    ai/                Muse and Grok clients, prompts, Hestia and Familyr Assistant
     clinical/          Analysis, operations, reports, WhatsApp intake
   proxy.ts             Session refresh and route gating (Next.js 16 middleware)
 supabase/migrations/   Database schema and policies

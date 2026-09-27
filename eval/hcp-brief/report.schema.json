@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://hearth.app/schemas/hcp-weekly-brief.schema.json",
-  "title": "HearthWeeklyHcpBrief",
-  "description": "Hearth proposed one-screen weekly HCP brief. Decision support only — not an Impiricus vendor format and not a diagnosis.",
+  "title": "FamilyrWeeklyHcpBrief",
+  "description": "Familyr proposed one-screen weekly HCP brief. Decision support only — not an Impiricus vendor format and not a diagnosis.",
   "type": "object",
   "additionalProperties": false,
   "required": [

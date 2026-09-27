@@ -1,10 +1,15 @@
 "use client";
 
 import { AddMemberPanel } from "@/components/family/AddMemberPanel";
-import { HearthMark } from "@/components/HearthMark";
+import { FamilyrMark } from "@/components/FamilyrMark";
 import { CommerceCard } from "@/components/family/CommerceCard";
 import { EventBringList } from "@/components/family/EventBringList";
-import { MutualAidChip, SocialExtensions, suggestMutualAidFromText } from "@/components/family/SocialExtensions";
+import {
+  ConversationStarters,
+  MutualAidChip,
+  SocialExtensions,
+  suggestMutualAidFromText,
+} from "@/components/family/SocialExtensions";
 import { looksLikeCommerceText, suggestCommerceFromText } from "@/lib/commerce-detect";
 import {
   canClaimSupplies,
@@ -19,8 +24,8 @@ import { useHour12, useLargerText, useTimezone } from "@/components/settings/Set
 import {
   assistantPreviewText,
   defaultAssistantGreeting,
-  HearthAssistantChat,
-} from "@/components/family/HearthAssistant";
+  FamilyrAssistantChat,
+} from "@/components/family/FamilyrAssistant";
 import type { AssistantContext } from "@/lib/ai/assistant-local";
 import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import { ImagePlus, Loader2, Mic, SendHorizontal } from "lucide-react";
@@ -155,7 +160,7 @@ function CheckInChip({
         onClick={onDraftReply}
         className={`mt-2 font-medium text-clinic hover:underline ${easy ? "min-h-10 text-sm" : "text-[11px]"}`}
       >
-        Draft a warm reply to {authorName}
+        Draft a reply to {authorName}
       </button>
     </div>
   );
@@ -176,6 +181,7 @@ function PinnedEventCard({
   onOrderSupply,
   supplyBusyId,
   orderingSupplyId,
+  orderedBySupplyId,
   demo = false,
 }: {
   post: Post;
@@ -192,6 +198,7 @@ function PinnedEventCard({
   onOrderSupply?: (suggestion: CommerceSuggestion) => void;
   supplyBusyId?: string | null;
   orderingSupplyId?: string | null;
+  orderedBySupplyId?: Record<string, { message: string }>;
   demo?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
@@ -277,6 +284,7 @@ function PinnedEventCard({
                 orderingSupplyId={orderingSupplyId}
                 onClaim={(supplyId) => onClaimSupply(event, supplyId)}
                 onOrder={onOrderSupply}
+                orderedBySupplyId={orderedBySupplyId}
                 compact
               />
             ) : null}
@@ -296,6 +304,7 @@ function BringListCard({
   onClaim,
   onOrder,
   matchedItem,
+  orderedBySupplyId,
 }: {
   event: CalendarEvent;
   members: Member[];
@@ -305,6 +314,7 @@ function BringListCard({
   onClaim: (supplyId: string) => void;
   onOrder: (suggestion: CommerceSuggestion) => void;
   matchedItem?: { item: string; id: string };
+  orderedBySupplyId?: Record<string, { message: string }>;
 }) {
   return (
     <div className="mt-2 w-full max-w-sm rounded-md border border-ember/25 bg-surface px-3 py-2.5">
@@ -321,6 +331,7 @@ function BringListCard({
         orderingSupplyId={orderingSupplyId}
         onClaim={onClaim}
         onOrder={onOrder}
+        orderedBySupplyId={orderedBySupplyId}
         compact
       />
     </div>
@@ -374,7 +385,7 @@ function Avatar({ member, size = 40 }: { member?: Member; size?: number }) {
   );
 }
 
-const QUICK_REACTIONS = ["☀️", "❤️", "👍"];
+const QUICK_REACTIONS = ["❤️", "👍", "😂"];
 
 function MessageReactions({
   postId,
@@ -1091,7 +1102,7 @@ export function ChatApp({
 
   return (
     <div className="chat-surface grid h-full min-h-0 overflow-hidden md:grid-cols-[20rem_minmax(0,1fr)]">
-      {/* Thread list — left column on desktop */}
+      {/* Thread list - left column on desktop */}
       <aside
         className={`min-h-0 flex-col border-r border-rule bg-surface ${
           mobileShowChat ? "hidden" : "flex"
@@ -1119,7 +1130,7 @@ export function ChatApp({
               aria-current={assistantActive ? "true" : undefined}
             >
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-tint ring-2 ring-ember/25">
-                <HearthMark className="h-6 w-6" />
+                <FamilyrMark className="h-6 w-6" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
@@ -1170,7 +1181,7 @@ export function ChatApp({
         </ul>
       </aside>
 
-      {/* Conversation — right column on desktop */}
+      {/* Conversation - right column on desktop */}
       <div className={`flex min-h-0 min-w-0 flex-col overflow-hidden ${mobileShowChat ? "flex" : "hidden md:flex"}`}>
         <div className="shrink-0 border-b border-rule bg-surface px-4 py-2.5">
           <div className="flex items-center gap-3">
@@ -1183,7 +1194,7 @@ export function ChatApp({
             </button>
             {assistantActive ? (
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-tint">
-                <HearthMark className="h-6 w-6" />
+                <FamilyrMark className="h-6 w-6" />
               </span>
             ) : headerMember ? (
               <Avatar member={headerMember} size={36} />
@@ -1191,7 +1202,7 @@ export function ChatApp({
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{headerTitle}</p>
               {assistantActive ? (
-                <p className="text-xs text-mute">In-app help · always here</p>
+                <p className="text-xs text-mute">In-app help. Not Hestia.</p>
               ) : isGroupThread(threadId) ? (
                 <p className="text-xs text-mute">{familyName} · {members.length} in circle</p>
               ) : (
@@ -1213,7 +1224,7 @@ export function ChatApp({
         </div>
 
         {assistantActive ? (
-          <HearthAssistantChat
+          <FamilyrAssistantChat
             context={{ ...assistantContext, postingAs: me.name }}
             easy={easy}
             demo={demo}
@@ -1245,6 +1256,7 @@ export function ChatApp({
                   onOrderSupply={(suggestion) => void orderSupplyFromBringList(suggestion)}
                   supplyBusyId={supplyBusyId}
                   orderingSupplyId={orderingSupplyId}
+                  orderedBySupplyId={commerceOrders}
                   demo={demo}
                 />
               );
@@ -1269,6 +1281,7 @@ export function ChatApp({
                   meId={me.id}
                   busySupplyId={supplyBusyId}
                   orderingSupplyId={orderingSupplyId}
+                  orderedBySupplyId={commerceOrders}
                   matchedItem={bringListHint?.matchedItem}
                   onClaim={(supplyId) => void claimSupply(bringEvent, supplyId)}
                   onOrder={(suggestion) => void orderSupplyFromBringList(suggestion)}
@@ -1452,7 +1465,6 @@ export function ChatApp({
           posts={chatPosts}
           messages={messages}
           body={body}
-          setBody={setBody}
           setMeId={setMeId}
           mutualAidHint={mutualAidHint}
           setMutualAidHint={setMutualAidHint}
@@ -1585,6 +1597,17 @@ export function ChatApp({
           </div>
         ) : null}
 
+        {isGroupThread(threadId) ? (
+          <ConversationStarters
+            familyId={me.familyId}
+            meId={me.id}
+            postCount={chatPosts.length}
+            setBody={setBody}
+            demo={demo}
+            easy={easy}
+          />
+        ) : null}
+
         <div className="border-t border-rule bg-surface px-3 py-2">
           {voiceError ? (
             <p className="mb-2 text-sm text-red-700" role="alert">{voiceError}</p>
@@ -1623,7 +1646,7 @@ export function ChatApp({
                   void send();
                 }
               }}
-              placeholder="Type a message"
+              placeholder="say something…"
               rows={1}
               className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-tint)] ${
                 easy ? "text-base" : "text-sm"

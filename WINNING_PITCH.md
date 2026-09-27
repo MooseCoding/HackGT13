@@ -1,8 +1,8 @@
-# Hearth — HackGT / MLH winning pitch
+# Familyr — HackGT / MLH winning pitch
 
 **One line:** A digital living room for families — with an opt-in clinician channel that turns everyday chat into explainable, baseline-aware care signals.
 
-**Product name on stage:** Hearth (family) · Impiricus-ready portal (`/hcp`)
+**Product name on stage:** Familyr (family) · Impiricus-ready portal (`/hcp`)
 
 ---
 
@@ -11,7 +11,7 @@
 > Families don’t fall out of care because nobody loves them.  
 > They fall out because love lives in a **chaotic group chat** — and the clinician gets **nothing between visits**.
 >
-> **Hearth** is the porch: async chat, photos, voice-to-text, a calendar that understands English, and a weekly story so grandparents don’t have to scroll.
+> **Familyr** is the porch: async chat, photos, voice-to-text, a calendar that understands English, and a weekly story so grandparents don’t have to scroll.
 >
 > When someone **opts in**, we look at how *they* write and *when* they post — compared to **their own baseline**, not a population average. Markers like late-night posting and repetition become an **explainable pre-visit note** for the clinician. Turn sharing off, and they disappear from the clinical list.
 >
@@ -50,7 +50,7 @@
 |--|--|
 | **Problem** | Group chat burnout + clinical blind spots between visits |
 | **Insight** | Signal already exists in *how* and *when* people communicate — if they consent |
-| **Product** | Hearth (connection) + opt-in Impiricus-ready clinician view (care) |
+| **Product** | Familyr (connection) + opt-in Impiricus-ready clinician view (care) |
 | **Moat in 1 demo** | End-to-end loop in 90s: warmth → baseline insight → consent agency → check-in |
 
 ---
@@ -58,7 +58,7 @@
 ## Track endings (last 15–20s)
 
 ### Impiricus / healthcare
-“Hearth is the porch. Impiricus is the house call — only when the family opens the door. Ask: do you have a sandbox API or embed we should target next?”
+“Familyr is the porch. Impiricus is the house call — only when the family opens the door. Ask: do you have a sandbox API or embed we should target next?”
 
 ### Meta / social good
 “Familiar social patterns so grandparents actually stay. Muse can write the weekly story and prompts that bridge generations — privacy-preserving signals, with consent.”

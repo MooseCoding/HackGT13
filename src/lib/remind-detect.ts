@@ -231,6 +231,6 @@ export function formatReminderSource(sourceText: string) {
   return sourceText;
 }
 
-export function isHearthReminderSource(sourceText: string) {
+export function isFamilyrReminderSource(sourceText: string) {
   return familyCallSourceLabel(sourceText) !== null;
 }

@@ -33,7 +33,7 @@ export type HcpBriefChange = {
   baseline?: string;
 };
 
-export type HearthWeeklyHcpBrief = {
+export type FamilyrWeeklyHcpBrief = {
   patient_id: string;
   reporting_period: {
     baseline_window: { start: string; end: string };
@@ -84,13 +84,13 @@ export function actionsFor(status: HcpBriefStatus, flagCount: number): Suggested
   return ["review_evidence", "contact_patient_or_caregiver"];
 }
 
-/** Deterministic Hearth brief from the live analysis snapshot (pipeline ground truth). */
+/** Deterministic Familyr brief from the live analysis snapshot (pipeline ground truth). */
 export function buildBriefFromSnapshot(
   patientId: string,
   snapshot: PatientSnapshot,
   windows: Pick<EvalCase, "baseline_window" | "current_window">,
   benignExplanation?: string,
-): HearthWeeklyHcpBrief {
+): FamilyrWeeklyHcpBrief {
   const status = snapshotStatus(snapshot);
   const evidence_ids = snapshot.insight.evidence.map((item) => item.postId);
   const changes: HcpBriefChange[] =
@@ -175,7 +175,7 @@ export type CaseEvalResult = {
   forbidden_hits: string[];
   sample_sizes: { current: number; baseline: number };
   flag_codes: string[];
-  brief: HearthWeeklyHcpBrief;
+  brief: FamilyrWeeklyHcpBrief;
   checks: {
     stable_avoids_alarm: boolean;
     concerning_prompts_review: boolean;
@@ -186,7 +186,7 @@ export type CaseEvalResult = {
 export function evaluateBriefAgainstCase(
   evalCase: EvalCase,
   snapshot: PatientSnapshot,
-  brief: HearthWeeklyHcpBrief,
+  brief: FamilyrWeeklyHcpBrief,
 ): CaseEvalResult {
   const pipeline_status = snapshotStatus(snapshot);
   const evidence_overlap = brief.evidence_ids.filter((id) => evalCase.expected_evidence_ids.includes(id));

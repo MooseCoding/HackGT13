@@ -75,7 +75,7 @@ export function CommerceCard({
         {suggestion.deliveryAddress ? ` · ${suggestion.deliveryAddress}` : ""}
       </p>
       <p className="mt-1 text-sm font-semibold text-ink">Estimated total: {formatPrice(suggestion.estimatedTotal)}</p>
-      <p className="mt-1 text-[11px] text-mute">Demo only — no payment, card, or checkout. Nothing is stored or charged.</p>
+      <p className="mt-1 text-[11px] text-mute">Demo only - no payment, card, or checkout. Nothing is stored or charged.</p>
       <button
         type="button"
         disabled={busy}

@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const cases = casesPackage.cases as EvalCase[];
 
-describe("Hearth HCP brief eval package", () => {
+describe("Familyr HCP brief eval package", () => {
   it("has five stable and five review_suggested cases with 20–50 messages", () => {
     expect(cases).toHaveLength(10);
     expect(cases.filter((item) => item.expected_label === "stable")).toHaveLength(5);

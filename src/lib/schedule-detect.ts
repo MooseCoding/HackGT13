@@ -8,7 +8,7 @@ export type ScheduleSuggestion = {
   startsAtHint: string;
   reason: string;
   suggestedText: string;
-  /** Original chat message — best source of context for calendar parsing. */
+  /** Original chat message - best source of context for calendar parsing. */
   sourceText: string;
   weeklyFamilyCall?: boolean;
 };
@@ -18,7 +18,7 @@ const WEEKLY_CALL_RE =
 /** Broad cues that a message might be scheduling something. */
 const SCHEDULE_CUE_RE =
   /\b(family\s+call|facetime|video\s+call|zoom|catch\s+up|check[\s-]?in|sunday\s+dinner|lunch|dinner|breakfast|brunch|call|soccer|game|tournament|practice|appointment|doctor|dentist|party|birthday|pickup|visit|bbq|cookout|flight|trip)\b/i;
-/** Only true call/video chat — not dinner, lunch, etc. */
+/** Only true call/video chat - not dinner, lunch, etc. */
 const CALL_ONLY_RE = /\b(family\s+call|facetime|video\s+call|zoom(?:\s+call)?|catch\s+up|check[\s-]?in)\b/i;
 const TIME_RE = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i;
 const DAY_RE = /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
@@ -91,7 +91,7 @@ export function extractScheduleTitle(raw: string, members: Member[]): string {
   return cleanEventTitle(chunk.slice(0, 72), hint);
 }
 
-/** Cheap first pass — skip calendar parsing unless the text looks like scheduling. */
+/** Cheap first pass - skip calendar parsing unless the text looks like scheduling. */
 export function looksLikeScheduleText(text: string) {
   const raw = text.trim();
   if (raw.length < 8) return false;
