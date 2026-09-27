@@ -29,6 +29,15 @@ function defaultGreeting() {
   return `Hi! I'm Hearth Assistant. I can check the calendar, draft events and reminders, and help with ${DIGEST_NAME}.`;
 }
 
+function clearAssistantSession() {
+  try {
+    sessionStorage.removeItem(TURNS_KEY);
+    sessionStorage.removeItem(PREVIEW_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function loadTurns(): Turn[] {
   if (typeof window === "undefined") return [{ role: "assistant", content: defaultGreeting() }];
   try {
@@ -64,7 +73,21 @@ export function HearthAssistantChat({
   const router = useRouter();
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [turns, setTurns] = useState<Turn[]>(() => loadTurns());
+  const [turns, setTurns] = useState<Turn[]>(() => {
+    // Drop stale cached chats from before tool-calling so users see the new agent.
+    if (typeof window !== "undefined") {
+      try {
+        const raw = sessionStorage.getItem(TURNS_KEY);
+        if (raw?.includes("I can't add it for you") || raw?.includes("Open Calendar then tap Add event")) {
+          clearAssistantSession();
+          return [{ role: "assistant", content: defaultGreeting() }];
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return loadTurns();
+  });
   const [pending, setPending] = useState<PendingAssistantAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
