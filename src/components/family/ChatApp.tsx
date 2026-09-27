@@ -18,6 +18,7 @@ import { useFamily } from "@/components/family/FamilyChrome";
 import { useHour12, useLargerText, useTimezone } from "@/components/settings/SettingsProvider";
 import { assistantPreviewText, HearthAssistantChat } from "@/components/family/HearthAssistant";
 import type { AssistantContext } from "@/lib/ai/assistant";
+import { ImagePlus, Loader2, Mic, SendHorizontal } from "lucide-react";
 import {
   ASSISTANT_LABEL,
   ASSISTANT_THREAD,
@@ -489,7 +490,10 @@ export function ChatApp({
   const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(() => events.map(ensureEventSupplies));
   const [localPosts, setLocalPosts] = useState<Post[]>(posts);
   const [reactions, setReactions] = useState<PostReaction[]>([]);
-  const chatPosts = demo ? localPosts : posts;
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  /** Optimistic + polled posts for both demo and live. */
+  const chatPosts = localPosts;
   const [assistantPreview, setAssistantPreview] = useState(() => assistantPreviewText());
   const hasWeeklyCalls = localEvents.some(isWeeklyFamilyCall);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -503,8 +507,13 @@ export function ChatApp({
   }, [events]);
 
   useEffect(() => {
-    if (!demo) setLocalPosts(posts);
-  }, [demo, posts]);
+    setLocalPosts((prev) => {
+      const byIdMap = new Map(posts.map((post) => [post.id, post]));
+      // Keep optimistic posts that the server has not echoed yet.
+      const extras = prev.filter((post) => post.id.startsWith("p-local-") && !byIdMap.has(post.id));
+      return [...posts, ...extras];
+    });
+  }, [posts]);
 
   useEffect(() => {
     setUrlReady(true);
@@ -935,55 +944,117 @@ export function ChatApp({
 
   async function send() {
     const text = body.trim();
-    if (!text && !photoUrl) return;
+    if ((!text && !photoUrl) || sending) return;
+    setSendError(null);
     if (demo) {
       applyDemoPost(text || (kind === "photo" ? "Photo" : "Voice note"));
       return;
     }
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        familyId: me.familyId,
-        authorId: me.id,
-        threadId,
-        kind,
-        body: text || (kind === "photo" ? "Photo" : "Voice note"),
-        photoUrl,
-        transcript: kind === "voice" ? text : undefined,
-        voiceSeconds: kind === "voice" ? Math.max(4, Math.round(text.split(" ").length / 2)) : undefined,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as {
-      scheduleSuggestion?: { title: string; suggestedText: string; reason: string; weeklyFamilyCall?: boolean };
-      reminderSuggestion?: ReminderSuggestion;
-      mutualAidSuggestion?: MutualAidSuggestion;
-      commerceSuggestion?: CommerceSuggestion;
-      calendarEvent?: CalendarEvent;
-      calendarEvents?: CalendarEvent[];
-      id?: string;
+
+    const optimisticId = `p-local-${Date.now()}`;
+    const optimistic: Post = {
+      id: optimisticId,
+      familyId: me.familyId,
+      authorId: me.id,
+      kind,
+      body: text || (kind === "photo" ? "Photo" : "Voice note"),
+      createdAt: new Date().toISOString(),
+      threadId,
+      photoUrl,
+      transcript: kind === "voice" ? text : undefined,
+      voiceSeconds: kind === "voice" ? Math.max(4, Math.round(text.split(" ").length / 2)) : undefined,
+      channel: "hearth",
     };
-    setScheduleHint(data.scheduleSuggestion ?? null);
-    setReminderHint(data.reminderSuggestion ?? null);
-    if (data.mutualAidSuggestion) {
-      setMutualAidHint({ ...data.mutualAidSuggestion, sourcePostId: data.id });
-    }
-    if (data.commerceSuggestion) {
-      setCommerceHint({ ...data.commerceSuggestion, sourcePostId: data.id });
-    }
-    if (data.calendarEvent) {
-      setCalendarAdded({
-        title: data.calendarEvent.title,
-        when: formatWhen(data.calendarEvent.startsAt, { timeZone: chatTimeZone, hour12 }),
-        count: data.calendarEvents?.length,
-      });
-    } else {
-      setCalendarAdded(null);
-    }
+    setLocalPosts((prev) => [optimistic, ...prev]);
     setBody("");
     setPhotoUrl(undefined);
     setKind("text");
-    router.refresh();
+    setSending(true);
+
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId: me.familyId,
+          authorId: me.id,
+          threadId,
+          kind: optimistic.kind,
+          body: optimistic.body,
+          photoUrl: optimistic.photoUrl,
+          transcript: optimistic.transcript,
+          voiceSeconds: optimistic.voiceSeconds,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        scheduleSuggestion?: { title: string; suggestedText: string; reason: string; weeklyFamilyCall?: boolean };
+        reminderSuggestion?: ReminderSuggestion;
+        mutualAidSuggestion?: MutualAidSuggestion;
+        commerceSuggestion?: CommerceSuggestion;
+        calendarEvent?: CalendarEvent;
+        calendarEvents?: CalendarEvent[];
+        id?: string;
+        createdAt?: string;
+        body?: string;
+        authorId?: string;
+        familyId?: string;
+        kind?: Post["kind"];
+        threadId?: string;
+        photoUrl?: string;
+        transcript?: string;
+        voiceSeconds?: number;
+      };
+      if (!res.ok) {
+        setLocalPosts((prev) => prev.filter((post) => post.id !== optimisticId));
+        setBody(text);
+        setPhotoUrl(optimistic.photoUrl);
+        setKind(optimistic.kind === "photo" || optimistic.kind === "voice" ? optimistic.kind : "text");
+        setSendError(data.error || "Could not send message. Try again.");
+        return;
+      }
+
+      const saved: Post = {
+        id: data.id || optimisticId,
+        familyId: data.familyId || me.familyId,
+        authorId: data.authorId || me.id,
+        kind: data.kind || optimistic.kind,
+        body: data.body || optimistic.body,
+        createdAt: data.createdAt || optimistic.createdAt,
+        threadId: data.threadId || threadId,
+        photoUrl: data.photoUrl ?? optimistic.photoUrl,
+        transcript: data.transcript ?? optimistic.transcript,
+        voiceSeconds: data.voiceSeconds ?? optimistic.voiceSeconds,
+        channel: "hearth",
+      };
+      setLocalPosts((prev) => [saved, ...prev.filter((post) => post.id !== optimisticId)]);
+      setScheduleHint(data.scheduleSuggestion ?? null);
+      setReminderHint(data.reminderSuggestion ?? null);
+      if (data.mutualAidSuggestion) {
+        setMutualAidHint({ ...data.mutualAidSuggestion, sourcePostId: data.id });
+      }
+      if (data.commerceSuggestion) {
+        setCommerceHint({ ...data.commerceSuggestion, sourcePostId: data.id });
+      }
+      if (data.calendarEvent) {
+        setCalendarAdded({
+          title: data.calendarEvent.title,
+          when: formatWhen(data.calendarEvent.startsAt, { timeZone: chatTimeZone, hour12 }),
+          count: data.calendarEvents?.length,
+        });
+      } else {
+        setCalendarAdded(null);
+      }
+      router.refresh();
+    } catch {
+      setLocalPosts((prev) => prev.filter((post) => post.id !== optimisticId));
+      setBody(text);
+      setPhotoUrl(optimistic.photoUrl);
+      setKind(optimistic.kind === "photo" || optimistic.kind === "voice" ? optimistic.kind : "text");
+      setSendError("Network error — message not sent.");
+    } finally {
+      setSending(false);
+    }
   }
 
   function speak(text: string) {
@@ -1181,12 +1252,12 @@ export function ChatApp({
 
             if (mine) {
               return (
-                <div key={p.id} className="flex items-end justify-end gap-2">
+                <div key={p.id} className="chat-msg-enter flex items-end justify-end gap-2">
                   <div className="flex max-w-[75%] flex-col items-end">
                     <p className="mb-0.5 text-xs text-mute">
                       {author?.name} · {formatChatTime(p.createdAt, chatTimeZone, hour12)}
                     </p>
-                    <div className="rounded-md bg-chat-out px-4 py-2.5">
+                    <div className="rounded-md bg-chat-out px-4 py-2.5 transition-shadow duration-200">
                       {p.photoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-sm object-cover" />
@@ -1197,7 +1268,8 @@ export function ChatApp({
                           onClick={() => speak(`${author?.name}. ${text}`)}
                           className="flex items-center gap-2 text-sm font-medium text-ember hover:underline"
                         >
-                          ▶ Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
+                          <Mic className="h-4 w-4" aria-hidden />
+                          Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
                         </button>
                       ) : (
                         <p className={`whitespace-pre-wrap leading-relaxed ${easy ? "text-base" : "text-[15px]"}`}>
@@ -1258,13 +1330,13 @@ export function ChatApp({
             }
 
             return (
-              <div key={p.id} className="flex justify-start gap-2">
+              <div key={p.id} className="chat-msg-enter flex justify-start gap-2">
                 <Avatar member={author} size={32} />
                 <div className="max-w-[85%]">
                   <p className="mb-0.5 text-xs text-mute">
                     {author?.name} · {formatChatTime(p.createdAt, chatTimeZone, hour12)}
                   </p>
-                  <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5">
+                  <div className="rounded-md border border-rule bg-chat-in px-4 py-2.5 transition-shadow duration-200">
                     {p.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.photoUrl} alt={p.photoAlt || ""} className="mb-1 max-h-48 rounded-sm object-cover" />
@@ -1275,7 +1347,8 @@ export function ChatApp({
                         onClick={() => speak(`${author?.name}. ${text}`)}
                         className="flex items-center gap-2 text-sm font-medium text-ember hover:underline"
                       >
-                        ▶ Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
+                        <Mic className="h-4 w-4" aria-hidden />
+                        Voice {p.voiceSeconds ? `(${p.voiceSeconds}s)` : ""}
                       </button>
                     ) : (
                       <p className={`whitespace-pre-wrap leading-relaxed ${easy ? "text-base" : "text-[15px]"}`}>
@@ -1491,17 +1564,30 @@ export function ChatApp({
           {voiceError ? (
             <p className="mb-2 text-sm text-red-700" role="alert">{voiceError}</p>
           ) : null}
-          <div className="flex items-end gap-2">
-            <label className="cursor-pointer px-1 py-2 text-xs font-medium text-mute hover:text-ink">
-              Photo
+          {sendError ? (
+            <p className="mb-2 text-sm text-red-700" role="alert">{sendError}</p>
+          ) : null}
+          <div className="flex items-end gap-1.5">
+            <label
+              className="grid h-10 w-10 cursor-pointer place-items-center rounded-sm text-mute transition-colors duration-150 hover:bg-accent-tint hover:text-ink"
+              title="Attach a photo"
+            >
+              <ImagePlus className="h-5 w-5" aria-hidden />
+              <span className="sr-only">Attach photo</span>
               <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} />
             </label>
             <button
               type="button"
               onClick={startVoice}
-              className={`px-1 py-2 text-xs font-medium ${listening ? "text-accent" : "text-mute hover:text-ink"}`}
+              title="Dictate a message"
+              className={`grid h-10 w-10 place-items-center rounded-sm transition-colors duration-150 ${
+                listening
+                  ? "bg-accent-tint text-accent animate-pulse"
+                  : "text-mute hover:bg-accent-tint hover:text-ink"
+              }`}
             >
-              Voice
+              <Mic className="h-5 w-5" aria-hidden />
+              <span className="sr-only">{listening ? "Listening…" : "Voice input"}</span>
             </button>
             <textarea
               value={body}
@@ -1509,20 +1595,24 @@ export function ChatApp({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  send();
+                  void send();
                 }
               }}
               placeholder="Type a message"
               rows={1}
-              className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none focus:border-accent ${
+              className={`max-h-28 min-h-[40px] flex-1 resize-none border border-rule bg-surface px-3 py-2 outline-none transition-[border-color,box-shadow] duration-150 focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-tint)] ${
                 easy ? "text-base" : "text-sm"
               }`}
             />
             <button
               type="button"
-              onClick={send}
-              className={`rounded-sm bg-ember px-4 font-medium text-white hover:bg-ember-dark ${easy ? "py-3 text-base" : "py-2 text-sm"}`}
+              onClick={() => void send()}
+              disabled={sending || (!body.trim() && !photoUrl)}
+              className={`inline-flex items-center gap-1.5 rounded-sm bg-ember font-medium text-white transition-[background-color,transform,opacity] duration-150 hover:bg-ember-dark active:scale-[0.98] disabled:opacity-50 ${
+                easy ? "px-4 py-3 text-base" : "px-3 py-2 text-sm"
+              }`}
             >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <SendHorizontal className="h-4 w-4" aria-hidden />}
               Send
             </button>
           </div>
